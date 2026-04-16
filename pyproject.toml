@@ -1,0 +1,15 @@
+[project]
+name = "evaluatietool-voorbeeld"
+version = "0.1.0"
+description = "Evaluatietool: selectiedata koppelen aan 1CHO voor studiesucces analyse"
+requires-python = ">=3.11"
+
+dependencies = [
+    "streamlit>=1.45.0",
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+    "plotly>=5.20.0",
+]
+
+[dependency-groups]
+dev = []
