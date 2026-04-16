@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 DATA_PATH = Path("data/synthetic/gekoppeld.parquet")
@@ -26,7 +27,6 @@ GROEP_KLEUREN = {
 
 st.set_page_config(
     page_title="Evaluatietool Selectie",
-    page_icon=":bar_chart:",
     layout="wide",
 )
 
@@ -34,9 +34,7 @@ st.set_page_config(
 @st.cache_data
 def laad_data() -> pd.DataFrame:
     if not DATA_PATH.exists():
-        st.error(
-            "Data niet gevonden. Draai eerst: `uv run python scripts/maak_data.py`"
-        )
+        st.error("Data niet gevonden. Draai eerst: `uv run python scripts/maak_data.py`")
         st.stop()
     df = pd.read_parquet(DATA_PATH)
     df["groep"] = pd.Categorical(df["groep"], categories=GROEP_VOLGORDE, ordered=True)
@@ -45,11 +43,10 @@ def laad_data() -> pd.DataFrame:
 
 data = laad_data()
 
-# --- Sidebar filters ---
+# --- Sidebar ---
 st.sidebar.title("Filters")
-
 cohort_keuzes = ["Alle cohorten"] + sorted(data["selectiejaar"].unique().tolist())
-cohort = st.sidebar.selectbox("Cohort (instroom jaar)", cohort_keuzes)
+cohort = st.sidebar.selectbox("Cohort", cohort_keuzes)
 
 geslacht_keuzes = ["Alle"] + sorted(data["geslacht"].unique().tolist())
 geslacht = st.sidebar.selectbox("Geslacht", geslacht_keuzes)
@@ -58,13 +55,10 @@ vooropl_keuzes = ["Alle"] + sorted(data["hoogste_vooropleiding"].unique().tolist
 vooropleiding = st.sidebar.selectbox("Vooropleiding", vooropl_keuzes)
 
 st.sidebar.divider()
-st.sidebar.caption(
-    "Synthetische voorbeelddata. Vervang door echte selectie- en 1CHO-data "
-    "via scripts/maak_data.py."
-)
+st.sidebar.caption("Synthetische voorbeelddata.")
 
 
-def filter_data(df: pd.DataFrame, incl_cohort=True) -> pd.DataFrame:
+def filter_data(df: pd.DataFrame, incl_cohort: bool = True) -> pd.DataFrame:
     if incl_cohort and cohort != "Alle cohorten":
         df = df[df["selectiejaar"] == int(cohort)]
     if geslacht != "Alle":
@@ -75,11 +69,99 @@ def filter_data(df: pd.DataFrame, incl_cohort=True) -> pd.DataFrame:
 
 
 # --- Tabs ---
-tab1, tab2, tab3 = st.tabs(["Overzicht", "Selectiescores", "Aantallen"])
+tab_scores, tab_overzicht, tab_demo, tab_aantallen = st.tabs([
+    "Selectiescores", "Verdeling", "Demografisch", "Aantallen"
+])
 
 
-# Tab 1: Overzicht
-with tab1:
+# ── Tab 1: Selectiescores (hoofdfocus) ──────────────────────────────────────
+with tab_scores:
+    st.header("Selectiescores per uitkomstgroep")
+    st.caption(
+        "Hogere scores bij doorstromers dan bij uitvallers signaleren predictieve validiteit "
+        "van het selectie-instrument. Let op overlap: een instrument dat groepen niet onderscheidt "
+        "heeft weinig voorspellende waarde."
+    )
+
+    df = filter_data(data)
+    df_gestart = df[df["groep"] != "Niet gestart"]
+
+    SCORES = {
+        "totaalscore":    "Totaalscore",
+        "interview_score": "Interview",
+        "motivatiescore": "Motivatiebrief",
+        "cv_score":       "CV",
+    }
+
+    # Totaalscore: groot, volledig breed
+    fig_totaal = go.Figure()
+    for groep in ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]:
+        subset = df_gestart[df_gestart["groep"] == groep]["totaalscore"].dropna()
+        fig_totaal.add_trace(go.Violin(
+            y=subset,
+            name=groep,
+            box_visible=True,
+            meanline_visible=True,
+            fillcolor=GROEP_KLEUREN[groep],
+            line_color=GROEP_KLEUREN[groep],
+            opacity=0.7,
+        ))
+    fig_totaal.update_layout(
+        title="Totaalscore (gewogen: interview 50%, motivatie 30%, CV 20%)",
+        yaxis_title="Score (1-10)",
+        height=500,
+        showlegend=True,
+        legend=dict(orientation="h", y=-0.15),
+        violingap=0.3,
+    )
+    st.plotly_chart(fig_totaal, use_container_width=True)
+
+    st.divider()
+
+    # Drie losse instrumenten naast elkaar
+    col1, col2, col3 = st.columns(3)
+
+    for col, (var, label) in zip(
+        [col1, col2, col3],
+        [("interview_score", "Interview"), ("motivatiescore", "Motivatiebrief"), ("cv_score", "CV")]
+    ):
+        fig = go.Figure()
+        for groep in ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]:
+            subset = df_gestart[df_gestart["groep"] == groep][var].dropna()
+            fig.add_trace(go.Violin(
+                y=subset,
+                name=groep,
+                box_visible=True,
+                meanline_visible=True,
+                fillcolor=GROEP_KLEUREN[groep],
+                line_color=GROEP_KLEUREN[groep],
+                opacity=0.7,
+                showlegend=False,
+            ))
+        fig.update_layout(
+            title=label,
+            yaxis_title="Score (1-10)",
+            height=420,
+            violingap=0.3,
+            margin=dict(t=50, b=10),
+        )
+        col.plotly_chart(fig, use_container_width=True)
+
+    # Gemiddelden tabel
+    st.divider()
+    st.subheader("Gemiddelden per groep")
+    tabel_scores = (
+        df_gestart
+        .groupby("groep", observed=True)[list(SCORES.keys())]
+        .agg(["mean", "std"])
+        .round(2)
+    )
+    tabel_scores.columns = [f"{SCORES[var]} ({stat})" for var, stat in tabel_scores.columns]
+    st.dataframe(tabel_scores, use_container_width=True)
+
+
+# ── Tab 2: Verdeling ─────────────────────────────────────────────────────────
+with tab_overzicht:
     st.header("Verdeling per groep")
     df = filter_data(data)
 
@@ -91,125 +173,111 @@ with tab1:
 
     st.divider()
 
-    col_links, col_rechts = st.columns(2)
+    agg = (
+        filter_data(data, incl_cohort=False)
+        .groupby(["selectiejaar", "groep"], observed=True)
+        .size()
+        .reset_index(name="n")
+    )
+    totals = agg.groupby("selectiejaar")["n"].transform("sum")
+    agg["pct"] = (agg["n"] / totals * 100).round(1)
 
-    with col_links:
-        # Gestapeld staafdiagram per cohort
-        agg = (
-            filter_data(data, incl_cohort=False)
-            .groupby(["selectiejaar", "groep"], observed=True)
-            .size()
-            .reset_index(name="n")
-        )
+    col_l, col_r = st.columns(2)
+
+    with col_l:
         fig = px.bar(
-            agg,
-            x="selectiejaar", y="n", color="groep",
+            agg, x="selectiejaar", y="n", color="groep",
             barmode="stack",
             color_discrete_map=GROEP_KLEUREN,
             category_orders={"groep": GROEP_VOLGORDE},
             labels={"selectiejaar": "Cohort", "n": "Aantal", "groep": ""},
-            title="Verdeling per cohort",
+            title="Absoluut per cohort",
         )
-        fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=-0.35))
+        fig.update_layout(height=500, legend=dict(orientation="h", y=-0.2))
         st.plotly_chart(fig, use_container_width=True)
 
-    with col_rechts:
-        # Genormaliseerd (procentueel)
-        agg_pct = agg.copy()
-        totals = agg_pct.groupby("selectiejaar")["n"].transform("sum")
-        agg_pct["pct"] = agg_pct["n"] / totals * 100
+    with col_r:
         fig2 = px.bar(
-            agg_pct,
-            x="selectiejaar", y="pct", color="groep",
+            agg, x="selectiejaar", y="pct", color="groep",
             barmode="stack",
             color_discrete_map=GROEP_KLEUREN,
             category_orders={"groep": GROEP_VOLGORDE},
             labels={"selectiejaar": "Cohort", "pct": "Percentage (%)", "groep": ""},
             title="Procentueel per cohort",
         )
-        fig2.update_layout(legend=dict(orientation="h", yanchor="bottom", y=-0.35))
+        fig2.update_layout(height=500, legend=dict(orientation="h", y=-0.2))
         st.plotly_chart(fig2, use_container_width=True)
 
-    # Demografisch
+
+# ── Tab 3: Demografisch ───────────────────────────────────────────────────────
+with tab_demo:
+    st.header("Demografisch profiel per groep")
+    df = filter_data(data)
+
     col_g, col_h = st.columns(2)
 
     with col_g:
         agg_g = (
             df.groupby(["groep", "geslacht"], observed=True)
-            .size()
-            .reset_index(name="n")
+            .size().reset_index(name="n")
         )
+        totals_g = agg_g.groupby("groep")["n"].transform("sum")
+        agg_g["pct"] = (agg_g["n"] / totals_g * 100).round(1)
         fig3 = px.bar(
-            agg_g, x="groep", y="n", color="geslacht",
+            agg_g, x="groep", y="pct", color="geslacht",
             barmode="stack",
-            labels={"groep": "", "n": "Aantal", "geslacht": "Geslacht"},
-            title="Geslacht per groep",
+            labels={"groep": "", "pct": "%", "geslacht": "Geslacht"},
+            title="Geslacht per groep (%)",
         )
-        fig3.update_layout(legend=dict(orientation="h", yanchor="bottom", y=-0.45))
+        fig3.update_layout(height=460, legend=dict(orientation="h", y=-0.2),
+                           xaxis=dict(tickangle=-20))
         st.plotly_chart(fig3, use_container_width=True)
 
     with col_h:
         agg_h = (
-            df.assign(herkomst_kort=df["herkomst"].apply(
+            df.assign(herkomst_kort=df["herkomst"].map(
                 lambda x: "Nederland" if x == "Nederland" else "niet-Nederland"
             ))
             .groupby(["groep", "herkomst_kort"], observed=True)
-            .size()
-            .reset_index(name="n")
+            .size().reset_index(name="n")
         )
+        totals_h = agg_h.groupby("groep")["n"].transform("sum")
+        agg_h["pct"] = (agg_h["n"] / totals_h * 100).round(1)
         fig4 = px.bar(
-            agg_h, x="groep", y="n", color="herkomst_kort",
+            agg_h, x="groep", y="pct", color="herkomst_kort",
             barmode="stack",
             color_discrete_map={"Nederland": "#3b82f6", "niet-Nederland": "#a78bfa"},
-            labels={"groep": "", "n": "Aantal", "herkomst_kort": "Herkomst"},
-            title="Herkomst per groep",
+            labels={"groep": "", "pct": "%", "herkomst_kort": "Herkomst"},
+            title="Herkomst per groep (%)",
         )
-        fig4.update_layout(legend=dict(orientation="h", yanchor="bottom", y=-0.45))
+        fig4.update_layout(height=460, legend=dict(orientation="h", y=-0.2),
+                           xaxis=dict(tickangle=-20))
         st.plotly_chart(fig4, use_container_width=True)
 
-
-# Tab 2: Selectiescores
-with tab2:
-    st.header("Selectiescores per groep")
-    st.caption(
-        "Als doorstromers hogere scores hebben, heeft het selectie-instrument predictieve validiteit."
+    # Vooropleiding volledig breed
+    agg_v = (
+        df.groupby(["groep", "hoogste_vooropleiding"], observed=True)
+        .size().reset_index(name="n")
     )
-
-    df2 = filter_data(data, incl_cohort=False)
-    if cohort != "Alle cohorten":
-        df2 = df2[df2["selectiejaar"] == int(cohort)]
-
-    scores = {
-        "Totaalscore":    "totaalscore",
-        "Motivatiebrief": "motivatiescore",
-        "CV":             "cv_score",
-        "Interview":      "interview_score",
-    }
-
-    cols = st.columns(len(scores))
-    for col, (label, var) in zip(cols, scores.items()):
-        fig = px.box(
-            df2[df2["groep"].notna()],
-            x="groep", y=var,
-            color="groep",
-            color_discrete_map=GROEP_KLEUREN,
-            category_orders={"groep": GROEP_VOLGORDE},
-            labels={"groep": "", var: "score"},
-            title=label,
-        )
-        fig.update_layout(showlegend=False, xaxis_tickangle=-25)
-        col.plotly_chart(fig, use_container_width=True)
+    totals_v = agg_v.groupby("groep")["n"].transform("sum")
+    agg_v["pct"] = (agg_v["n"] / totals_v * 100).round(1)
+    fig5 = px.bar(
+        agg_v, x="groep", y="pct", color="hoogste_vooropleiding",
+        barmode="stack",
+        labels={"groep": "", "pct": "%", "hoogste_vooropleiding": "Vooropleiding"},
+        title="Vooropleiding per groep (%)",
+    )
+    fig5.update_layout(height=460, legend=dict(orientation="h", y=-0.25),
+                       xaxis=dict(tickangle=-20))
+    st.plotly_chart(fig5, use_container_width=True)
 
 
-# Tab 3: Aantallen
-with tab3:
+# ── Tab 4: Aantallen ─────────────────────────────────────────────────────────
+with tab_aantallen:
     st.header("Aantallen per cohort")
-
     tabel = (
         data.groupby(["selectiejaar", "groep"], observed=True)
-        .size()
-        .unstack(fill_value=0)
-        .reset_index()
+        .size().unstack(fill_value=0).reset_index()
         .rename(columns={"selectiejaar": "Cohort"})
     )
     tabel["Totaal"] = tabel[list(GROEP_VOLGORDE)].sum(axis=1)
