@@ -234,12 +234,6 @@ with tab_overzicht:
     st.caption(f"Gefilterd op: {', '.join(filter_labels)}")
     df = filter_data(data)
 
-    col1, col2, col3 = st.columns(3)
-    for col, groep in zip([col1, col2, col3], GROEP_VOLGORDE):
-        n = (df["groep"] == groep).sum()
-        col.metric(groep, n)
-
-    st.divider()
 
     agg = (
         filter_data(data, incl_cohort=False)
