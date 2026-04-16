@@ -11,6 +11,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from scipy import stats
 
 DATA_PATH = Path("data/synthetic/gekoppeld.parquet")
 
@@ -85,8 +86,6 @@ def filter_data(df: pd.DataFrame, incl_cohort: bool = True) -> pd.DataFrame:
 
 
 st.sidebar.divider()
-n_gefilterd = len(filter_data(data))
-st.sidebar.metric("Kandidaten in selectie", n_gefilterd)
 st.sidebar.caption("Synthetische voorbeelddata.")
 
 
@@ -215,6 +214,46 @@ with tab_scores:
         [(SCORES[var], "gem." if stat == "mean" else "SD") for var, stat in tabel_scores.columns]
     )
     st.dataframe(tabel_scores, width="stretch")
+
+    # Significantietoetsen per score
+    groep_data = {g: df[df["groep"] == g] for g in GROEP_VOLGORDE}
+
+    def sig_sym(p):
+        return "***" if p < 0.001 else "**" if p < 0.01 else "*" if p < 0.05 else "ns"
+
+    def fmt_p(p):
+        return "< 0.001" if p < 0.001 else f"{p:.3f}"
+
+    sig_rijen = []
+    for var, label in SCORES.items():
+        samples_alle = [groep_data[g][var].dropna() for g in GROEP_VOLGORDE]
+        a = groep_data["Gestart, niet naar jaar 2"][var].dropna()
+        b = groep_data["Doorgestroomd naar jaar 2"][var].dropna()
+
+        if all(len(s) >= 2 for s in samples_alle):
+            _, p_kw = stats.kruskal(*samples_alle)
+            kw_str = f"{fmt_p(p_kw)}  {sig_sym(p_kw)}"
+        else:
+            kw_str = "n.v.t."
+
+        if len(a) >= 2 and len(b) >= 2:
+            _, p_mw = stats.mannwhitneyu(a, b, alternative="two-sided")
+            mw_str = f"{fmt_p(p_mw)}  {sig_sym(p_mw)}"
+        else:
+            mw_str = "n.v.t."
+
+        sig_rijen.append({
+            "Score": label,
+            "p KW (3 groepen)": kw_str,
+            "p MW (jaar 2 vs uitval)": mw_str,
+        })
+
+    st.caption(
+        "KW = Kruskal-Wallis (alle 3 groepen). "
+        "MW = Mann-Whitney U (gestart niet naar jaar 2 vs doorgestroomd naar jaar 2). "
+        "\\* p<0.05  \\*\\* p<0.01  \\*\\*\\* p<0.001"
+    )
+    st.dataframe(pd.DataFrame(sig_rijen), hide_index=True, width="stretch")
 
 
 # ── Tab 2: Verdeling ─────────────────────────────────────────────────────────
