@@ -281,9 +281,13 @@ with tab_demo:
 with tab_aantallen:
     st.header("Aantallen per cohort")
     tabel = (
-        data.groupby(["selectiejaar", "groep"], observed=True)
+        filter_data(data)
+        .groupby(["selectiejaar", "groep"], observed=True)
         .size().unstack(fill_value=0).reset_index()
         .rename(columns={"selectiejaar": "Cohort"})
     )
+    for groep in GROEP_VOLGORDE:
+        if groep not in tabel.columns:
+            tabel[groep] = 0
     tabel["Totaal"] = tabel[list(GROEP_VOLGORDE)].sum(axis=1)
     st.dataframe(tabel, use_container_width=True, hide_index=True)
