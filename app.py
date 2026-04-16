@@ -49,7 +49,7 @@ st.set_page_config(
 )
 
 st.title("Evaluatietool Selectie")
-st.caption("B Gezondheidswetenschappen — DEMO Hogeschool")
+st.caption("B Gezondheidswetenschappen | DEMO Hogeschool")
 
 
 @st.cache_data
@@ -217,7 +217,7 @@ with tab_scores:
             sig_rijen.append({"Score": label, "p-waarde": "n.v.t.", "Sig.": ""})
 
     st.caption(
-        "Mann-Whitney U toets — vergelijkt de scoreverdeling van studenten die niet doorstroomden "
+        "Mann-Whitney U toets: vergelijkt de scoreverdeling van studenten die niet doorstroomden "
         "naar jaar 2 met studenten die dat wel deden. Een significante uitkomst betekent dat de twee "
         "groepen systematisch anders scoren op dat instrument, wat wijst op predictieve validiteit. "
         "De toets maakt geen aanname over een normale verdeling en is daardoor geschikt voor scores "
@@ -323,7 +323,7 @@ with tab_demo:
         fix_xas_labels(fig4)
         st.plotly_chart(fig4, width="stretch")
 
-    # Vooropleiding: horizontale grouped bar — leesbaarder dan gestapeld met 6 kleuren
+    # Vooropleiding: horizontale grouped bar, leesbaarder dan gestapeld met 6 kleuren
     agg_v = (
         df.groupby(["hoogste_vooropleiding", "groep"], observed=True)
         .size().reset_index(name="n")
@@ -361,7 +361,7 @@ with tab_demo:
         },
         category_orders={"instroom_type": ["direct", "tussenjaar", "switcher"]},
         labels={"groep": "", "pct": "%", "instroom_type": "Instroom"},
-        title="Instroomtype per groep (%) — direct, tussenjaar, switcher",
+        title="Instroomtype per groep (%): direct, tussenjaar, switcher",
     )
     fig6.update_layout(height=460, legend=dict(orientation="h", y=-0.2))
     fix_xas_labels(fig6)
@@ -410,7 +410,7 @@ with tab_vo:
     st.header("VO-eindcijfer vs selectiescores")
     st.caption(
         "Het VO-eindcijfer is het gemiddeld eindexamencijfer van de hoogste vooropleiding "
-        "vóór het hoger onderwijs — voor de meeste studenten het VWO-diploma. "
+        "vóór het hoger onderwijs; voor de meeste studenten is dat het VWO-diploma. "
         "Het komt rechtstreeks uit het EV-bestand van 1CHO en is daardoor onafhankelijk van "
         "wat de opleiding zelf heeft gemeten tijdens de selectie. "
         "De grafiek laat zien of de selectie-instrumenten informatie toevoegen die de school "
@@ -476,8 +476,8 @@ with tab_vo:
         cor_rijen.append({"Score": var, "r (Pearson)": r})
     st.caption(
         "Pearson r meet de lineaire samenhang tussen VO-eindcijfer en selectiescore. "
-        "r = 0: geen verband — instrument meet iets anders dan schoolprestaties. "
-        "r = 1: perfect verband — selectie op dezelfde dimensie als VO-cijfers. "
+        "r = 0 betekent geen verband: het instrument meet iets anders dan schoolprestaties. "
+        "r = 1 betekent perfect verband: selectie op dezelfde dimensie als VO-cijfers. "
         "Een lage r is wenselijk: het instrument voegt informatie toe die VO-cijfers niet geven."
     )
     st.dataframe(pd.DataFrame(cor_rijen), hide_index=True)
