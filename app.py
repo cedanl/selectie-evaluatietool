@@ -104,6 +104,7 @@ with tab_scores:
             fillcolor=GROEP_KLEUREN[groep],
             line_color=GROEP_KLEUREN[groep],
             opacity=0.7,
+            hoverinfo="skip",
         ))
     fig_totaal.update_layout(
         title="Totaalscore (gewogen: interview 50%, motivatie 30%, CV 20%)",
@@ -136,6 +137,7 @@ with tab_scores:
                 line_color=GROEP_KLEUREN[groep],
                 opacity=0.7,
                 showlegend=False,
+                hoverinfo="skip",
             ))
         fig.update_layout(
             title=label,
