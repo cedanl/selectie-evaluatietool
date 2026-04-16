@@ -9,7 +9,11 @@
 
 library(shiny)
 library(bslib)
-library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(scales)
 
 # Laad de gekoppelde dataset (aangemaakt door R/koppel_en_classificeer.R)
 if (!file.exists("data/synthetic/gekoppeld.rds")) {

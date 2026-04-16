@@ -11,7 +11,10 @@
 #
 # Output: data/synthetic/EV_DEMO_selectieopleiding.csv
 
-library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(readr)
 
 set.seed(2024)
 

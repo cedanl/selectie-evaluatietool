@@ -6,7 +6,11 @@
 #
 # Output: data/synthetic/selectiedata_voorbeeld.csv
 
-library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(readr)
+library(stringr)
 
 set.seed(2024)
 
@@ -49,14 +53,13 @@ maak_cohort <- function(jaar, pgn_offset) {
   leeftijd   <- round(rnorm(n, mean = 19.2, sd = 1.4)) |> pmax(17) |> pmin(26)
 
   # Gemiddeld VO-cijfer: correleert licht met vooropleiding
-  gem_vo_base <- case_match(
-    vooropl,
-    "vwo profiel natuur & gezondheid"     ~ 7.2,
-    "vwo profiel natuur & techniek"       ~ 7.1,
-    "vwo profiel cultuur & maatschappij"  ~ 6.9,
-    "vwo profiel economie & maatschappij" ~ 6.8,
-    "hbo-propedeuse"                      ~ 6.5,
-    .default                              ~ 6.4
+  gem_vo_base <- case_when(
+    vooropl == "vwo profiel natuur & gezondheid"     ~ 7.2,
+    vooropl == "vwo profiel natuur & techniek"       ~ 7.1,
+    vooropl == "vwo profiel cultuur & maatschappij"  ~ 6.9,
+    vooropl == "vwo profiel economie & maatschappij" ~ 6.8,
+    vooropl == "hbo-propedeuse"                      ~ 6.5,
+    TRUE                                             ~ 6.4
   )
   gem_vo <- round(rnorm(n, mean = gem_vo_base, sd = 0.6) |> pmax(4) |> pmin(10), 1)
 

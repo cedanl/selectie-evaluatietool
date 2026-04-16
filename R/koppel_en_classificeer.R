@@ -14,7 +14,9 @@
 # Aanname: de koppeling loopt via persoonsgebonden_nummer.
 # In de praktijk moet dit via een beveiligd koppelproces verlopen.
 
-library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(readr)
 
 selectiedata <- read_csv2("data/synthetic/selectiedata_voorbeeld.csv")
 cho_data     <- read_csv2("data/synthetic/EV_DEMO_selectieopleiding.csv")
