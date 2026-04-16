@@ -25,6 +25,22 @@ GROEP_KLEUREN = {
     "Doorgestroomd naar jaar 2": "#22c55e",
 }
 
+# Verkorte labels voor op de x-as (Plotly ondersteunt <br> als regelafbreking)
+GROEP_XTICKLABELS = [
+    "Niet<br>gestart",
+    "Gestart, niet<br>naar jaar 2",
+    "Doorgestroomd<br>naar jaar 2",
+]
+
+def fix_xas_labels(fig):
+    """Vervangt de groepsnamen op de x-as door versies met regelafbreking."""
+    fig.update_xaxes(
+        tickmode="array",
+        tickvals=GROEP_VOLGORDE,
+        ticktext=GROEP_XTICKLABELS,
+    )
+    return fig
+
 st.set_page_config(
     page_title="Evaluatietool Selectie",
     layout="wide",
@@ -114,6 +130,7 @@ with tab_scores:
         legend=dict(orientation="h", y=-0.15),
         violingap=0.3,
     )
+    fix_xas_labels(fig_totaal)
     st.plotly_chart(fig_totaal, use_container_width=True)
 
     st.divider()
@@ -146,6 +163,7 @@ with tab_scores:
             violingap=0.3,
             margin=dict(t=50, b=10),
         )
+        fix_xas_labels(fig)
         col.plotly_chart(fig, use_container_width=True)
 
     # Gemiddelden tabel
@@ -230,8 +248,8 @@ with tab_demo:
             labels={"groep": "", "pct": "%", "geslacht": "Geslacht"},
             title="Geslacht per groep (%)",
         )
-        fig3.update_layout(height=460, legend=dict(orientation="h", y=-0.2),
-                           xaxis=dict(tickangle=-20))
+        fig3.update_layout(height=460, legend=dict(orientation="h", y=-0.2))
+        fix_xas_labels(fig3)
         st.plotly_chart(fig3, use_container_width=True)
 
     with col_h:
@@ -251,8 +269,8 @@ with tab_demo:
             labels={"groep": "", "pct": "%", "herkomst_kort": "Herkomst"},
             title="Herkomst per groep (%)",
         )
-        fig4.update_layout(height=460, legend=dict(orientation="h", y=-0.2),
-                           xaxis=dict(tickangle=-20))
+        fig4.update_layout(height=460, legend=dict(orientation="h", y=-0.2))
+        fix_xas_labels(fig4)
         st.plotly_chart(fig4, use_container_width=True)
 
     # Vooropleiding volledig breed
@@ -268,8 +286,8 @@ with tab_demo:
         labels={"groep": "", "pct": "%", "hoogste_vooropleiding": "Vooropleiding"},
         title="Vooropleiding per groep (%)",
     )
-    fig5.update_layout(height=460, legend=dict(orientation="h", y=-0.25),
-                       xaxis=dict(tickangle=-20))
+    fig5.update_layout(height=460, legend=dict(orientation="h", y=-0.25))
+    fix_xas_labels(fig5)
     st.plotly_chart(fig5, use_container_width=True)
 
 
