@@ -188,7 +188,7 @@ with tab_overzicht:
     for col, groep in zip([col1, col2, col3], GROEP_VOLGORDE):
         n = (df["groep"] == groep).sum()
         pct = n / len(df) * 100 if len(df) > 0 else 0
-        col.metric(groep, n, f"{pct:.0f}%")
+        col.metric(groep, f"{n}  ({pct:.0f}%)")
 
     st.divider()
 
