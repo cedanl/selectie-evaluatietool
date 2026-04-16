@@ -1,0 +1,1201 @@
+kandidaat_id;persoonsgebonden_nummer;selectiejaar;opleiding;instellingscode;geslacht;leeftijd;herkomst;hoogste_vooropleiding;gem_eindcijfer_vo;motivatiescore;cv_score;interview_score;totaalscore;rangorde;selectie_uitkomst
+10001;;2021;B Gezondheidswetenschappen;DEMO;man;18;Marokko;vwo profiel natuur & gezondheid;6.5;5.3;5.8;4.4;4.95;213;niet geselecteerd
+10002;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;7.0;4.7;4.8;4.9;4.82;225;niet geselecteerd
+10003;10003.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel cultuur & maatschappij;7.2;6.0;6.5;5.4;5.8;96;geselecteerd
+10004;;2021;B Gezondheidswetenschappen;DEMO;man;18;westerse achtergrond;vwo profiel cultuur & maatschappij;6.7;5.7;5.2;4.2;4.85;223;niet geselecteerd
+10005;;2021;B Gezondheidswetenschappen;DEMO;anders;22;Nederland;vwo profiel cultuur & maatschappij;6.6;2.6;3.4;4.4;3.66;335;niet geselecteerd
+10006;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;hbo-propedeuse;6.4;3.9;5.6;3.0;3.79;329;niet geselecteerd
+10007;10007.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;22;westerse achtergrond;vwo profiel natuur & techniek;8.6;5.7;5.1;6.2;5.83;94;geselecteerd
+10008;10008.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;5.8;5.3;5.9;6.3;5.92;80;geselecteerd
+10009;10009.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel cultuur & maatschappij;6.7;6.4;5.6;5.9;5.99;74;geselecteerd
+10010;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;overig niet-westers;vwo profiel natuur & gezondheid;7.6;2.7;5.3;5.4;4.57;249;niet geselecteerd
+10011;10011.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;vwo profiel natuur & gezondheid;7.3;5.4;5.8;7.6;6.58;39;geselecteerd
+10012;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.0;4.7;4.8;5.7;5.22;179;niet geselecteerd
+10013;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;hbo-propedeuse;6.6;3.3;3.2;3.3;3.28;363;niet geselecteerd
+10014;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;6.9;4.0;3.6;4.3;4.07;301;niet geselecteerd
+10015;10015.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;6.2;6.1;4.2;6.4;5.87;89;geselecteerd
+10016;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Turkije;vwo profiel economie & maatschappij;6.5;2.4;4.2;2.4;2.76;380;niet geselecteerd
+10017;;2021;B Gezondheidswetenschappen;DEMO;anders;21;Suriname/Antillen;vwo profiel natuur & techniek;7.9;2.4;3.7;3.8;3.36;352;niet geselecteerd
+10018;10018.0;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel cultuur & maatschappij;7.4;6.6;6.2;6.8;6.62;32;geselecteerd
+10019;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.9;3.9;3.1;4.2;3.89;319;niet geselecteerd
+10020;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.2;2.0;5.3;4.9;4.11;298;niet geselecteerd
+10021;;2021;B Gezondheidswetenschappen;DEMO;vrouw;22;overig niet-westers;hbo-propedeuse;6.6;2.8;2.8;3.8;3.3;362;niet geselecteerd
+10022;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;hbo-propedeuse;7.0;3.8;3.3;3.1;3.35;354;niet geselecteerd
+10023;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.6;5.0;5.3;2.3;3.71;333;niet geselecteerd
+10024;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel economie & maatschappij;7.5;5.6;5.2;5.6;5.52;132;niet geselecteerd
+10025;10025.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;vwo profiel cultuur & maatschappij;6.5;5.7;5.6;7.2;6.43;46;geselecteerd
+10026;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;7.6;1.7;3.4;2.1;2.24;396;niet geselecteerd
+10027;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.4;4.3;6.4;5.7;5.42;151;niet geselecteerd
+10028;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & techniek;6.4;4.5;5.8;5.7;5.36;161;niet geselecteerd
+10029;10029.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;vwo profiel cultuur & maatschappij;7.2;6.4;6.9;7.0;6.8;22;geselecteerd
+10030;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.9;2.0;4.2;2.6;2.74;383;niet geselecteerd
+10031;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;westerse achtergrond;vwo profiel natuur & techniek;8.4;6.2;4.6;4.9;5.23;178;niet geselecteerd
+10032;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;hbo-propedeuse;6.9;4.9;3.0;3.8;3.97;310;niet geselecteerd
+10033;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.0;3.9;3.9;4.1;4.0;309;niet geselecteerd
+10034;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Suriname/Antillen;vwo profiel cultuur & maatschappij;6.8;4.8;4.7;5.5;5.13;192;niet geselecteerd
+10035;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;8.0;5.7;4.6;5.5;5.38;156;niet geselecteerd
+10036;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;8.0;2.1;2.1;4.3;3.2;366;niet geselecteerd
+10037;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.2;6.0;5.6;3.4;4.62;246;niet geselecteerd
+10038;10038.0;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.3;7.2;8.6;7.4;7.58;5;geselecteerd
+10039;;2021;B Gezondheidswetenschappen;DEMO;man;21;Suriname/Antillen;vwo profiel natuur & techniek;7.5;4.3;3.9;4.3;4.22;290;niet geselecteerd
+10040;10040.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.6;5.7;5.7;6.2;5.95;79;geselecteerd
+10041;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel cultuur & maatschappij;6.9;3.1;4.4;2.6;3.11;367;niet geselecteerd
+10042;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.8;6.7;4.9;3.8;4.89;219;niet geselecteerd
+10043;10043.0;2021;B Gezondheidswetenschappen;DEMO;man;22;Nederland;hbo-propedeuse;6.1;8.0;6.4;7.1;7.23;8;geselecteerd
+10044;10044.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel economie & maatschappij;6.2;6.1;5.0;5.6;5.63;116;reserve
+10045;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;overig niet-westers;vwo profiel natuur & gezondheid;7.7;5.2;4.2;4.0;4.4;266;niet geselecteerd
+10046;;2021;B Gezondheidswetenschappen;DEMO;man;20;Suriname/Antillen;hbo-propedeuse;6.6;2.3;4.0;3.0;2.99;376;niet geselecteerd
+10047;10047.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;7.7;5.5;7.0;6.3;6.2;67;geselecteerd
+10048;;2021;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel cultuur & maatschappij;5.9;3.9;3.7;5.1;4.46;256;niet geselecteerd
+10049;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;hbo-propedeuse;6.4;2.9;5.4;4.9;4.4;267;niet geselecteerd
+10050;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.2;3.8;4.2;2.7;3.33;357;niet geselecteerd
+10051;10051.0;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.4;8.2;6.4;7.1;7.29;7;geselecteerd
+10052;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;vwo profiel economie & maatschappij;6.4;3.7;3.4;4.2;3.89;320;niet geselecteerd
+10053;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;7.8;3.8;5.2;5.1;4.73;232;niet geselecteerd
+10054;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.7;6.1;4.6;5.4;5.45;145;niet geselecteerd
+10055;10055.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;overig niet-westers;vwo profiel natuur & techniek;5.9;5.6;6.1;6.8;6.3;56;geselecteerd
+10056;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Suriname/Antillen;vwo profiel cultuur & maatschappij;6.2;4.7;3.9;4.2;4.29;279;niet geselecteerd
+10057;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Suriname/Antillen;vwo profiel natuur & gezondheid;7.0;3.4;3.4;3.6;3.5;342;niet geselecteerd
+10058;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.5;5.1;3.4;5.4;4.91;215;niet geselecteerd
+10059;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;5.8;5.4;4.8;4.2;4.68;237;niet geselecteerd
+10060;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Turkije;vwo profiel economie & maatschappij;6.7;3.3;2.7;1.8;2.43;392;niet geselecteerd
+10061;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.8;4.6;4.0;4.1;4.23;287;niet geselecteerd
+10062;10062.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Suriname/Antillen;vwo profiel natuur & gezondheid;7.8;6.9;4.0;6.3;6.02;72;geselecteerd
+10063;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.1;4.9;4.9;4.5;4.7;234;niet geselecteerd
+10064;10064.0;2021;B Gezondheidswetenschappen;DEMO;man;22;Nederland;vwo profiel natuur & techniek;7.8;5.8;7.6;5.5;6.01;73;geselecteerd
+10065;10065.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;anders;6.3;5.8;6.9;7.0;6.62;33;geselecteerd
+10066;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel cultuur & maatschappij;7.1;5.8;4.3;5.6;5.4;153;niet geselecteerd
+10067;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Turkije;vwo profiel natuur & gezondheid;7.1;3.7;4.1;3.1;3.48;344;niet geselecteerd
+10068;10068.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;6.8;6.2;6.6;6.3;6.33;51;geselecteerd
+10069;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;8.2;3.9;5.2;4.6;4.51;253;niet geselecteerd
+10070;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;7.5;4.5;3.9;4.4;4.33;273;niet geselecteerd
+10071;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Suriname/Antillen;vwo profiel natuur & gezondheid;7.7;3.3;3.9;1.5;2.52;390;niet geselecteerd
+10072;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Marokko;vwo profiel natuur & gezondheid;7.1;5.1;4.6;3.7;4.3;278;niet geselecteerd
+10073;10073.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.3;5.1;6.3;7.0;6.29;57;geselecteerd
+10074;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.0;4.6;3.6;4.1;4.15;296;niet geselecteerd
+10075;10075.0;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel economie & maatschappij;7.0;5.7;5.6;5.9;5.78;100;geselecteerd
+10076;;2021;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & gezondheid;6.8;5.4;3.4;2.6;3.6;337;niet geselecteerd
+10077;10077.0;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;7.5;5.8;4.9;6.3;5.87;90;geselecteerd
+10078;10078.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;overig niet-westers;vwo profiel cultuur & maatschappij;5.7;5.5;5.6;5.9;5.72;105;reserve
+10079;10079.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;8.4;6.0;6.3;6.9;6.51;42;geselecteerd
+10080;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & techniek;7.0;4.7;4.6;3.8;4.23;288;niet geselecteerd
+10081;10081.0;2021;B Gezondheidswetenschappen;DEMO;man;22;Marokko;hbo-propedeuse;7.7;9.3;6.9;9.0;8.67;1;geselecteerd
+10082;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;8.4;5.5;4.8;5.5;5.36;162;niet geselecteerd
+10083;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel economie & maatschappij;7.9;2.7;3.2;2.6;2.75;381;niet geselecteerd
+10084;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;vwo profiel natuur & techniek;7.1;7.3;4.3;4.8;5.45;146;niet geselecteerd
+10085;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.6;2.7;2.2;2.2;2.35;395;niet geselecteerd
+10086;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & techniek;6.4;4.7;6.0;5.7;5.46;143;niet geselecteerd
+10087;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.3;3.4;5.2;4.8;4.46;257;niet geselecteerd
+10088;10088.0;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & techniek;7.1;5.4;6.6;7.4;6.64;31;geselecteerd
+10089;10089.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;5.9;5.8;6.5;5.7;5.89;85;geselecteerd
+10090;10090.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel economie & maatschappij;6.3;6.2;5.6;5.8;5.88;88;geselecteerd
+10091;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;7.7;5.7;3.9;4.0;4.49;254;niet geselecteerd
+10092;10092.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;6.5;6.8;3.7;5.6;5.58;120;reserve
+10093;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Turkije;vwo profiel cultuur & maatschappij;7.5;5.2;4.5;4.8;4.86;221;niet geselecteerd
+10094;10094.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;overig niet-westers;vwo profiel natuur & gezondheid;7.2;9.1;6.7;7.6;7.87;3;geselecteerd
+10095;;2021;B Gezondheidswetenschappen;DEMO;man;23;Nederland;vwo profiel natuur & gezondheid;7.1;4.5;4.7;6.3;5.44;149;niet geselecteerd
+10096;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;hbo-propedeuse;5.6;4.8;7.1;5.2;5.46;144;niet geselecteerd
+10097;;2021;B Gezondheidswetenschappen;DEMO;man;20;Marokko;hbo-propedeuse;6.8;5.5;3.6;4.8;4.77;229;niet geselecteerd
+10098;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.6;4.8;3.9;3.7;4.07;302;niet geselecteerd
+10099;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;8.7;3.5;4.5;3.3;3.6;338;niet geselecteerd
+10100;;2021;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & techniek;7.0;4.7;4.5;5.9;5.26;172;niet geselecteerd
+10101;10101.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.8;7.0;5.6;6.9;6.67;28;geselecteerd
+10102;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;westerse achtergrond;anders;6.8;3.8;2.4;4.0;3.62;336;niet geselecteerd
+10103;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.3;5.0;4.7;3.0;3.94;313;niet geselecteerd
+10104;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;overig niet-westers;vwo profiel economie & maatschappij;6.5;4.1;3.5;2.3;3.08;370;niet geselecteerd
+10105;10105.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & techniek;7.6;7.1;6.0;7.1;6.88;19;geselecteerd
+10106;10106.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;7.0;6.3;5.6;6.5;6.26;58;geselecteerd
+10107;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;hbo-propedeuse;6.7;6.3;4.4;4.5;5.02;201;niet geselecteerd
+10108;;2021;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & techniek;7.8;5.4;4.1;5.2;5.04;200;niet geselecteerd
+10109;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.4;3.4;3.7;4.1;3.81;325;niet geselecteerd
+10110;10110.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Suriname/Antillen;vwo profiel economie & maatschappij;7.4;7.5;6.6;7.7;7.42;6;geselecteerd
+10111;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel economie & maatschappij;6.4;2.4;4.2;3.5;3.31;360;niet geselecteerd
+10112;10112.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;7.4;5.4;6.8;5.5;5.73;103;reserve
+10113;;2021;B Gezondheidswetenschappen;DEMO;man;18;westerse achtergrond;vwo profiel cultuur & maatschappij;6.9;5.2;6.1;4.8;5.18;185;niet geselecteerd
+10114;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.1;3.5;5.5;5.5;4.9;218;niet geselecteerd
+10115;10115.0;2021;B Gezondheidswetenschappen;DEMO;man;19;overig niet-westers;vwo profiel natuur & gezondheid;4.9;6.1;6.3;6.9;6.54;40;geselecteerd
+10116;10116.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Suriname/Antillen;vwo profiel economie & maatschappij;6.7;4.8;5.2;6.3;5.63;117;reserve
+10117;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;6.5;2.4;4.5;2.8;3.02;374;niet geselecteerd
+10118;10118.0;2021;B Gezondheidswetenschappen;DEMO;man;20;overig niet-westers;vwo profiel natuur & gezondheid;7.1;6.0;5.6;6.1;5.97;77;geselecteerd
+10119;;2021;B Gezondheidswetenschappen;DEMO;vrouw;23;Nederland;vwo profiel cultuur & maatschappij;6.7;2.7;2.3;3.9;3.22;364;niet geselecteerd
+10120;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.5;3.6;2.6;2.3;2.75;382;niet geselecteerd
+10121;10121.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;overig niet-westers;vwo profiel natuur & gezondheid;6.1;6.1;5.2;5.7;5.72;106;reserve
+10122;10122.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.1;5.9;5.6;7.4;6.59;37;geselecteerd
+10123;;2021;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel cultuur & maatschappij;7.4;4.6;5.1;5.8;5.3;167;niet geselecteerd
+10124;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.6;6.5;4.7;4.2;4.99;207;niet geselecteerd
+10125;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;overig niet-westers;vwo profiel economie & maatschappij;6.9;5.0;4.6;5.2;5.02;202;niet geselecteerd
+10126;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;anders;7.5;4.6;4.6;5.0;4.8;227;niet geselecteerd
+10127;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Turkije;vwo profiel cultuur & maatschappij;7.0;4.3;7.2;3.2;4.33;274;niet geselecteerd
+10128;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;7.2;2.9;2.1;1.9;2.24;397;niet geselecteerd
+10129;10129.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Turkije;vwo profiel natuur & gezondheid;7.0;7.5;6.8;5.6;6.41;47;geselecteerd
+10130;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;6.0;3.0;2.8;2.7;2.81;379;niet geselecteerd
+10131;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;anders;5.9;4.9;4.7;3.9;4.36;269;niet geselecteerd
+10132;10132.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;hbo-propedeuse;6.8;6.6;5.9;7.3;6.81;21;geselecteerd
+10133;10133.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;vwo profiel natuur & gezondheid;8.5;5.2;5.6;6.2;5.78;101;reserve
+10134;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.1;3.4;4.5;4.1;3.97;311;niet geselecteerd
+10135;10135.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;overig niet-westers;vwo profiel natuur & gezondheid;6.6;7.3;5.6;6.8;6.71;26;geselecteerd
+10136;10136.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.7;6.5;6.0;7.7;7.0;15;geselecteerd
+10137;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.1;4.3;4.5;3.9;4.14;297;niet geselecteerd
+10138;10138.0;2021;B Gezondheidswetenschappen;DEMO;man;17;westerse achtergrond;vwo profiel natuur & gezondheid;7.1;5.7;5.9;5.8;5.79;98;geselecteerd
+10139;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Marokko;vwo profiel natuur & gezondheid;7.4;6.0;5.8;5.1;5.51;134;niet geselecteerd
+10140;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel economie & maatschappij;6.9;4.4;4.2;4.5;4.41;263;niet geselecteerd
+10141;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;6.9;3.8;5.6;4.3;4.41;264;niet geselecteerd
+10142;10142.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;vwo profiel natuur & gezondheid;6.1;6.4;6.0;6.4;6.32;53;geselecteerd
+10143;10143.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & techniek;7.6;5.9;6.6;7.2;6.69;27;geselecteerd
+10144;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.7;5.2;4.8;4.2;4.62;247;niet geselecteerd
+10145;10145.0;2021;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & techniek;7.1;7.0;8.4;8.1;7.83;4;geselecteerd
+10146;;2021;B Gezondheidswetenschappen;DEMO;man;19;Suriname/Antillen;vwo profiel natuur & gezondheid;6.9;5.2;3.3;4.4;4.42;261;niet geselecteerd
+10147;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Turkije;vwo profiel natuur & gezondheid;6.6;5.5;4.6;4.5;4.82;226;niet geselecteerd
+10148;10148.0;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;6.5;8.1;7.6;7.9;7.9;2;geselecteerd
+10149;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Suriname/Antillen;vwo profiel economie & maatschappij;6.4;2.5;3.7;2.3;2.64;388;niet geselecteerd
+10150;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;6.1;4.2;4.0;3.5;3.81;326;niet geselecteerd
+10151;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;6.2;4.9;4.8;4.4;4.63;242;niet geselecteerd
+10152;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.3;5.0;4.8;6.1;5.51;135;niet geselecteerd
+10153;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;7.2;5.9;5.1;5.1;5.34;165;niet geselecteerd
+10154;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel natuur & gezondheid;7.1;3.7;4.0;3.1;3.46;346;niet geselecteerd
+10155;;2021;B Gezondheidswetenschappen;DEMO;man;20;Turkije;anders;5.7;5.9;4.5;5.5;5.42;152;niet geselecteerd
+10156;;2021;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel cultuur & maatschappij;6.7;2.6;3.6;4.0;3.5;343;niet geselecteerd
+10157;;2021;B Gezondheidswetenschappen;DEMO;man;21;westerse achtergrond;vwo profiel cultuur & maatschappij;7.4;2.3;2.6;3.0;2.71;385;niet geselecteerd
+10158;10158.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Turkije;vwo profiel cultuur & maatschappij;6.5;5.8;6.3;6.3;6.15;68;geselecteerd
+10159;10159.0;2021;B Gezondheidswetenschappen;DEMO;anders;19;Marokko;vwo profiel natuur & gezondheid;7.8;6.1;6.2;6.9;6.52;41;geselecteerd
+10160;10160.0;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel economie & maatschappij;6.5;5.5;5.0;5.9;5.6;119;reserve
+10161;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;7.1;3.7;4.5;4.1;4.06;304;niet geselecteerd
+10162;;2021;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel cultuur & maatschappij;6.3;3.7;4.0;3.7;3.76;330;niet geselecteerd
+10163;;2021;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel cultuur & maatschappij;7.1;4.5;3.6;5.2;4.67;239;niet geselecteerd
+10164;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;8.0;3.0;3.2;2.3;2.69;386;niet geselecteerd
+10165;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;hbo-propedeuse;6.2;4.6;3.9;4.8;4.56;250;niet geselecteerd
+10166;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.4;4.7;4.0;4.2;4.31;276;niet geselecteerd
+10167;10167.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;6.3;5.3;6.8;6.4;6.15;69;geselecteerd
+10168;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;vwo profiel natuur & techniek;7.3;5.7;5.5;4.9;5.26;173;niet geselecteerd
+10169;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.4;4.7;1.0;3.0;3.11;368;niet geselecteerd
+10170;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel cultuur & maatschappij;7.4;6.6;5.3;4.2;5.14;189;niet geselecteerd
+10171;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;6.7;3.7;3.0;3.4;3.41;349;niet geselecteerd
+10172;;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel economie & maatschappij;5.7;3.3;1.5;2.8;2.69;387;niet geselecteerd
+10173;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;7.0;6.2;5.5;4.8;5.36;163;niet geselecteerd
+10174;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.8;3.9;5.0;5.7;5.02;203;niet geselecteerd
+10175;;2021;B Gezondheidswetenschappen;DEMO;man;19;Suriname/Antillen;vwo profiel natuur & techniek;6.6;4.7;5.2;5.3;5.1;196;niet geselecteerd
+10176;10176.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;7.4;5.3;5.8;6.2;5.85;92;geselecteerd
+10177;10177.0;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;6.7;4.9;5.6;6.8;5.99;75;geselecteerd
+10178;10178.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & gezondheid;7.3;5.7;7.1;5.4;5.83;95;geselecteerd
+10179;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;westerse achtergrond;vwo profiel cultuur & maatschappij;6.9;4.1;5.6;5.0;4.85;224;niet geselecteerd
+10180;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;overig niet-westers;vwo profiel natuur & techniek;7.4;5.8;2.3;4.0;4.2;294;niet geselecteerd
+10181;;2021;B Gezondheidswetenschappen;DEMO;man;19;overig niet-westers;vwo profiel economie & maatschappij;7.2;3.1;1.4;3.8;3.11;369;niet geselecteerd
+10182;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.5;2.7;3.1;1.9;2.38;394;niet geselecteerd
+10183;10183.0;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;hbo-propedeuse;6.7;4.7;4.9;7.7;6.24;61;geselecteerd
+10184;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;7.3;4.9;4.8;3.7;4.28;281;niet geselecteerd
+10185;10185.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;hbo-propedeuse;7.0;7.7;5.2;6.5;6.6;36;geselecteerd
+10186;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.7;5.0;4.2;5.8;5.24;177;niet geselecteerd
+10187;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;5.7;5.0;3.6;4.0;4.22;291;niet geselecteerd
+10188;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;anders;6.0;5.2;5.3;5.1;5.17;186;niet geselecteerd
+10189;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;6.7;3.3;5.6;6.1;5.16;188;niet geselecteerd
+10190;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.0;4.4;4.2;5.5;4.91;216;niet geselecteerd
+10191;;2021;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & techniek;6.7;4.8;5.4;5.2;5.12;194;niet geselecteerd
+10192;10192.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.2;5.9;6.3;6.6;6.33;52;geselecteerd
+10193;;2021;B Gezondheidswetenschappen;DEMO;man;20;overig niet-westers;vwo profiel natuur & techniek;8.6;2.5;2.4;3.7;3.08;371;niet geselecteerd
+10194;;2021;B Gezondheidswetenschappen;DEMO;anders;21;Nederland;vwo profiel economie & maatschappij;6.5;4.6;5.0;5.5;5.13;193;niet geselecteerd
+10195;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel economie & maatschappij;6.6;4.0;5.9;5.2;4.98;210;niet geselecteerd
+10196;;2021;B Gezondheidswetenschappen;DEMO;anders;18;Nederland;vwo profiel natuur & gezondheid;7.7;5.2;5.2;4.4;4.8;228;niet geselecteerd
+10197;10197.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;vwo profiel cultuur & maatschappij;5.9;5.9;5.7;6.0;5.91;82;geselecteerd
+10198;;2021;B Gezondheidswetenschappen;DEMO;man;17;Suriname/Antillen;vwo profiel natuur & techniek;6.5;2.9;3.0;3.2;3.07;372;niet geselecteerd
+10199;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.5;5.4;5.9;5.4;5.5;138;niet geselecteerd
+10200;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;6.9;4.3;3.7;5.9;4.98;211;niet geselecteerd
+10201;;2021;B Gezondheidswetenschappen;DEMO;man;18;Suriname/Antillen;vwo profiel cultuur & maatschappij;6.3;6.3;5.0;5.3;5.54;127;niet geselecteerd
+10202;10202.0;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & gezondheid;7.0;6.7;6.0;7.7;7.06;11;geselecteerd
+10203;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;6.0;5.0;4.4;3.7;4.23;289;niet geselecteerd
+10204;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.3;5.8;4.7;5.5;5.43;150;niet geselecteerd
+10205;;2021;B Gezondheidswetenschappen;DEMO;man;17;overig niet-westers;vwo profiel cultuur & maatschappij;7.8;3.8;4.0;4.7;4.29;280;niet geselecteerd
+10206;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.1;3.1;3.3;3.5;3.34;356;niet geselecteerd
+10207;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;6.6;4.2;3.7;1.9;2.95;378;niet geselecteerd
+10208;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;vwo profiel natuur & gezondheid;7.1;4.0;3.1;3.0;3.32;359;niet geselecteerd
+10209;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;hbo-propedeuse;6.4;4.7;3.6;5.0;4.63;243;niet geselecteerd
+10210;;2021;B Gezondheidswetenschappen;DEMO;man;23;Nederland;vwo profiel natuur & techniek;7.6;5.7;3.7;5.7;5.3;168;niet geselecteerd
+10211;;2021;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel economie & maatschappij;7.7;4.6;3.2;4.8;4.42;262;niet geselecteerd
+10212;;2021;B Gezondheidswetenschappen;DEMO;man;18;westerse achtergrond;vwo profiel natuur & gezondheid;6.5;5.0;5.8;5.1;5.21;181;niet geselecteerd
+10213;10213.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Suriname/Antillen;vwo profiel natuur & gezondheid;7.4;6.1;5.4;6.0;5.91;83;geselecteerd
+10214;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;8.1;3.9;4.8;3.8;4.03;306;niet geselecteerd
+10215;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.6;5.9;5.2;4.9;5.26;174;niet geselecteerd
+10216;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;6.0;3.9;5.0;4.2;4.27;282;niet geselecteerd
+10217;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;8.0;4.4;4.5;4.9;4.67;240;niet geselecteerd
+10218;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.8;4.1;3.7;4.1;4.02;307;niet geselecteerd
+10219;10219.0;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;6.8;7.2;6.8;7.4;7.22;9;geselecteerd
+10220;10220.0;2021;B Gezondheidswetenschappen;DEMO;man;23;Marokko;vwo profiel natuur & gezondheid;7.0;5.3;7.7;6.7;6.48;43;geselecteerd
+10221;10221.0;2021;B Gezondheidswetenschappen;DEMO;man;18;Suriname/Antillen;vwo profiel economie & maatschappij;6.2;6.1;4.3;6.4;5.89;86;geselecteerd
+10222;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;hbo-propedeuse;6.5;4.4;3.7;3.6;3.86;322;niet geselecteerd
+10223;;2021;B Gezondheidswetenschappen;DEMO;man;19;westerse achtergrond;vwo profiel natuur & techniek;7.2;5.5;5.5;4.6;5.05;199;niet geselecteerd
+10224;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;westerse achtergrond;vwo profiel cultuur & maatschappij;7.2;3.9;3.7;2.6;3.21;365;niet geselecteerd
+10225;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;7.0;3.7;4.5;4.5;4.26;284;niet geselecteerd
+10226;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.3;6.6;4.6;5.3;5.55;125;niet geselecteerd
+10227;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & techniek;7.3;4.3;3.9;2.9;3.52;341;niet geselecteerd
+10228;10228.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.7;6.1;6.7;6.4;6.37;49;geselecteerd
+10229;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.4;2.9;4.7;4.2;3.91;316;niet geselecteerd
+10230;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;6.4;2.1;2.5;1.9;2.08;400;niet geselecteerd
+10231;10231.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;22;Marokko;vwo profiel cultuur & maatschappij;6.1;6.9;5.7;6.5;6.46;44;geselecteerd
+10232;10232.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.4;7.0;5.5;5.2;5.8;97;geselecteerd
+10233;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;overig niet-westers;vwo profiel economie & maatschappij;6.7;3.7;4.7;4.4;4.25;285;niet geselecteerd
+10234;10234.0;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel economie & maatschappij;6.9;5.7;6.0;6.9;6.36;50;geselecteerd
+10235;10235.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel natuur & gezondheid;5.7;6.5;4.9;6.4;6.13;70;geselecteerd
+10236;10236.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Marokko;anders;6.3;6.2;7.1;7.4;6.98;17;geselecteerd
+10237;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;7.1;6.3;5.0;5.0;5.39;155;niet geselecteerd
+10238;;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel cultuur & maatschappij;7.4;3.3;3.0;2.8;2.99;377;niet geselecteerd
+10239;10239.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.0;5.1;4.3;6.6;5.69;108;reserve
+10240;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;6.6;4.7;5.1;4.0;4.43;260;niet geselecteerd
+10241;;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & gezondheid;7.4;5.9;4.6;4.9;5.14;190;niet geselecteerd
+10242;;2021;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel economie & maatschappij;7.4;5.2;5.3;5.0;5.12;195;niet geselecteerd
+10243;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;7.4;4.2;5.4;4.7;4.69;236;niet geselecteerd
+10244;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Turkije;vwo profiel natuur & gezondheid;7.2;3.6;6.0;4.4;4.48;255;niet geselecteerd
+10245;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.4;3.8;4.1;3.9;3.91;317;niet geselecteerd
+10246;10246.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;7.3;6.2;6.7;7.7;7.05;12;geselecteerd
+10247;10247.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.5;6.5;6.6;7.3;6.92;18;geselecteerd
+10248;;2021;B Gezondheidswetenschappen;DEMO;man;18;Marokko;vwo profiel economie & maatschappij;6.0;4.8;4.1;4.3;4.41;265;niet geselecteerd
+10249;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;6.5;5.0;5.2;5.9;5.49;139;niet geselecteerd
+10250;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.1;4.6;5.1;6.1;5.45;147;niet geselecteerd
+10251;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.6;5.8;5.4;4.4;5.02;204;niet geselecteerd
+10252;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;6.0;2.2;2.9;2.8;2.64;389;niet geselecteerd
+10253;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.8;4.9;5.1;4.8;4.89;220;niet geselecteerd
+10254;10254.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;7.3;6.6;6.4;6.1;6.31;54;geselecteerd
+10255;;2021;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel cultuur & maatschappij;6.8;4.7;6.4;5.7;5.54;128;niet geselecteerd
+10256;10256.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;vwo profiel natuur & gezondheid;6.9;5.2;7.5;6.4;6.26;59;geselecteerd
+10257;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;vwo profiel economie & maatschappij;6.7;5.0;5.3;4.4;4.76;230;niet geselecteerd
+10258;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;6.6;2.8;2.9;3.3;3.07;373;niet geselecteerd
+10259;;2021;B Gezondheidswetenschappen;DEMO;man;17;Turkije;vwo profiel natuur & gezondheid;8.0;6.8;5.1;4.4;5.26;175;niet geselecteerd
+10260;10260.0;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;6.3;6.2;7.8;7.2;7.02;14;geselecteerd
+10261;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.2;6.2;5.3;4.9;5.37;157;niet geselecteerd
+10262;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;6.4;1.5;2.0;2.5;2.1;399;niet geselecteerd
+10263;;2021;B Gezondheidswetenschappen;DEMO;anders;22;Nederland;vwo profiel cultuur & maatschappij;7.3;4.3;4.7;3.2;3.83;323;niet geselecteerd
+10264;10264.0;2021;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel cultuur & maatschappij;5.7;5.3;5.6;6.1;5.76;102;reserve
+10265;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & techniek;6.6;3.2;3.5;3.4;3.36;353;niet geselecteerd
+10266;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & techniek;6.7;4.5;4.8;4.1;4.36;270;niet geselecteerd
+10267;;2021;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & gezondheid;8.0;3.6;4.6;3.5;3.75;332;niet geselecteerd
+10268;10268.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Marokko;vwo profiel cultuur & maatschappij;7.3;6.7;6.3;7.0;6.77;23;geselecteerd
+10269;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.5;4.0;5.4;3.1;3.83;324;niet geselecteerd
+10270;10270.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;overig niet-westers;vwo profiel natuur & techniek;6.5;4.5;5.7;6.7;5.84;93;geselecteerd
+10271;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;8.0;2.4;3.3;1.7;2.23;398;niet geselecteerd
+10272;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;6.5;4.1;5.6;4.2;4.45;259;niet geselecteerd
+10273;10273.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.3;6.1;7.9;6.4;6.61;34;geselecteerd
+10274;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.5;3.7;4.5;2.9;3.46;347;niet geselecteerd
+10275;10275.0;2021;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.1;6.4;5.6;7.1;6.59;38;geselecteerd
+10276;10276.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;westerse achtergrond;vwo profiel natuur & gezondheid;6.9;6.7;5.5;7.1;6.66;29;geselecteerd
+10277;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.2;5.4;5.4;5.7;5.55;126;niet geselecteerd
+10278;10278.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;5.4;6.5;4.8;6.7;6.26;60;geselecteerd
+10279;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.8;4.6;5.2;5.9;5.37;158;niet geselecteerd
+10280;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;hbo-propedeuse;6.2;5.7;5.2;5.3;5.4;154;niet geselecteerd
+10281;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;6.7;3.6;1.9;3.7;3.31;361;niet geselecteerd
+10282;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel economie & maatschappij;7.9;3.9;5.4;4.9;4.7;235;niet geselecteerd
+10283;10283.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;7.1;6.2;5.6;5.4;5.68;109;reserve
+10284;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;7.6;1.9;3.3;3.0;2.73;384;niet geselecteerd
+10285;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.7;4.7;4.7;5.7;5.2;184;niet geselecteerd
+10286;10286.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;vwo profiel natuur & gezondheid;8.0;5.7;4.8;7.1;6.22;65;geselecteerd
+10287;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;6.5;4.2;3.9;5.1;4.59;248;niet geselecteerd
+10288;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;hbo-propedeuse;7.9;4.0;5.8;4.2;4.46;258;niet geselecteerd
+10289;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;vwo profiel cultuur & maatschappij;7.2;5.6;5.1;5.3;5.35;164;niet geselecteerd
+10290;;2021;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel cultuur & maatschappij;6.1;5.7;5.0;5.0;5.21;182;niet geselecteerd
+10291;;2021;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel cultuur & maatschappij;7.0;3.5;3.8;4.0;3.81;327;niet geselecteerd
+10292;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;8.1;5.7;4.3;4.9;5.02;205;niet geselecteerd
+10293;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel economie & maatschappij;6.3;5.4;5.0;5.5;5.37;159;niet geselecteerd
+10294;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel cultuur & maatschappij;6.9;4.9;6.5;5.0;5.27;171;niet geselecteerd
+10295;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & techniek;6.7;5.0;4.4;6.4;5.58;121;niet geselecteerd
+10296;10296.0;2021;B Gezondheidswetenschappen;DEMO;man;19;overig niet-westers;anders;4.9;6.8;3.6;6.2;5.86;91;geselecteerd
+10297;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;6.4;4.6;6.5;5.8;5.58;122;niet geselecteerd
+10298;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel cultuur & maatschappij;6.3;4.8;6.2;5.6;5.48;140;niet geselecteerd
+10299;10299.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;hbo-propedeuse;6.0;6.1;7.0;6.0;6.23;64;geselecteerd
+10300;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.9;3.5;3.3;4.1;3.76;331;niet geselecteerd
+10301;10301.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Suriname/Antillen;vwo profiel natuur & gezondheid;7.1;4.9;5.8;6.1;5.68;110;reserve
+10302;;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & techniek;7.6;3.6;4.9;4.0;4.06;305;niet geselecteerd
+10303;;2021;B Gezondheidswetenschappen;DEMO;man;18;Suriname/Antillen;vwo profiel natuur & gezondheid;7.6;4.4;3.7;3.5;3.81;328;niet geselecteerd
+10304;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Turkije;vwo profiel natuur & gezondheid;6.8;3.9;3.5;3.6;3.67;334;niet geselecteerd
+10305;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & techniek;6.7;5.6;3.4;4.7;4.71;233;niet geselecteerd
+10306;10306.0;2021;B Gezondheidswetenschappen;DEMO;anders;19;Nederland;vwo profiel natuur & gezondheid;6.7;6.5;7.0;6.2;6.45;45;geselecteerd
+10307;10307.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Marokko;vwo profiel natuur & gezondheid;7.9;5.4;5.4;6.4;5.9;84;geselecteerd
+10308;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Turkije;hbo-propedeuse;5.5;4.7;5.8;3.3;4.22;292;niet geselecteerd
+10309;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.4;2.7;4.4;3.7;3.54;340;niet geselecteerd
+10310;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;hbo-propedeuse;6.7;3.9;4.0;2.8;3.37;351;niet geselecteerd
+10311;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;6.9;4.1;4.4;4.5;4.36;271;niet geselecteerd
+10312;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;overig niet-westers;vwo profiel natuur & techniek;8.1;4.9;4.8;5.3;5.08;197;niet geselecteerd
+10313;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;vwo profiel natuur & techniek;6.5;5.5;4.1;5.7;5.32;166;niet geselecteerd
+10314;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;hbo-propedeuse;6.4;4.8;3.9;4.3;4.37;268;niet geselecteerd
+10315;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.9;2.6;1.5;2.7;2.43;393;niet geselecteerd
+10316;10316.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;overig niet-westers;anders;5.7;6.4;5.8;7.3;6.73;25;geselecteerd
+10317;;2021;B Gezondheidswetenschappen;DEMO;man;20;Suriname/Antillen;vwo profiel natuur & gezondheid;7.1;4.6;4.4;5.0;4.76;231;niet geselecteerd
+10318;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.3;5.5;5.4;5.7;5.58;123;niet geselecteerd
+10319;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Suriname/Antillen;hbo-propedeuse;6.4;3.4;4.5;4.0;3.92;315;niet geselecteerd
+10320;;2021;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;hbo-propedeuse;6.2;3.6;4.1;2.9;3.35;355;niet geselecteerd
+10321;10321.0;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & gezondheid;8.3;5.2;6.1;6.4;5.98;76;geselecteerd
+10322;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.1;5.0;5.2;5.2;5.14;191;niet geselecteerd
+10323;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.7;3.6;6.0;4.7;4.63;244;niet geselecteerd
+10324;10324.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel cultuur & maatschappij;7.0;6.0;5.7;6.6;6.24;62;geselecteerd
+10325;10325.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.7;5.0;5.4;6.3;5.73;104;reserve
+10326;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.6;4.2;4.9;4.0;4.24;286;niet geselecteerd
+10327;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Suriname/Antillen;hbo-propedeuse;5.8;4.1;5.2;4.1;4.32;275;niet geselecteerd
+10328;10328.0;2021;B Gezondheidswetenschappen;DEMO;man;17;Suriname/Antillen;vwo profiel natuur & gezondheid;7.6;5.3;7.4;5.8;5.97;78;geselecteerd
+10329;;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;anders;6.3;3.0;3.5;2.8;3.0;375;niet geselecteerd
+10330;10330.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & techniek;8.0;6.5;5.8;6.2;6.21;66;geselecteerd
+10331;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;vwo profiel natuur & techniek;8.1;4.6;7.8;4.1;4.99;208;niet geselecteerd
+10332;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;6.5;5.1;4.5;5.1;4.98;212;niet geselecteerd
+10333;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;6.6;3.5;6.0;5.4;4.95;214;niet geselecteerd
+10334;;2021;B Gezondheidswetenschappen;DEMO;vrouw;22;Marokko;vwo profiel cultuur & maatschappij;6.8;4.5;5.8;5.1;5.06;198;niet geselecteerd
+10335;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;hbo-propedeuse;6.6;5.0;6.2;5.6;5.54;129;niet geselecteerd
+10336;10336.0;2021;B Gezondheidswetenschappen;DEMO;man;21;overig niet-westers;vwo profiel cultuur & maatschappij;7.3;5.4;6.6;6.6;6.24;63;geselecteerd
+10337;10337.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.2;6.5;5.8;7.0;6.61;35;geselecteerd
+10338;10338.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel natuur & gezondheid;7.6;5.0;7.2;5.9;5.89;87;geselecteerd
+10339;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & techniek;7.3;3.8;4.8;4.5;4.35;272;niet geselecteerd
+10340;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & techniek;6.0;5.9;4.5;5.6;5.47;142;niet geselecteerd
+10341;10341.0;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & techniek;6.4;5.7;4.9;5.9;5.64;114;reserve
+10342;;2021;B Gezondheidswetenschappen;DEMO;man;19;overig niet-westers;vwo profiel natuur & gezondheid;8.1;4.0;5.2;2.7;3.59;339;niet geselecteerd
+10343;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;westerse achtergrond;vwo profiel natuur & gezondheid;7.4;3.4;5.0;3.9;3.97;312;niet geselecteerd
+10344;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.6;6.5;5.5;4.8;5.45;148;niet geselecteerd
+10345;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;8.1;5.1;4.7;5.8;5.37;160;niet geselecteerd
+10346;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;8.0;2.6;2.8;2.2;2.44;391;niet geselecteerd
+10347;10347.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Suriname/Antillen;vwo profiel natuur & gezondheid;6.3;6.0;7.3;6.8;6.66;30;geselecteerd
+10348;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;7.0;3.8;4.3;4.4;4.2;295;niet geselecteerd
+10349;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.1;5.1;5.2;5.9;5.52;133;niet geselecteerd
+10350;10350.0;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & gezondheid;7.0;6.0;5.5;5.6;5.7;107;reserve
+10351;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;6.2;5.7;2.2;6.3;5.3;169;niet geselecteerd
+10352;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;westerse achtergrond;vwo profiel natuur & gezondheid;7.6;5.4;5.0;5.2;5.22;180;niet geselecteerd
+10353;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Suriname/Antillen;vwo profiel natuur & gezondheid;7.1;5.4;5.2;5.1;5.21;183;niet geselecteerd
+10354;10354.0;2021;B Gezondheidswetenschappen;DEMO;man;20;Marokko;vwo profiel economie & maatschappij;6.7;8.6;6.8;6.1;6.99;16;geselecteerd
+10355;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;7.9;2.1;4.0;3.9;3.38;350;niet geselecteerd
+10356;10356.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Marokko;vwo profiel natuur & gezondheid;7.2;6.1;5.6;6.9;6.4;48;geselecteerd
+10357;10357.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & techniek;6.5;6.7;4.8;5.4;5.67;111;reserve
+10358;10358.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Turkije;vwo profiel natuur & gezondheid;7.1;4.9;5.5;6.2;5.67;112;reserve
+10359;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;7.2;4.7;3.1;2.6;3.33;358;niet geselecteerd
+10360;10360.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Marokko;vwo profiel natuur & gezondheid;8.0;5.3;7.1;6.6;6.31;55;geselecteerd
+10361;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.4;5.9;5.8;5.1;5.48;141;niet geselecteerd
+10362;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;hbo-propedeuse;5.6;4.5;4.8;3.6;4.11;299;niet geselecteerd
+10363;10363.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.6;6.7;4.9;5.3;5.64;115;reserve
+10364;;2021;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel economie & maatschappij;6.5;3.0;4.2;4.7;4.09;300;niet geselecteerd
+10365;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;anders;5.9;4.5;1.6;3.6;3.47;345;niet geselecteerd
+10366;;2021;B Gezondheidswetenschappen;DEMO;man;18;westerse achtergrond;vwo profiel natuur & gezondheid;7.5;5.4;6.2;5.3;5.51;136;niet geselecteerd
+10367;;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel cultuur & maatschappij;6.4;4.2;3.3;4.2;4.02;308;niet geselecteerd
+10368;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.8;5.1;6.3;5.5;5.54;130;niet geselecteerd
+10369;10369.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.9;5.9;6.0;5.3;5.62;118;reserve
+10370;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;7.1;5.3;5.1;3.4;4.31;277;niet geselecteerd
+10371;10371.0;2021;B Gezondheidswetenschappen;DEMO;man;17;Nederland;hbo-propedeuse;5.6;7.0;5.1;5.6;5.92;81;geselecteerd
+10372;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.6;3.8;5.6;4.6;4.56;251;niet geselecteerd
+10373;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;vwo profiel natuur & gezondheid;7.5;4.4;3.0;4.3;4.07;303;niet geselecteerd
+10374;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.0;6.4;4.6;4.3;4.99;209;niet geselecteerd
+10375;;2021;B Gezondheidswetenschappen;DEMO;man;19;Suriname/Antillen;vwo profiel economie & maatschappij;6.5;5.4;6.1;5.4;5.54;131;niet geselecteerd
+10376;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;hbo-propedeuse;6.3;4.8;4.9;3.7;4.27;283;niet geselecteerd
+10377;;2021;B Gezondheidswetenschappen;DEMO;man;21;Nederland;hbo-propedeuse;6.1;3.5;2.8;4.6;3.91;318;niet geselecteerd
+10378;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;6.9;5.7;5.4;5.0;5.29;170;niet geselecteerd
+10379;10379.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.6;6.9;5.4;5.8;6.05;71;geselecteerd
+10380;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;6.6;5.7;6.3;5.2;5.57;124;niet geselecteerd
+10381;;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel economie & maatschappij;7.6;4.2;3.3;4.6;4.22;293;niet geselecteerd
+10382;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;hbo-propedeuse;5.8;5.2;5.5;4.4;4.86;222;niet geselecteerd
+10383;;2021;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;7.7;4.8;4.7;4.6;4.68;238;niet geselecteerd
+10384;10384.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;7.2;7.0;5.0;7.9;7.05;13;geselecteerd
+10385;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Suriname/Antillen;vwo profiel natuur & techniek;7.2;4.1;3.8;3.9;3.94;314;niet geselecteerd
+10386;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.6;5.6;4.0;2.8;3.88;321;niet geselecteerd
+10387;10387.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Suriname/Antillen;vwo profiel natuur & techniek;6.4;6.7;6.1;7.7;7.08;10;geselecteerd
+10388;10388.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel cultuur & maatschappij;7.6;6.0;7.1;4.9;5.67;113;reserve
+10389;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel cultuur & maatschappij;6.7;4.5;4.8;5.9;5.26;176;niet geselecteerd
+10390;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.5;3.6;4.3;3.0;3.44;348;niet geselecteerd
+10391;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.4;5.5;3.4;4.6;4.63;245;niet geselecteerd
+10392;10392.0;2021;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & gezondheid;6.5;6.6;6.7;6.9;6.77;24;geselecteerd
+10393;10393.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.4;6.5;6.4;7.3;6.88;20;geselecteerd
+10394;;2021;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.3;4.1;5.6;4.4;4.55;252;niet geselecteerd
+10395;10395.0;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;vwo profiel natuur & techniek;8.2;5.3;7.0;5.6;5.79;99;geselecteerd
+10396;;2021;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;5.2;5.2;5.8;4.9;5.17;187;niet geselecteerd
+10397;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;hbo-propedeuse;6.9;4.7;4.0;6.6;5.51;137;niet geselecteerd
+10398;;2021;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.0;4.9;3.7;5.4;4.91;217;niet geselecteerd
+10399;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;7.0;7.1;3.4;4.4;5.01;206;niet geselecteerd
+10400;;2021;B Gezondheidswetenschappen;DEMO;man;19;Nederland;anders;6.5;5.0;4.0;4.7;4.65;241;niet geselecteerd
+10401;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.5;3.4;2.3;4.0;3.48;348;niet geselecteerd
+10402;;2022;B Gezondheidswetenschappen;DEMO;man;19;Turkije;anders;5.3;5.0;6.0;4.0;4.7;242;niet geselecteerd
+10403;10403.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.9;6.6;5.2;5.9;5.97;88;geselecteerd
+10404;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Turkije;vwo profiel natuur & gezondheid;6.8;5.3;5.0;5.4;5.29;168;niet geselecteerd
+10405;;2022;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel cultuur & maatschappij;6.2;4.2;3.0;4.8;4.26;295;niet geselecteerd
+10406;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;7.9;3.9;4.0;5.6;4.77;230;niet geselecteerd
+10407;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;6.9;4.8;3.9;4.8;4.62;251;niet geselecteerd
+10408;10408.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel cultuur & maatschappij;7.2;6.2;5.7;5.5;5.75;108;reserve
+10409;10409.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Marokko;vwo profiel cultuur & maatschappij;8.3;6.2;8.5;7.1;7.11;23;geselecteerd
+10410;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.2;5.3;4.7;5.2;5.13;190;niet geselecteerd
+10411;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Marokko;vwo profiel cultuur & maatschappij;7.4;4.0;3.8;4.1;4.01;317;niet geselecteerd
+10412;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.1;4.4;4.4;4.5;4.45;273;niet geselecteerd
+10413;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel economie & maatschappij;6.3;3.7;2.2;3.3;3.2;366;niet geselecteerd
+10414;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.3;5.2;6.0;4.5;5.01;204;niet geselecteerd
+10415;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;6.0;3.9;2.8;3.8;3.63;341;niet geselecteerd
+10416;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel economie & maatschappij;6.6;4.3;4.5;5.2;4.79;225;niet geselecteerd
+10417;10417.0;2022;B Gezondheidswetenschappen;DEMO;anders;19;Nederland;vwo profiel natuur & techniek;7.1;6.6;7.0;8.0;7.38;17;geselecteerd
+10418;10418.0;2022;B Gezondheidswetenschappen;DEMO;man;17;Marokko;vwo profiel cultuur & maatschappij;7.0;6.1;5.6;5.5;5.7;113;reserve
+10419;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;7.2;5.8;4.9;4.9;5.17;185;niet geselecteerd
+10420;10420.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;westerse achtergrond;vwo profiel cultuur & maatschappij;6.0;6.1;6.6;6.5;6.4;60;geselecteerd
+10421;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & techniek;7.4;5.1;5.8;5.3;5.34;163;niet geselecteerd
+10422;10422.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;7.2;5.8;5.3;5.8;5.7;114;reserve
+10423;10423.0;2022;B Gezondheidswetenschappen;DEMO;anders;19;Nederland;vwo profiel economie & maatschappij;7.7;6.9;5.6;6.5;6.44;58;geselecteerd
+10424;;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;7.4;4.1;5.0;4.9;4.68;246;niet geselecteerd
+10425;;2022;B Gezondheidswetenschappen;DEMO;man;19;westerse achtergrond;vwo profiel natuur & gezondheid;7.5;3.7;4.2;4.6;4.25;297;niet geselecteerd
+10426;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;7.7;4.7;5.5;4.4;4.71;241;niet geselecteerd
+10427;10427.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Suriname/Antillen;vwo profiel natuur & gezondheid;7.4;5.1;6.8;6.9;6.34;64;geselecteerd
+10428;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;6.3;3.8;4.7;4.4;4.28;290;niet geselecteerd
+10429;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel cultuur & maatschappij;7.5;4.2;5.0;4.1;4.31;286;niet geselecteerd
+10430;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & techniek;7.3;5.2;5.0;5.1;5.11;192;niet geselecteerd
+10431;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;7.7;4.8;3.8;5.5;4.95;210;niet geselecteerd
+10432;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;hbo-propedeuse;7.2;5.6;4.2;4.1;4.57;256;niet geselecteerd
+10433;10433.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;8.0;6.5;3.6;6.5;5.92;92;geselecteerd
+10434;;2022;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & gezondheid;7.6;3.3;2.7;3.8;3.43;350;niet geselecteerd
+10435;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;anders;5.9;5.7;3.4;4.6;4.69;244;niet geselecteerd
+10436;;2022;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & gezondheid;7.0;5.8;4.7;4.0;4.68;247;niet geselecteerd
+10437;10437.0;2022;B Gezondheidswetenschappen;DEMO;man;19;westerse achtergrond;vwo profiel cultuur & maatschappij;8.5;6.8;5.7;7.5;6.93;27;geselecteerd
+10438;;2022;B Gezondheidswetenschappen;DEMO;man;19;westerse achtergrond;vwo profiel natuur & gezondheid;6.6;3.1;4.2;4.3;3.92;324;niet geselecteerd
+10439;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.7;4.6;6.3;5.6;5.44;149;niet geselecteerd
+10440;;2022;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & gezondheid;7.6;3.2;3.9;5.0;4.24;298;niet geselecteerd
+10441;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;anders;6.4;2.9;1.8;2.1;2.28;394;niet geselecteerd
+10442;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.7;4.7;5.9;4.3;4.74;234;niet geselecteerd
+10443;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;7.4;4.7;4.8;4.2;4.47;271;niet geselecteerd
+10444;10444.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;7.4;6.3;7.8;6.9;6.9;28;geselecteerd
+10445;10445.0;2022;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.0;7.8;7.2;5.3;6.43;59;geselecteerd
+10446;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Suriname/Antillen;vwo profiel cultuur & maatschappij;7.2;3.9;2.5;5.4;4.37;285;niet geselecteerd
+10447;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;hbo-propedeuse;6.8;5.1;4.6;4.7;4.8;221;niet geselecteerd
+10448;;2022;B Gezondheidswetenschappen;DEMO;man;17;Marokko;vwo profiel cultuur & maatschappij;7.4;5.4;5.7;5.3;5.41;152;niet geselecteerd
+10449;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;6.4;4.7;4.7;5.3;5.0;206;niet geselecteerd
+10450;10450.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.1;7.2;8.0;7.3;7.41;15;geselecteerd
+10451;10451.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.0;5.4;6.5;5.7;5.77;106;reserve
+10452;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;6.5;4.7;4.9;5.3;5.04;197;niet geselecteerd
+10453;;2022;B Gezondheidswetenschappen;DEMO;man;22;westerse achtergrond;anders;6.3;5.8;4.8;5.0;5.2;179;niet geselecteerd
+10454;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;6.7;5.8;5.3;4.4;5.0;207;niet geselecteerd
+10455;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;7.9;3.7;3.3;2.8;3.17;368;niet geselecteerd
+10456;10456.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.5;7.0;6.6;7.6;7.22;21;geselecteerd
+10457;10457.0;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;7.4;7.0;8.7;7.3;7.49;11;geselecteerd
+10458;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;6.9;5.1;3.6;4.7;4.6;252;niet geselecteerd
+10459;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.6;2.3;2.9;3.2;2.87;381;niet geselecteerd
+10460;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.6;4.4;4.5;5.5;4.97;209;niet geselecteerd
+10461;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.7;4.1;5.1;5.3;4.9;217;niet geselecteerd
+10462;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Marokko;vwo profiel natuur & gezondheid;7.7;3.9;4.9;3.6;3.95;320;niet geselecteerd
+10463;;2022;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.1;4.3;6.2;4.9;4.98;208;niet geselecteerd
+10464;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;anders;5.5;6.5;5.8;4.7;5.46;145;niet geselecteerd
+10465;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;7.1;3.8;4.4;2.3;3.17;369;niet geselecteerd
+10466;10466.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;7.1;6.9;7.3;8.8;7.93;6;geselecteerd
+10467;10467.0;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & techniek;6.2;7.2;4.7;6.8;6.5;54;geselecteerd
+10468;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.5;4.4;6.9;5.8;5.6;127;niet geselecteerd
+10469;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.0;4.9;5.0;6.0;5.47;140;niet geselecteerd
+10470;10470.0;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.2;6.5;6.4;5.7;6.08;82;geselecteerd
+10471;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;6.6;5.8;5.6;5.5;5.61;124;niet geselecteerd
+10472;;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.1;3.7;4.8;3.6;3.87;327;niet geselecteerd
+10473;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.7;2.5;3.2;1.7;2.24;395;niet geselecteerd
+10474;;2022;B Gezondheidswetenschappen;DEMO;man;20;westerse achtergrond;vwo profiel natuur & techniek;8.1;4.4;4.9;3.8;4.2;300;niet geselecteerd
+10475;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Suriname/Antillen;vwo profiel economie & maatschappij;7.3;4.6;5.5;4.9;4.93;213;niet geselecteerd
+10476;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;overig niet-westers;vwo profiel natuur & techniek;7.0;5.4;5.6;5.1;5.29;169;niet geselecteerd
+10477;10477.0;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;5.2;5.4;6.4;6.5;6.15;75;geselecteerd
+10478;;2022;B Gezondheidswetenschappen;DEMO;man;19;westerse achtergrond;vwo profiel natuur & gezondheid;7.0;3.4;4.3;4.8;4.28;291;niet geselecteerd
+10479;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;6.9;4.5;4.6;6.1;5.32;167;niet geselecteerd
+10480;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.0;2.7;3.4;4.3;3.64;340;niet geselecteerd
+10481;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;hbo-propedeuse;5.8;4.7;5.3;5.2;5.07;195;niet geselecteerd
+10482;;2022;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & gezondheid;6.7;4.1;5.1;5.0;4.75;232;niet geselecteerd
+10483;;2022;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel economie & maatschappij;7.5;3.9;4.9;5.3;4.8;222;niet geselecteerd
+10484;10484.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;7.6;6.4;6.7;6.8;6.66;45;geselecteerd
+10485;10485.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;6.9;6.3;5.9;6.9;6.52;53;geselecteerd
+10486;10486.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.7;6.9;8.0;6.6;6.97;26;geselecteerd
+10487;;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;6.7;2.9;5.1;3.7;3.74;337;niet geselecteerd
+10488;10488.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Turkije;vwo profiel natuur & gezondheid;8.1;6.9;5.8;5.9;6.18;73;geselecteerd
+10489;10489.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel natuur & gezondheid;6.8;5.3;6.7;6.3;6.08;83;geselecteerd
+10490;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;overig niet-westers;hbo-propedeuse;6.3;4.2;4.4;5.4;4.84;218;niet geselecteerd
+10491;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;westerse achtergrond;vwo profiel natuur & techniek;7.5;3.3;4.1;3.1;3.36;356;niet geselecteerd
+10492;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;anders;6.2;4.4;4.5;4.4;4.42;276;niet geselecteerd
+10493;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.2;2.6;3.6;4.9;3.95;321;niet geselecteerd
+10494;10494.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;6.7;5.0;7.1;6.0;5.92;93;geselecteerd
+10495;10495.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;hbo-propedeuse;7.2;7.2;5.3;5.3;5.87;97;geselecteerd
+10496;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Suriname/Antillen;vwo profiel natuur & gezondheid;7.0;3.7;3.2;3.3;3.4;353;niet geselecteerd
+10497;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;westerse achtergrond;hbo-propedeuse;6.5;6.9;6.6;4.3;5.54;132;niet geselecteerd
+10498;10498.0;2022;B Gezondheidswetenschappen;DEMO;man;20;westerse achtergrond;vwo profiel cultuur & maatschappij;6.2;6.7;6.8;6.9;6.82;34;geselecteerd
+10499;;2022;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.9;3.9;2.8;4.1;3.78;333;niet geselecteerd
+10500;10500.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;6.3;6.4;7.2;5.4;6.06;84;geselecteerd
+10501;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Turkije;vwo profiel cultuur & maatschappij;8.1;3.3;1.5;1.7;2.14;397;niet geselecteerd
+10502;10502.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;7.0;6.6;4.6;6.5;6.15;76;geselecteerd
+10503;10503.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel natuur & gezondheid;5.8;5.7;6.9;7.4;6.79;36;geselecteerd
+10504;10504.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.5;4.3;7.3;6.4;5.95;90;geselecteerd
+10505;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;6.0;3.1;4.8;2.7;3.24;362;niet geselecteerd
+10506;10506.0;2022;B Gezondheidswetenschappen;DEMO;anders;18;overig niet-westers;vwo profiel natuur & gezondheid;7.8;6.6;6.0;6.4;6.38;62;geselecteerd
+10507;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;8.2;5.1;5.0;5.9;5.48;136;niet geselecteerd
+10508;;2022;B Gezondheidswetenschappen;DEMO;man;21;Nederland;hbo-propedeuse;5.9;5.3;5.4;5.2;5.27;172;niet geselecteerd
+10509;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;vwo profiel natuur & gezondheid;6.7;5.0;6.1;5.5;5.47;141;niet geselecteerd
+10510;;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.2;3.6;5.4;6.0;5.16;187;niet geselecteerd
+10511;10511.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & gezondheid;7.6;7.0;6.8;6.5;6.71;41;geselecteerd
+10512;;2022;B Gezondheidswetenschappen;DEMO;man;18;Turkije;vwo profiel economie & maatschappij;7.3;5.0;3.8;4.5;4.51;264;niet geselecteerd
+10513;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.3;4.8;4.3;4.9;4.75;233;niet geselecteerd
+10514;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.8;5.4;4.5;5.4;5.22;177;niet geselecteerd
+10515;;2022;B Gezondheidswetenschappen;DEMO;anders;17;Nederland;vwo profiel natuur & gezondheid;5.8;5.1;4.0;6.2;5.43;150;niet geselecteerd
+10516;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Marokko;vwo profiel natuur & techniek;6.5;4.5;5.7;2.8;3.89;326;niet geselecteerd
+10517;10517.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;overig niet-westers;vwo profiel economie & maatschappij;6.5;6.4;5.1;7.2;6.54;51;geselecteerd
+10518;10518.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.5;6.1;5.3;5.5;5.64;119;reserve
+10519;;2022;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & gezondheid;7.7;4.6;4.7;4.5;4.57;257;niet geselecteerd
+10520;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Suriname/Antillen;vwo profiel natuur & techniek;7.5;5.0;4.0;5.0;4.8;223;niet geselecteerd
+10521;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.9;4.5;1.1;2.1;2.62;387;niet geselecteerd
+10522;;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;hbo-propedeuse;5.9;4.8;6.0;5.2;5.24;175;niet geselecteerd
+10523;;2022;B Gezondheidswetenschappen;DEMO;man;18;westerse achtergrond;vwo profiel natuur & gezondheid;6.8;4.5;5.4;5.9;5.38;158;niet geselecteerd
+10524;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;6.9;5.1;4.0;4.7;4.68;248;niet geselecteerd
+10525;;2022;B Gezondheidswetenschappen;DEMO;man;20;Marokko;vwo profiel natuur & gezondheid;7.8;5.1;4.6;6.2;5.55;130;niet geselecteerd
+10526;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel economie & maatschappij;7.2;4.8;4.5;5.7;5.19;182;niet geselecteerd
+10527;10527.0;2022;B Gezondheidswetenschappen;DEMO;man;20;westerse achtergrond;vwo profiel economie & maatschappij;7.8;6.1;7.7;5.9;6.32;66;geselecteerd
+10528;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.7;5.1;4.9;3.2;4.11;310;niet geselecteerd
+10529;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.7;4.5;4.1;4.5;4.42;277;niet geselecteerd
+10530;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;6.6;5.3;4.9;5.7;5.42;151;niet geselecteerd
+10531;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;7.1;3.3;5.2;3.6;3.83;329;niet geselecteerd
+10532;10532.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;overig niet-westers;vwo profiel natuur & gezondheid;7.1;7.7;7.5;7.8;7.71;8;geselecteerd
+10533;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;7.8;4.1;2.1;4.8;4.05;314;niet geselecteerd
+10534;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & techniek;7.2;2.0;2.4;3.5;2.83;383;niet geselecteerd
+10535;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;hbo-propedeuse;7.0;4.6;3.6;3.0;3.6;343;niet geselecteerd
+10536;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel cultuur & maatschappij;7.1;1.8;1.9;1.4;1.62;400;niet geselecteerd
+10537;10537.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;6.4;7.9;6.8;5.8;6.63;47;geselecteerd
+10538;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;6.8;4.3;3.1;3.7;3.76;335;niet geselecteerd
+10539;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.4;4.6;6.7;5.3;5.37;159;niet geselecteerd
+10540;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;5.9;4.9;5.2;4.0;4.51;265;niet geselecteerd
+10541;10541.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.4;7.7;5.5;6.6;6.71;42;geselecteerd
+10542;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;8.1;6.2;5.2;5.0;5.4;155;niet geselecteerd
+10543;;2022;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel cultuur & maatschappij;7.2;3.0;2.6;3.6;3.22;363;niet geselecteerd
+10544;10544.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Turkije;vwo profiel natuur & gezondheid;6.0;6.7;6.8;8.2;7.47;12;geselecteerd
+10545;10545.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;7.5;5.2;5.6;6.3;5.83;102;reserve
+10546;;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;5.5;5.1;5.7;4.7;5.02;202;niet geselecteerd
+10547;10547.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;7.8;6.3;4.9;6.3;6.02;85;geselecteerd
+10548;;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;8.2;4.4;5.9;3.6;4.3;288;niet geselecteerd
+10549;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;8.2;3.2;3.2;3.3;3.25;361;niet geselecteerd
+10550;10550.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;westerse achtergrond;vwo profiel natuur & techniek;7.6;7.7;7.2;7.4;7.45;14;geselecteerd
+10551;10551.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;anders;6.8;6.0;4.6;6.8;6.12;80;geselecteerd
+10552;;2022;B Gezondheidswetenschappen;DEMO;man;17;Turkije;vwo profiel natuur & gezondheid;6.7;3.9;3.6;3.7;3.74;338;niet geselecteerd
+10553;;2022;B Gezondheidswetenschappen;DEMO;man;20;westerse achtergrond;vwo profiel cultuur & maatschappij;7.3;6.0;5.1;5.6;5.62;122;niet geselecteerd
+10554;10554.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;6.8;6.4;7.1;6.4;6.54;52;geselecteerd
+10555;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;6.9;4.3;3.9;3.9;4.02;316;niet geselecteerd
+10556;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & techniek;6.2;4.3;5.0;4.6;4.59;253;niet geselecteerd
+10557;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.8;5.2;5.1;5.8;5.48;137;niet geselecteerd
+10558;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;6.9;4.7;4.8;5.4;5.07;196;niet geselecteerd
+10559;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Turkije;vwo profiel natuur & gezondheid;6.0;5.5;5.3;5.5;5.46;146;niet geselecteerd
+10560;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.4;1.9;3.0;2.4;2.37;392;niet geselecteerd
+10561;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;hbo-propedeuse;6.0;3.2;5.5;2.0;3.06;376;niet geselecteerd
+10562;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Turkije;vwo profiel cultuur & maatschappij;6.9;5.2;6.0;5.4;5.46;147;niet geselecteerd
+10563;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.3;6.3;5.6;4.7;5.36;161;niet geselecteerd
+10564;;2022;B Gezondheidswetenschappen;DEMO;man;18;westerse achtergrond;vwo profiel economie & maatschappij;6.1;2.9;3.6;3.5;3.34;359;niet geselecteerd
+10565;10565.0;2022;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel cultuur & maatschappij;7.6;6.5;5.5;6.7;6.4;61;geselecteerd
+10566;;2022;B Gezondheidswetenschappen;DEMO;anders;20;Nederland;vwo profiel natuur & techniek;7.5;4.9;3.8;3.4;3.93;323;niet geselecteerd
+10567;10567.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;6.8;4.5;6.6;6.3;5.82;103;reserve
+10568;10568.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;westerse achtergrond;vwo profiel natuur & gezondheid;7.0;7.0;4.9;7.2;6.68;44;geselecteerd
+10569;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;7.2;5.1;5.4;4.8;5.01;205;niet geselecteerd
+10570;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;7.2;2.3;3.9;3.0;2.97;379;niet geselecteerd
+10571;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.0;5.8;5.2;4.5;5.03;199;niet geselecteerd
+10572;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.0;2.2;3.6;2.5;2.63;386;niet geselecteerd
+10573;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;6.0;4.9;2.9;2.1;3.1;373;niet geselecteerd
+10574;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.3;6.2;5.4;4.7;5.29;170;niet geselecteerd
+10575;10575.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.1;8.0;6.3;7.5;7.41;16;geselecteerd
+10576;10576.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.8;5.5;5.6;5.9;5.72;111;reserve
+10577;10577.0;2022;B Gezondheidswetenschappen;DEMO;man;20;overig niet-westers;vwo profiel economie & maatschappij;6.6;6.1;6.1;5.6;5.85;99;geselecteerd
+10578;10578.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;6.7;6.7;5.2;5.3;5.7;115;reserve
+10579;;2022;B Gezondheidswetenschappen;DEMO;man;19;westerse achtergrond;vwo profiel natuur & gezondheid;8.3;3.6;2.0;3.0;2.98;378;niet geselecteerd
+10580;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;overig niet-westers;anders;5.1;3.5;3.5;1.1;2.3;393;niet geselecteerd
+10581;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;overig niet-westers;vwo profiel cultuur & maatschappij;6.3;5.3;4.4;5.1;5.02;203;niet geselecteerd
+10582;10582.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;7.3;5.5;6.8;5.6;5.81;104;reserve
+10583;10583.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;overig niet-westers;vwo profiel natuur & gezondheid;7.5;6.2;6.7;5.1;5.75;109;reserve
+10584;10584.0;2022;B Gezondheidswetenschappen;DEMO;man;19;Suriname/Antillen;vwo profiel natuur & gezondheid;7.7;7.0;6.4;5.5;6.13;78;geselecteerd
+10585;;2022;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & gezondheid;7.5;2.7;3.2;2.8;2.85;382;niet geselecteerd
+10586;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.6;4.1;4.0;4.1;4.08;312;niet geselecteerd
+10587;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.7;3.3;4.1;2.8;3.21;364;niet geselecteerd
+10588;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;hbo-propedeuse;5.5;4.6;5.0;3.5;4.13;308;niet geselecteerd
+10589;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;anders;5.4;4.3;5.3;3.3;4.0;319;niet geselecteerd
+10590;10590.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.2;5.3;7.3;5.5;5.8;105;reserve
+10591;;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel economie & maatschappij;6.7;3.0;5.0;2.9;3.35;358;niet geselecteerd
+10592;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;7.7;4.7;5.1;4.1;4.48;270;niet geselecteerd
+10593;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;hbo-propedeuse;6.0;6.2;5.3;5.1;5.47;142;niet geselecteerd
+10594;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.6;5.0;4.2;4.3;4.49;266;niet geselecteerd
+10595;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Turkije;vwo profiel natuur & techniek;7.8;4.9;5.3;5.6;5.33;164;niet geselecteerd
+10596;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & techniek;6.4;6.0;4.4;4.0;4.68;249;niet geselecteerd
+10597;10597.0;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.3;7.2;9.0;5.5;6.71;43;geselecteerd
+10598;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.5;4.3;3.7;6.0;5.03;200;niet geselecteerd
+10599;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;6.6;4.8;4.2;3.6;4.08;313;niet geselecteerd
+10600;;2022;B Gezondheidswetenschappen;DEMO;man;21;Nederland;anders;7.3;4.0;4.0;3.5;3.75;336;niet geselecteerd
+10601;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & techniek;6.0;3.4;4.6;5.1;4.49;267;niet geselecteerd
+10602;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;6.8;4.0;5.2;4.3;4.39;283;niet geselecteerd
+10603;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.4;4.9;4.1;5.1;4.84;219;niet geselecteerd
+10604;10604.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.3;4.2;6.3;7.5;6.27;68;geselecteerd
+10605;;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;6.5;4.1;3.2;2.4;3.07;375;niet geselecteerd
+10606;;2022;B Gezondheidswetenschappen;DEMO;man;20;Marokko;vwo profiel cultuur & maatschappij;6.6;5.2;6.6;5.2;5.48;138;niet geselecteerd
+10607;;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;6.5;5.5;3.9;5.6;5.23;176;niet geselecteerd
+10608;10608.0;2022;B Gezondheidswetenschappen;DEMO;man;17;Nederland;hbo-propedeuse;5.9;5.2;4.4;6.6;5.74;110;reserve
+10609;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;8.2;4.4;2.7;4.6;4.16;302;niet geselecteerd
+10610;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.7;3.0;3.2;3.7;3.39;355;niet geselecteerd
+10611;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Suriname/Antillen;vwo profiel natuur & gezondheid;7.3;5.7;6.7;4.7;5.4;156;niet geselecteerd
+10612;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Suriname/Antillen;hbo-propedeuse;6.3;5.2;4.6;6.0;5.48;139;niet geselecteerd
+10613;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;7.2;3.7;4.2;3.1;3.5;347;niet geselecteerd
+10614;;2022;B Gezondheidswetenschappen;DEMO;man;17;Marokko;vwo profiel cultuur & maatschappij;6.8;3.2;3.2;4.7;3.95;322;niet geselecteerd
+10615;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;5.9;4.1;4.9;5.1;4.76;231;niet geselecteerd
+10616;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;vwo profiel natuur & techniek;7.1;6.5;4.3;5.6;5.61;125;niet geselecteerd
+10617;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.4;5.1;3.8;5.0;4.79;226;niet geselecteerd
+10618;;2022;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & techniek;6.2;5.0;4.9;4.2;4.58;255;niet geselecteerd
+10619;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;6.8;5.8;5.2;5.1;5.33;165;niet geselecteerd
+10620;10620.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel cultuur & maatschappij;7.7;6.1;5.7;6.1;6.02;86;geselecteerd
+10621;;2022;B Gezondheidswetenschappen;DEMO;man;21;westerse achtergrond;vwo profiel natuur & gezondheid;8.1;5.8;6.1;5.1;5.51;133;niet geselecteerd
+10622;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Suriname/Antillen;vwo profiel cultuur & maatschappij;6.9;3.9;5.0;4.5;4.42;278;niet geselecteerd
+10623;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;6.9;2.6;2.8;2.2;2.44;391;niet geselecteerd
+10624;10624.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;8.0;5.9;6.1;6.5;6.24;70;geselecteerd
+10625;;2022;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;anders;5.3;5.6;4.0;4.5;4.73;238;niet geselecteerd
+10626;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;5.9;5.8;5.0;4.0;4.74;235;niet geselecteerd
+10627;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;vwo profiel natuur & techniek;7.2;3.4;3.1;5.0;4.14;305;niet geselecteerd
+10628;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;5.4;4.0;3.3;3.1;3.41;352;niet geselecteerd
+10629;10629.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Marokko;vwo profiel natuur & gezondheid;7.4;8.0;8.1;8.4;8.22;3;geselecteerd
+10630;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel economie & maatschappij;7.1;4.5;5.4;5.2;5.03;201;niet geselecteerd
+10631;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.3;5.0;4.2;4.4;4.54;259;niet geselecteerd
+10632;10632.0;2022;B Gezondheidswetenschappen;DEMO;man;18;westerse achtergrond;vwo profiel economie & maatschappij;6.3;6.6;6.2;6.5;6.47;55;geselecteerd
+10633;;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;8.4;5.0;4.5;4.6;4.7;243;niet geselecteerd
+10634;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel cultuur & maatschappij;6.7;4.1;4.6;4.3;4.3;289;niet geselecteerd
+10635;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Suriname/Antillen;vwo profiel natuur & gezondheid;6.0;3.0;3.0;3.2;3.1;374;niet geselecteerd
+10636;10636.0;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;7.4;7.0;6.5;6.7;6.75;38;geselecteerd
+10637;10637.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.3;6.2;6.6;6.0;6.18;74;geselecteerd
+10638;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;6.4;4.0;5.7;4.3;4.49;268;niet geselecteerd
+10639;10639.0;2022;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel cultuur & maatschappij;7.4;5.6;7.5;6.3;6.33;65;geselecteerd
+10640;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Marokko;anders;7.1;4.5;2.2;2.4;2.99;377;niet geselecteerd
+10641;;2022;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & gezondheid;6.7;5.8;5.0;4.9;5.19;183;niet geselecteerd
+10642;10642.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;6.8;8.2;7.8;7.7;7.87;7;geselecteerd
+10643;;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;6.2;3.2;7.5;3.9;4.41;279;niet geselecteerd
+10644;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & techniek;6.9;3.9;6.4;5.8;5.35;162;niet geselecteerd
+10645;10645.0;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;6.8;6.2;8.1;7.7;7.33;18;geselecteerd
+10646;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.3;3.4;2.8;3.7;3.43;351;niet geselecteerd
+10647;10647.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;6.9;9.1;8.0;9.2;8.93;1;geselecteerd
+10648;10648.0;2022;B Gezondheidswetenschappen;DEMO;man;17;westerse achtergrond;vwo profiel natuur & gezondheid;7.2;7.0;7.3;6.9;7.01;25;geselecteerd
+10649;;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;6.9;2.1;5.6;6.1;4.8;224;niet geselecteerd
+10650;;2022;B Gezondheidswetenschappen;DEMO;man;19;Turkije;hbo-propedeuse;5.9;5.6;4.1;5.3;5.15;188;niet geselecteerd
+10651;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;vwo profiel cultuur & maatschappij;7.7;5.1;4.8;4.1;4.54;260;niet geselecteerd
+10652;10652.0;2022;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.7;5.6;5.0;6.9;6.13;79;geselecteerd
+10653;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;5.9;1.7;5.5;3.5;3.36;357;niet geselecteerd
+10654;;2022;B Gezondheidswetenschappen;DEMO;man;22;Nederland;vwo profiel natuur & gezondheid;7.5;3.9;6.0;4.7;4.72;240;niet geselecteerd
+10655;10655.0;2022;B Gezondheidswetenschappen;DEMO;anders;20;Nederland;vwo profiel cultuur & maatschappij;6.9;5.6;6.7;7.7;6.87;29;geselecteerd
+10656;;2022;B Gezondheidswetenschappen;DEMO;man;20;Marokko;vwo profiel natuur & techniek;6.2;4.2;4.3;4.8;4.52;263;niet geselecteerd
+10657;10657.0;2022;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & techniek;7.9;5.9;6.5;7.0;6.57;50;geselecteerd
+10658;;2022;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & gezondheid;8.1;2.4;3.6;3.4;3.14;371;niet geselecteerd
+10659;10659.0;2022;B Gezondheidswetenschappen;DEMO;man;19;Marokko;vwo profiel natuur & techniek;6.3;7.3;7.1;6.0;6.61;48;geselecteerd
+10660;;2022;B Gezondheidswetenschappen;DEMO;man;19;Marokko;vwo profiel natuur & gezondheid;5.8;4.4;4.8;4.0;4.28;292;niet geselecteerd
+10661;;2022;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & gezondheid;8.3;4.5;4.4;5.0;4.73;239;niet geselecteerd
+10662;;2022;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & techniek;6.8;3.4;4.6;4.4;4.14;306;niet geselecteerd
+10663;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;7.1;5.0;2.8;4.7;4.41;280;niet geselecteerd
+10664;10664.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.3;7.7;7.2;8.5;8.0;4;geselecteerd
+10665;10665.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;hbo-propedeuse;7.2;5.3;5.9;5.9;5.72;112;reserve
+10666;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel economie & maatschappij;7.4;3.5;6.2;4.5;4.54;261;niet geselecteerd
+10667;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.9;5.0;5.2;5.5;5.29;171;niet geselecteerd
+10668;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;7.8;3.2;5.4;3.3;3.69;339;niet geselecteerd
+10669;10669.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;hbo-propedeuse;6.2;5.1;6.1;6.8;6.15;77;geselecteerd
+10670;10670.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;vwo profiel natuur & gezondheid;6.8;7.6;5.7;6.9;6.87;30;geselecteerd
+10671;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Suriname/Antillen;vwo profiel economie & maatschappij;6.8;6.0;4.9;4.3;4.93;214;niet geselecteerd
+10672;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.2;5.4;5.1;4.3;4.79;227;niet geselecteerd
+10673;10673.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;7.2;4.7;8.7;6.3;6.3;67;geselecteerd
+10674;;2022;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.2;2.9;4.8;4.0;3.83;330;niet geselecteerd
+10675;;2022;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & techniek;6.9;4.1;6.3;5.8;5.39;157;niet geselecteerd
+10676;;2022;B Gezondheidswetenschappen;DEMO;anders;18;Nederland;vwo profiel natuur & gezondheid;7.0;6.8;3.3;5.8;5.6;128;niet geselecteerd
+10677;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;overig niet-westers;vwo profiel natuur & gezondheid;8.3;4.3;3.3;2.9;3.4;354;niet geselecteerd
+10678;10678.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & techniek;7.2;5.9;5.7;5.7;5.76;107;reserve
+10679;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;anders;6.2;4.6;4.6;3.7;4.15;303;niet geselecteerd
+10680;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;6.3;3.7;2.6;4.0;3.63;342;niet geselecteerd
+10681;10681.0;2022;B Gezondheidswetenschappen;DEMO;man;22;Suriname/Antillen;vwo profiel natuur & gezondheid;6.4;5.8;6.1;6.1;6.01;87;geselecteerd
+10682;;2022;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & gezondheid;7.8;3.2;2.2;3.1;2.95;380;niet geselecteerd
+10683;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Suriname/Antillen;anders;7.1;3.8;5.5;4.0;4.24;299;niet geselecteerd
+10684;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;hbo-propedeuse;6.4;4.9;5.2;3.6;4.31;287;niet geselecteerd
+10685;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel natuur & gezondheid;7.4;3.1;4.5;4.7;4.18;301;niet geselecteerd
+10686;10686.0;2022;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel cultuur & maatschappij;7.1;7.1;5.0;7.3;6.78;37;geselecteerd
+10687;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.9;6.0;4.6;3.7;4.57;258;niet geselecteerd
+10688;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.3;6.3;4.1;5.6;5.51;134;niet geselecteerd
+10689;10689.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Suriname/Antillen;vwo profiel natuur & gezondheid;7.5;7.2;5.8;7.6;7.12;22;geselecteerd
+10690;10690.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;vwo profiel natuur & techniek;8.2;6.0;5.1;6.6;6.12;81;geselecteerd
+10691;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & techniek;7.1;5.3;6.4;5.0;5.37;160;niet geselecteerd
+10692;10692.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.5;7.1;7.2;7.4;7.27;19;geselecteerd
+10693;;2022;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel economie & maatschappij;7.7;5.0;5.3;4.7;4.91;216;niet geselecteerd
+10694;10694.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;anders;6.3;6.3;6.4;6.6;6.47;56;geselecteerd
+10695;10695.0;2022;B Gezondheidswetenschappen;DEMO;man;19;Marokko;vwo profiel economie & maatschappij;7.5;7.5;6.7;6.3;6.74;39;geselecteerd
+10696;10696.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;6.4;5.7;4.7;6.1;5.7;116;reserve
+10697;;2022;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & gezondheid;7.7;5.1;3.4;4.4;4.41;281;niet geselecteerd
+10698;10698.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.4;7.7;6.5;7.7;7.46;13;geselecteerd
+10699;;2022;B Gezondheidswetenschappen;DEMO;anders;20;Nederland;hbo-propedeuse;7.3;5.9;2.0;3.4;3.87;328;niet geselecteerd
+10700;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;6.1;3.2;2.2;2.2;2.5;389;niet geselecteerd
+10701;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Marokko;vwo profiel natuur & gezondheid;7.1;5.6;4.0;5.7;5.33;166;niet geselecteerd
+10702;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.3;4.7;5.3;6.3;5.62;123;niet geselecteerd
+10703;10703.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;7.9;7.8;6.3;6.1;6.65;46;geselecteerd
+10704;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;hbo-propedeuse;6.7;3.6;4.9;4.4;4.26;296;niet geselecteerd
+10705;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & techniek;7.2;4.2;5.9;4.7;4.79;228;niet geselecteerd
+10706;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.2;5.2;4.2;5.5;5.15;189;niet geselecteerd
+10707;10707.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;7.9;4.9;5.4;6.6;5.85;100;geselecteerd
+10708;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;westerse achtergrond;vwo profiel natuur & gezondheid;6.8;4.8;3.9;3.4;3.92;325;niet geselecteerd
+10709;10709.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.1;8.4;6.6;9.4;8.54;2;geselecteerd
+10710;;2022;B Gezondheidswetenschappen;DEMO;vrouw;23;Nederland;vwo profiel natuur & gezondheid;7.9;4.2;4.5;3.9;4.11;311;niet geselecteerd
+10711;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.0;5.4;5.9;4.8;5.2;180;niet geselecteerd
+10712;;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & techniek;7.9;3.8;5.3;4.5;4.45;274;niet geselecteerd
+10713;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;7.4;3.9;4.9;5.6;4.95;211;niet geselecteerd
+10714;10714.0;2022;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & techniek;7.8;6.7;6.1;6.0;6.23;71;geselecteerd
+10715;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.1;2.4;2.5;2.5;2.47;390;niet geselecteerd
+10716;;2022;B Gezondheidswetenschappen;DEMO;anders;19;Marokko;vwo profiel natuur & gezondheid;8.7;3.0;4.8;4.3;4.01;318;niet geselecteerd
+10717;10717.0;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel economie & maatschappij;5.9;6.4;7.2;7.0;6.86;32;geselecteerd
+10718;;2022;B Gezondheidswetenschappen;DEMO;man;21;westerse achtergrond;vwo profiel natuur & techniek;7.4;2.5;4.1;3.4;3.27;360;niet geselecteerd
+10719;10719.0;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.0;7.2;6.5;6.7;6.81;35;geselecteerd
+10720;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel natuur & gezondheid;7.8;3.7;5.1;4.0;4.13;309;niet geselecteerd
+10721;10721.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.6;6.7;7.8;6.6;6.87;31;geselecteerd
+10722;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;6.9;4.0;6.7;5.0;5.04;198;niet geselecteerd
+10723;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.2;5.3;4.2;4.8;4.83;220;niet geselecteerd
+10724;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;7.8;4.6;4.0;4.4;4.38;284;niet geselecteerd
+10725;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;hbo-propedeuse;6.9;4.8;5.0;4.3;4.59;254;niet geselecteerd
+10726;10726.0;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;6.8;5.6;5.0;7.1;6.23;72;geselecteerd
+10727;10727.0;2022;B Gezondheidswetenschappen;DEMO;anders;20;Nederland;vwo profiel cultuur & maatschappij;7.1;6.3;7.7;6.8;6.83;33;geselecteerd
+10728;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;westerse achtergrond;vwo profiel natuur & gezondheid;7.0;5.4;5.2;5.5;5.41;153;niet geselecteerd
+10729;10729.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;8.5;7.8;6.2;6.3;6.73;40;geselecteerd
+10730;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;vwo profiel cultuur & maatschappij;7.6;3.0;4.9;3.4;3.58;345;niet geselecteerd
+10731;;2022;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel cultuur & maatschappij;5.9;5.9;6.2;5.2;5.61;126;niet geselecteerd
+10732;10732.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.0;6.3;5.1;7.1;6.46;57;geselecteerd
+10733;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.7;4.6;4.9;6.2;5.46;148;niet geselecteerd
+10734;;2022;B Gezondheidswetenschappen;DEMO;man;20;westerse achtergrond;vwo profiel natuur & gezondheid;7.3;5.1;4.5;4.2;4.53;262;niet geselecteerd
+10735;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;westerse achtergrond;vwo profiel natuur & gezondheid;7.3;4.3;3.8;4.0;4.05;315;niet geselecteerd
+10736;10736.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Suriname/Antillen;vwo profiel natuur & techniek;6.5;5.6;4.8;6.4;5.84;101;reserve
+10737;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;anders;6.4;3.7;3.1;2.9;3.18;367;niet geselecteerd
+10738;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;hbo-propedeuse;7.5;6.4;5.0;5.1;5.47;143;niet geselecteerd
+10739;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.5;5.4;4.0;6.1;5.47;144;niet geselecteerd
+10740;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.1;2.6;1.7;1.7;1.97;399;niet geselecteerd
+10741;;2022;B Gezondheidswetenschappen;DEMO;vrouw;22;Marokko;vwo profiel cultuur & maatschappij;6.5;5.1;5.3;4.3;4.74;236;niet geselecteerd
+10742;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;hbo-propedeuse;5.7;4.1;3.3;3.1;3.44;349;niet geselecteerd
+10743;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.2;5.1;4.9;3.9;4.46;272;niet geselecteerd
+10744;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;overig niet-westers;vwo profiel natuur & techniek;6.8;5.4;4.4;5.4;5.2;181;niet geselecteerd
+10745;;2022;B Gezondheidswetenschappen;DEMO;anders;19;Nederland;vwo profiel cultuur & maatschappij;6.7;6.2;5.3;5.3;5.57;129;niet geselecteerd
+10746;10746.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Suriname/Antillen;vwo profiel natuur & techniek;6.4;6.0;6.0;5.8;5.9;96;geselecteerd
+10747;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel cultuur & maatschappij;6.8;4.2;4.1;5.2;4.68;250;niet geselecteerd
+10748;;2022;B Gezondheidswetenschappen;DEMO;man;19;Suriname/Antillen;vwo profiel natuur & techniek;7.2;4.3;4.3;5.9;5.1;193;niet geselecteerd
+10749;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.4;2.9;4.2;1.8;2.61;388;niet geselecteerd
+10750;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;7.5;3.0;3.8;3.0;3.16;370;niet geselecteerd
+10751;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;hbo-propedeuse;6.3;5.3;5.5;5.0;5.19;184;niet geselecteerd
+10752;10752.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;overig niet-westers;vwo profiel cultuur & maatschappij;7.0;6.2;7.3;5.9;6.27;69;geselecteerd
+10753;10753.0;2022;B Gezondheidswetenschappen;DEMO;man;21;Marokko;hbo-propedeuse;6.1;5.7;5.4;5.7;5.64;120;reserve
+10754;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.4;3.9;2.7;2.8;3.11;372;niet geselecteerd
+10755;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.3;2.7;1.1;2.4;2.23;396;niet geselecteerd
+10756;10756.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;23;Nederland;vwo profiel natuur & gezondheid;6.9;6.3;6.0;8.0;7.09;24;geselecteerd
+10757;;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;6.7;6.2;3.3;5.3;5.17;186;niet geselecteerd
+10758;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel natuur & gezondheid;6.7;4.9;3.6;5.1;4.74;237;niet geselecteerd
+10759;10759.0;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;7.0;6.8;5.6;6.9;6.61;49;geselecteerd
+10760;;2022;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & gezondheid;7.9;3.3;4.5;5.2;4.49;269;niet geselecteerd
+10761;10761.0;2022;B Gezondheidswetenschappen;DEMO;man;23;Nederland;hbo-propedeuse;7.0;7.0;6.6;9.1;7.97;5;geselecteerd
+10762;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Turkije;vwo profiel natuur & techniek;6.1;1.6;2.1;2.3;2.05;398;niet geselecteerd
+10763;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;6.7;3.7;2.8;2.3;2.82;384;niet geselecteerd
+10764;10764.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;westerse achtergrond;vwo profiel natuur & gezondheid;7.3;5.5;5.5;5.9;5.7;117;reserve
+10765;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;7.4;4.8;2.7;4.6;4.28;293;niet geselecteerd
+10766;;2022;B Gezondheidswetenschappen;DEMO;man;22;Nederland;vwo profiel natuur & gezondheid;7.2;5.4;4.4;6.0;5.5;135;niet geselecteerd
+10767;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;6.9;4.9;4.8;4.7;4.78;229;niet geselecteerd
+10768;;2022;B Gezondheidswetenschappen;DEMO;man;22;Nederland;vwo profiel natuur & techniek;7.6;3.5;2.8;3.2;3.21;365;niet geselecteerd
+10769;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;vwo profiel natuur & gezondheid;7.2;4.1;3.5;4.7;4.28;294;niet geselecteerd
+10770;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Turkije;vwo profiel natuur & techniek;7.6;2.2;3.8;2.5;2.67;385;niet geselecteerd
+10771;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.9;4.4;3.6;4.8;4.44;275;niet geselecteerd
+10772;;2022;B Gezondheidswetenschappen;DEMO;vrouw;22;overig niet-westers;vwo profiel natuur & gezondheid;8.3;5.0;5.1;5.5;5.27;173;niet geselecteerd
+10773;;2022;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & gezondheid;7.4;5.9;6.2;4.8;5.41;154;niet geselecteerd
+10774;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel cultuur & maatschappij;6.8;5.3;5.9;4.7;5.12;191;niet geselecteerd
+10775;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;overig niet-westers;vwo profiel cultuur & maatschappij;7.3;4.7;3.8;3.2;3.77;334;niet geselecteerd
+10776;10776.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Turkije;vwo profiel natuur & gezondheid;6.4;5.6;5.4;6.3;5.91;95;geselecteerd
+10777;10777.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;vwo profiel economie & maatschappij;6.4;5.3;5.4;6.5;5.92;94;geselecteerd
+10778;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;7.2;5.0;4.8;3.9;4.41;282;niet geselecteerd
+10779;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.3;4.8;5.3;6.1;5.55;131;niet geselecteerd
+10780;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.3;4.5;6.1;4.7;4.92;215;niet geselecteerd
+10781;;2022;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel economie & maatschappij;7.0;5.9;4.6;4.5;4.94;212;niet geselecteerd
+10782;;2022;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;6.4;4.6;2.6;3.4;3.6;344;niet geselecteerd
+10783;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;hbo-propedeuse;6.0;4.2;4.2;3.4;3.8;331;niet geselecteerd
+10784;10784.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;6.7;5.2;6.7;6.1;5.95;91;geselecteerd
+10785;10785.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;6.2;8.0;7.5;7.4;7.6;9;geselecteerd
+10786;;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;7.7;3.6;4.2;3.2;3.52;346;niet geselecteerd
+10787;10787.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel cultuur & maatschappij;7.5;5.2;6.1;7.2;6.38;63;geselecteerd
+10788;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;hbo-propedeuse;6.2;4.6;4.8;4.7;4.69;245;niet geselecteerd
+10789;;2022;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & gezondheid;6.5;4.8;5.4;5.5;5.27;174;niet geselecteerd
+10790;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;6.3;2.8;4.5;4.8;4.14;307;niet geselecteerd
+10791;10791.0;2022;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.3;6.5;5.3;5.7;5.86;98;geselecteerd
+10792;10792.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;hbo-propedeuse;6.1;6.2;4.2;5.9;5.65;118;reserve
+10793;10793.0;2022;B Gezondheidswetenschappen;DEMO;man;18;Suriname/Antillen;vwo profiel natuur & techniek;8.2;7.6;6.8;7.9;7.59;10;geselecteerd
+10794;10794.0;2022;B Gezondheidswetenschappen;DEMO;vrouw;20;Marokko;vwo profiel cultuur & maatschappij;5.1;7.9;6.9;7.0;7.25;20;geselecteerd
+10795;10795.0;2022;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;6.4;6.6;5.4;5.8;5.96;89;geselecteerd
+10796;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;6.5;6.0;4.6;5.0;5.22;178;niet geselecteerd
+10797;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;7.2;3.8;3.8;4.5;4.15;304;niet geselecteerd
+10798;;2022;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;8.7;5.5;5.7;4.6;5.09;194;niet geselecteerd
+10799;;2022;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;6.7;3.0;2.7;4.7;3.79;332;niet geselecteerd
+10800;;2022;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.0;6.5;5.2;5.3;5.64;121;niet geselecteerd
+10801;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;6.5;6.7;4.6;3.7;4.78;210;niet geselecteerd
+10802;10802.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;7.6;6.4;6.9;5.6;6.1;71;geselecteerd
+10803;10803.0;2023;B Gezondheidswetenschappen;DEMO;man;18;Suriname/Antillen;hbo-propedeuse;6.3;6.0;6.4;6.8;6.48;41;geselecteerd
+10804;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;hbo-propedeuse;6.2;5.5;4.1;4.2;4.57;234;niet geselecteerd
+10805;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.0;4.5;4.0;4.3;4.3;268;niet geselecteerd
+10806;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & techniek;7.6;4.5;4.6;4.0;4.27;275;niet geselecteerd
+10807;10807.0;2023;B Gezondheidswetenschappen;DEMO;anders;20;Nederland;vwo profiel economie & maatschappij;6.2;6.2;8.2;6.5;6.75;31;geselecteerd
+10808;10808.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;hbo-propedeuse;6.5;6.5;6.0;6.5;6.4;50;geselecteerd
+10809;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.8;5.8;6.4;4.9;5.47;122;niet geselecteerd
+10810;10810.0;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & techniek;6.9;6.1;5.9;6.8;6.41;49;geselecteerd
+10811;10811.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & techniek;7.4;7.2;6.3;8.3;7.57;5;geselecteerd
+10812;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;overig niet-westers;vwo profiel natuur & gezondheid;6.5;4.4;4.0;3.1;3.67;336;niet geselecteerd
+10813;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;6.6;4.4;5.2;4.4;4.56;235;niet geselecteerd
+10814;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;hbo-propedeuse;6.2;6.0;5.3;4.3;5.01;173;niet geselecteerd
+10815;;2023;B Gezondheidswetenschappen;DEMO;man;20;westerse achtergrond;vwo profiel natuur & gezondheid;6.8;6.6;5.4;4.7;5.41;127;niet geselecteerd
+10816;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;hbo-propedeuse;6.4;4.2;2.6;3.6;3.58;346;niet geselecteerd
+10817;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;hbo-propedeuse;6.4;4.4;4.2;4.6;4.46;248;niet geselecteerd
+10818;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.1;4.3;3.8;4.5;4.3;269;niet geselecteerd
+10819;;2023;B Gezondheidswetenschappen;DEMO;man;21;westerse achtergrond;vwo profiel natuur & gezondheid;6.0;4.0;3.3;4.1;3.91;309;niet geselecteerd
+10820;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel economie & maatschappij;6.8;2.7;2.6;4.0;3.33;361;niet geselecteerd
+10821;10821.0;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel economie & maatschappij;6.3;6.7;5.6;5.0;5.63;111;reserve
+10822;;2023;B Gezondheidswetenschappen;DEMO;man;19;Marokko;vwo profiel natuur & techniek;8.3;3.9;5.8;4.4;4.53;241;niet geselecteerd
+10823;;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;6.4;5.4;5.0;5.0;5.12;163;niet geselecteerd
+10824;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;hbo-propedeuse;5.8;3.9;3.8;3.8;3.83;318;niet geselecteerd
+10825;;2023;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel cultuur & maatschappij;6.3;3.7;5.3;3.0;3.67;337;niet geselecteerd
+10826;10826.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;6.7;5.8;5.4;7.8;6.72;34;geselecteerd
+10827;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.3;2.1;1.7;2.7;2.32;393;niet geselecteerd
+10828;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel natuur & techniek;8.2;2.9;2.6;3.7;3.24;364;niet geselecteerd
+10829;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;8.4;4.4;4.0;4.4;4.32;265;niet geselecteerd
+10830;10830.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel natuur & gezondheid;7.4;6.4;5.6;6.6;6.34;54;geselecteerd
+10831;10831.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.3;7.4;4.7;6.0;6.16;68;geselecteerd
+10832;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;6.5;5.1;3.6;3.5;4.0;295;niet geselecteerd
+10833;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;vwo profiel cultuur & maatschappij;6.4;5.2;3.9;4.4;4.54;239;niet geselecteerd
+10834;10834.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.3;6.0;5.4;5.3;5.53;120;reserve
+10835;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Marokko;hbo-propedeuse;6.3;2.9;4.7;3.7;3.66;339;niet geselecteerd
+10836;;2023;B Gezondheidswetenschappen;DEMO;vrouw;22;westerse achtergrond;vwo profiel natuur & gezondheid;6.6;5.7;5.9;4.9;5.34;134;niet geselecteerd
+10837;10837.0;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;hbo-propedeuse;6.6;6.9;6.2;7.8;7.21;13;geselecteerd
+10838;;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;7.5;2.6;3.7;4.0;3.52;349;niet geselecteerd
+10839;;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & techniek;7.6;4.5;5.4;5.0;4.93;187;niet geselecteerd
+10840;10840.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & techniek;7.8;5.9;5.9;5.9;5.9;89;geselecteerd
+10841;10841.0;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;6.6;7.4;4.7;5.1;5.71;103;reserve
+10842;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Marokko;vwo profiel cultuur & maatschappij;7.1;4.2;3.3;4.0;3.92;308;niet geselecteerd
+10843;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.2;4.3;4.8;4.5;4.5;245;niet geselecteerd
+10844;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.0;4.1;3.3;6.1;4.94;185;niet geselecteerd
+10845;10845.0;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel cultuur & maatschappij;6.3;7.1;6.9;6.7;6.86;27;geselecteerd
+10846;10846.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.8;6.9;6.8;7.6;7.23;12;geselecteerd
+10847;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;7.8;6.1;5.5;4.6;5.23;148;niet geselecteerd
+10848;;2023;B Gezondheidswetenschappen;DEMO;man;21;overig niet-westers;vwo profiel natuur & gezondheid;6.9;4.7;5.2;4.7;4.8;207;niet geselecteerd
+10849;10849.0;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;anders;7.2;5.8;6.6;5.8;5.96;84;geselecteerd
+10850;10850.0;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel cultuur & maatschappij;6.8;6.9;6.7;8.7;7.76;4;geselecteerd
+10851;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;6.5;4.8;6.0;5.0;5.14;160;niet geselecteerd
+10852;10852.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Marokko;vwo profiel natuur & gezondheid;7.5;7.0;7.4;7.4;7.28;8;geselecteerd
+10853;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;vwo profiel cultuur & maatschappij;6.1;5.4;4.6;5.5;5.29;139;niet geselecteerd
+10854;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.1;4.6;4.2;4.9;4.67;223;niet geselecteerd
+10855;10855.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;vwo profiel natuur & techniek;7.1;5.1;6.0;5.7;5.58;116;reserve
+10856;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & techniek;7.4;3.3;3.8;5.1;4.3;270;niet geselecteerd
+10857;10857.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.1;7.0;6.9;5.3;6.13;70;geselecteerd
+10858;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;overig niet-westers;vwo profiel cultuur & maatschappij;6.8;5.1;3.9;4.5;4.56;236;niet geselecteerd
+10859;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;6.4;3.7;5.2;3.7;4.0;296;niet geselecteerd
+10860;10860.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;7.2;5.6;6.1;6.2;6.0;80;geselecteerd
+10861;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Suriname/Antillen;vwo profiel natuur & gezondheid;7.0;3.5;4.7;3.9;3.94;304;niet geselecteerd
+10862;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Turkije;vwo profiel natuur & gezondheid;7.2;3.9;5.0;4.3;4.32;266;niet geselecteerd
+10863;10863.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;22;overig niet-westers;vwo profiel cultuur & maatschappij;6.2;5.7;5.2;6.6;6.05;77;geselecteerd
+10864;10864.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;vwo profiel natuur & gezondheid;7.0;5.9;6.7;5.9;6.06;75;geselecteerd
+10865;10865.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;6.8;6.2;4.9;7.3;6.49;39;geselecteerd
+10866;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.2;3.6;3.6;5.3;4.45;249;niet geselecteerd
+10867;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;vwo profiel natuur & gezondheid;7.2;4.1;4.2;3.5;3.82;319;niet geselecteerd
+10868;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.1;2.4;4.6;2.9;3.09;370;niet geselecteerd
+10869;10869.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Suriname/Antillen;vwo profiel natuur & gezondheid;6.4;5.1;6.4;6.5;6.06;76;geselecteerd
+10870;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.4;3.2;5.0;3.7;3.81;321;niet geselecteerd
+10871;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.5;5.0;6.3;4.6;5.06;170;niet geselecteerd
+10872;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;6.6;4.0;5.3;4.7;4.61;231;niet geselecteerd
+10873;10873.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Marokko;vwo profiel cultuur & maatschappij;6.5;5.8;5.2;5.7;5.63;112;reserve
+10874;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel economie & maatschappij;7.3;4.7;4.0;4.3;4.36;261;niet geselecteerd
+10875;10875.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.2;6.1;6.1;5.9;6.0;81;geselecteerd
+10876;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;hbo-propedeuse;7.6;5.0;4.7;5.1;4.99;179;niet geselecteerd
+10877;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.4;3.1;2.6;3.5;3.2;367;niet geselecteerd
+10878;;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;7.1;6.4;4.2;5.4;5.46;123;niet geselecteerd
+10879;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.7;3.4;4.2;4.2;3.96;299;niet geselecteerd
+10880;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;hbo-propedeuse;6.3;5.6;4.4;5.4;5.26;143;niet geselecteerd
+10881;;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel economie & maatschappij;6.6;4.8;3.8;4.9;4.65;227;niet geselecteerd
+10882;10882.0;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel cultuur & maatschappij;6.0;8.0;5.7;6.3;6.69;35;geselecteerd
+10883;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;7.2;5.7;3.7;5.8;5.35;131;niet geselecteerd
+10884;;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;westerse achtergrond;vwo profiel natuur & gezondheid;7.1;5.2;5.0;3.5;4.31;267;niet geselecteerd
+10885;10885.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.4;6.6;6.5;6.2;6.38;52;geselecteerd
+10886;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.4;2.3;4.9;3.2;3.27;363;niet geselecteerd
+10887;10887.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel cultuur & maatschappij;8.2;5.3;6.3;6.8;6.25;58;geselecteerd
+10888;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;hbo-propedeuse;7.4;6.8;5.4;4.4;5.32;136;niet geselecteerd
+10889;;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & gezondheid;7.2;4.2;5.4;4.7;4.69;222;niet geselecteerd
+10890;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;6.9;3.6;3.0;3.5;3.43;355;niet geselecteerd
+10891;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.4;3.5;2.6;4.6;3.87;314;niet geselecteerd
+10892;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;anders;5.8;3.7;2.5;4.7;3.96;300;niet geselecteerd
+10893;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;7.2;4.5;4.6;4.9;4.72;216;niet geselecteerd
+10894;;2023;B Gezondheidswetenschappen;DEMO;man;18;westerse achtergrond;vwo profiel natuur & gezondheid;7.4;3.9;3.1;2.5;3.04;372;niet geselecteerd
+10895;10895.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Marokko;vwo profiel natuur & gezondheid;7.4;5.7;5.8;5.4;5.57;117;reserve
+10896;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Marokko;vwo profiel natuur & techniek;7.6;3.2;4.5;3.3;3.51;351;niet geselecteerd
+10897;;2023;B Gezondheidswetenschappen;DEMO;man;17;Suriname/Antillen;vwo profiel natuur & gezondheid;7.4;2.8;3.8;1.9;2.55;391;niet geselecteerd
+10898;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Suriname/Antillen;vwo profiel natuur & gezondheid;8.1;4.6;1.9;2.4;2.96;376;niet geselecteerd
+10899;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;8.3;5.2;6.3;4.5;5.07;168;niet geselecteerd
+10900;;2023;B Gezondheidswetenschappen;DEMO;man;17;Nederland;hbo-propedeuse;6.5;5.0;5.2;4.5;4.79;208;niet geselecteerd
+10901;10901.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;westerse achtergrond;vwo profiel economie & maatschappij;5.9;6.5;6.2;7.1;6.74;32;geselecteerd
+10902;10902.0;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;anders;6.1;6.6;7.1;5.7;6.25;59;geselecteerd
+10903;;2023;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & gezondheid;6.9;4.8;4.8;4.9;4.85;201;niet geselecteerd
+10904;10904.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.4;8.4;5.6;5.4;6.34;55;geselecteerd
+10905;10905.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.2;6.2;5.4;5.8;5.84;94;geselecteerd
+10906;10906.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & techniek;6.7;7.7;6.8;5.6;6.47;42;geselecteerd
+10907;10907.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;6.6;7.5;6.0;6.9;6.9;23;geselecteerd
+10908;10908.0;2023;B Gezondheidswetenschappen;DEMO;man;19;westerse achtergrond;hbo-propedeuse;6.7;6.9;8.6;8.2;7.89;3;geselecteerd
+10909;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.3;5.4;7.5;3.6;4.92;188;niet geselecteerd
+10910;;2023;B Gezondheidswetenschappen;DEMO;man;19;Marokko;vwo profiel natuur & gezondheid;7.2;2.9;2.9;4.5;3.7;334;niet geselecteerd
+10911;10911.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;overig niet-westers;vwo profiel cultuur & maatschappij;7.0;6.5;6.4;6.6;6.53;38;geselecteerd
+10912;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Marokko;vwo profiel cultuur & maatschappij;6.5;5.4;5.1;4.3;4.79;209;niet geselecteerd
+10913;10913.0;2023;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & gezondheid;7.7;6.9;4.9;5.4;5.75;100;geselecteerd
+10914;;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel economie & maatschappij;6.3;3.3;4.6;3.2;3.51;352;niet geselecteerd
+10915;10915.0;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & techniek;7.4;5.8;5.8;6.6;6.2;64;geselecteerd
+10916;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;6.0;5.2;3.7;5.6;5.1;165;niet geselecteerd
+10917;;2023;B Gezondheidswetenschappen;DEMO;man;18;overig niet-westers;vwo profiel economie & maatschappij;6.8;4.4;7.4;5.3;5.45;124;niet geselecteerd
+10918;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.8;4.0;2.9;5.2;4.38;256;niet geselecteerd
+10919;;2023;B Gezondheidswetenschappen;DEMO;man;18;westerse achtergrond;vwo profiel cultuur & maatschappij;7.5;3.4;4.9;4.6;4.3;271;niet geselecteerd
+10920;10920.0;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel cultuur & maatschappij;6.4;6.8;5.0;5.5;5.79;95;geselecteerd
+10921;10921.0;2023;B Gezondheidswetenschappen;DEMO;man;17;Nederland;anders;6.4;5.5;6.4;6.0;5.93;86;geselecteerd
+10922;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;hbo-propedeuse;6.9;6.1;3.8;3.7;4.44;252;niet geselecteerd
+10923;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.6;4.9;4.8;2.9;3.88;312;niet geselecteerd
+10924;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel cultuur & maatschappij;6.3;4.9;3.3;4.5;4.38;257;niet geselecteerd
+10925;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Turkije;vwo profiel natuur & gezondheid;6.6;2.5;3.2;2.2;2.49;392;niet geselecteerd
+10926;10926.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.6;6.9;6.6;7.0;6.89;24;geselecteerd
+10927;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Marokko;vwo profiel cultuur & maatschappij;7.8;5.8;5.2;4.4;4.98;180;niet geselecteerd
+10928;10928.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.8;5.4;5.3;6.6;5.98;82;geselecteerd
+10929;;2023;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & techniek;7.3;6.4;4.9;4.5;5.15;159;niet geselecteerd
+10930;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Suriname/Antillen;vwo profiel natuur & gezondheid;7.3;3.7;3.7;3.8;3.75;328;niet geselecteerd
+10931;10931.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & gezondheid;6.6;5.4;5.2;6.1;5.71;104;reserve
+10932;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;anders;5.8;3.5;3.7;3.9;3.74;331;niet geselecteerd
+10933;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;7.5;3.2;3.9;2.4;2.94;377;niet geselecteerd
+10934;;2023;B Gezondheidswetenschappen;DEMO;man;20;Turkije;vwo profiel natuur & gezondheid;7.2;5.7;5.0;4.4;4.91;189;niet geselecteerd
+10935;10935.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;6.5;6.9;7.3;7.5;7.28;9;geselecteerd
+10936;;2023;B Gezondheidswetenschappen;DEMO;man;20;Suriname/Antillen;vwo profiel natuur & gezondheid;6.3;4.1;5.1;4.1;4.3;272;niet geselecteerd
+10937;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;8.1;5.8;5.3;4.6;5.1;166;niet geselecteerd
+10938;10938.0;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.1;7.2;7.7;6.8;7.1;16;geselecteerd
+10939;;2023;B Gezondheidswetenschappen;DEMO;man;22;Marokko;vwo profiel cultuur & maatschappij;6.7;6.5;3.6;5.0;5.17;156;niet geselecteerd
+10940;;2023;B Gezondheidswetenschappen;DEMO;man;19;westerse achtergrond;vwo profiel economie & maatschappij;7.2;3.9;5.8;3.1;3.88;313;niet geselecteerd
+10941;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Turkije;vwo profiel natuur & techniek;7.1;5.0;4.1;6.1;5.37;129;niet geselecteerd
+10942;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;6.7;4.8;2.8;4.9;4.45;250;niet geselecteerd
+10943;;2023;B Gezondheidswetenschappen;DEMO;man;21;Suriname/Antillen;vwo profiel natuur & gezondheid;7.7;6.2;6.1;3.6;4.88;193;niet geselecteerd
+10944;;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel cultuur & maatschappij;5.0;5.3;5.4;4.0;4.67;224;niet geselecteerd
+10945;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.3;3.3;3.8;3.7;3.6;344;niet geselecteerd
+10946;10946.0;2023;B Gezondheidswetenschappen;DEMO;man;18;overig niet-westers;vwo profiel natuur & techniek;7.5;7.0;6.3;7.6;7.16;14;geselecteerd
+10947;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;8.0;4.2;2.8;4.0;3.82;320;niet geselecteerd
+10948;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;vwo profiel natuur & gezondheid;7.2;4.1;3.7;4.3;4.12;287;niet geselecteerd
+10949;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;6.4;3.5;4.0;3.1;3.4;357;niet geselecteerd
+10950;10950.0;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;6.6;5.8;6.3;5.1;5.55;119;reserve
+10951;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.4;4.7;4.3;4.7;4.62;229;niet geselecteerd
+10952;10952.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel natuur & gezondheid;7.4;6.4;6.3;6.4;6.38;53;geselecteerd
+10953;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.8;3.5;3.6;4.0;3.77;327;niet geselecteerd
+10954;10954.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;anders;6.7;7.0;6.2;7.3;6.99;19;geselecteerd
+10955;;2023;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & gezondheid;7.3;4.7;4.5;5.8;5.21;150;niet geselecteerd
+10956;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;7.3;4.8;5.3;5.4;5.2;151;niet geselecteerd
+10957;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Marokko;vwo profiel cultuur & maatschappij;7.3;2.5;2.8;3.4;3.01;374;niet geselecteerd
+10958;10958.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;6.3;7.6;5.8;7.1;6.99;20;geselecteerd
+10959;10959.0;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel cultuur & maatschappij;7.4;6.8;5.2;7.3;6.73;33;geselecteerd
+10960;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel cultuur & maatschappij;6.5;4.9;6.0;4.3;4.82;204;niet geselecteerd
+10961;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.8;4.2;4.4;4.8;4.54;240;niet geselecteerd
+10962;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.0;4.9;4.4;3.2;3.95;301;niet geselecteerd
+10963;10963.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;6.4;5.5;5.5;5.8;5.65;110;reserve
+10964;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.6;5.1;6.0;4.1;4.78;211;niet geselecteerd
+10965;;2023;B Gezondheidswetenschappen;DEMO;man;22;westerse achtergrond;vwo profiel economie & maatschappij;7.1;3.0;4.3;3.3;3.41;356;niet geselecteerd
+10966;;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Suriname/Antillen;vwo profiel natuur & techniek;6.8;4.2;5.0;5.0;4.76;214;niet geselecteerd
+10967;;2023;B Gezondheidswetenschappen;DEMO;man;21;Suriname/Antillen;vwo profiel natuur & gezondheid;8.3;3.8;5.6;3.9;4.21;283;niet geselecteerd
+10968;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.7;4.2;5.1;3.9;4.23;279;niet geselecteerd
+10969;;2023;B Gezondheidswetenschappen;DEMO;man;21;overig niet-westers;vwo profiel cultuur & maatschappij;7.8;5.0;6.0;4.3;4.85;202;niet geselecteerd
+10970;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;hbo-propedeuse;7.1;4.9;5.9;5.7;5.5;121;niet geselecteerd
+10971;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.8;1.9;3.7;3.1;2.86;380;niet geselecteerd
+10972;10972.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.2;5.8;6.5;6.0;6.04;78;geselecteerd
+10973;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & techniek;6.5;4.5;4.6;5.2;4.87;197;niet geselecteerd
+10974;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Suriname/Antillen;vwo profiel natuur & gezondheid;7.3;5.6;5.3;5.0;5.24;146;niet geselecteerd
+10975;10975.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & techniek;7.3;4.7;6.5;6.9;6.16;69;geselecteerd
+10976;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;8.0;4.5;4.3;3.6;4.01;294;niet geselecteerd
+10977;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;8.2;4.5;4.9;4.8;4.73;215;niet geselecteerd
+10978;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;6.0;1.1;2.1;4.1;2.8;383;niet geselecteerd
+10979;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.7;2.0;3.4;3.1;2.83;382;niet geselecteerd
+10980;;2023;B Gezondheidswetenschappen;DEMO;man;17;Suriname/Antillen;vwo profiel cultuur & maatschappij;7.3;5.5;5.9;4.6;5.13;161;niet geselecteerd
+10981;10981.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;hbo-propedeuse;6.9;5.5;7.7;5.4;5.89;90;geselecteerd
+10982;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.4;5.2;4.4;5.8;5.34;135;niet geselecteerd
+10983;10983.0;2023;B Gezondheidswetenschappen;DEMO;man;22;Nederland;vwo profiel natuur & gezondheid;6.9;5.9;6.5;6.8;6.47;43;geselecteerd
+10984;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.8;1.9;2.7;2.3;2.26;395;niet geselecteerd
+10985;;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel cultuur & maatschappij;6.2;3.2;4.2;3.2;3.4;358;niet geselecteerd
+10986;;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Suriname/Antillen;vwo profiel economie & maatschappij;6.8;4.6;3.6;3.1;3.65;340;niet geselecteerd
+10987;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Suriname/Antillen;vwo profiel natuur & gezondheid;7.5;5.6;5.7;4.9;5.27;142;niet geselecteerd
+10988;10988.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;anders;5.3;6.3;4.9;5.5;5.62;114;reserve
+10989;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;8.8;5.2;4.2;5.6;5.2;152;niet geselecteerd
+10990;;2023;B Gezondheidswetenschappen;DEMO;man;21;Turkije;vwo profiel natuur & techniek;5.9;3.8;5.5;3.2;3.84;316;niet geselecteerd
+10991;10991.0;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;hbo-propedeuse;6.8;5.6;6.5;6.9;6.43;47;geselecteerd
+10992;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Suriname/Antillen;vwo profiel natuur & techniek;7.3;5.2;4.9;5.4;5.24;147;niet geselecteerd
+10993;;2023;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel cultuur & maatschappij;7.8;5.0;5.2;5.5;5.29;140;niet geselecteerd
+10994;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;8.0;3.0;4.4;4.5;4.03;293;niet geselecteerd
+10995;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;6.2;4.5;5.7;5.6;5.29;141;niet geselecteerd
+10996;;2023;B Gezondheidswetenschappen;DEMO;man;24;westerse achtergrond;vwo profiel natuur & gezondheid;7.3;3.3;2.4;2.5;2.72;386;niet geselecteerd
+10997;10997.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.3;6.2;6.3;6.6;6.42;48;geselecteerd
+10998;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Marokko;vwo profiel economie & maatschappij;7.6;4.9;2.6;4.1;4.04;292;niet geselecteerd
+10999;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;6.3;3.6;3.3;2.5;2.99;375;niet geselecteerd
+11000;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.6;3.1;4.4;4.8;4.21;284;niet geselecteerd
+11001;;2023;B Gezondheidswetenschappen;DEMO;man;17;overig niet-westers;vwo profiel cultuur & maatschappij;7.4;4.3;4.0;4.6;4.39;255;niet geselecteerd
+11002;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.2;4.3;4.1;2.5;3.36;359;niet geselecteerd
+11003;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.4;4.6;5.3;4.1;4.49;246;niet geselecteerd
+11004;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.2;5.1;4.8;3.9;4.44;253;niet geselecteerd
+11005;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;6.4;5.9;5.1;4.8;5.19;153;niet geselecteerd
+11006;11006.0;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;6.8;6.0;4.6;5.7;5.57;118;reserve
+11007;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;westerse achtergrond;vwo profiel cultuur & maatschappij;6.8;3.1;2.5;3.2;3.03;373;niet geselecteerd
+11008;;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & techniek;6.3;3.5;2.4;3.1;3.08;371;niet geselecteerd
+11009;;2023;B Gezondheidswetenschappen;DEMO;man;23;Nederland;vwo profiel natuur & gezondheid;6.8;5.3;4.9;3.9;4.52;242;niet geselecteerd
+11010;;2023;B Gezondheidswetenschappen;DEMO;man;19;overig niet-westers;vwo profiel economie & maatschappij;7.1;3.8;5.1;3.5;3.91;310;niet geselecteerd
+11011;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Turkije;vwo profiel natuur & gezondheid;6.5;3.7;4.1;4.9;4.38;258;niet geselecteerd
+11012;11012.0;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.0;6.5;4.8;7.1;6.46;44;geselecteerd
+11013;11013.0;2023;B Gezondheidswetenschappen;DEMO;man;22;Nederland;vwo profiel natuur & gezondheid;8.0;6.6;4.9;5.8;5.86;93;geselecteerd
+11014;;2023;B Gezondheidswetenschappen;DEMO;anders;22;Nederland;vwo profiel natuur & gezondheid;7.0;4.0;3.8;5.7;4.81;205;niet geselecteerd
+11015;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;hbo-propedeuse;6.3;4.3;3.7;4.3;4.18;285;niet geselecteerd
+11016;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.0;6.3;5.3;4.6;5.25;145;niet geselecteerd
+11017;11017.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & techniek;7.0;6.9;6.0;7.3;6.92;22;geselecteerd
+11018;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;overig niet-westers;hbo-propedeuse;6.8;4.4;3.9;4.3;4.25;277;niet geselecteerd
+11019;11019.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;6.4;7.0;6.1;7.9;7.27;10;geselecteerd
+11020;11020.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.7;6.9;7.2;5.9;6.46;45;geselecteerd
+11021;11021.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;westerse achtergrond;vwo profiel natuur & gezondheid;7.4;6.3;6.2;5.0;5.63;113;reserve
+11022;;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel cultuur & maatschappij;7.1;4.2;5.3;3.8;4.22;282;niet geselecteerd
+11023;11023.0;2023;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel economie & maatschappij;6.8;5.8;4.5;6.2;5.74;101;reserve
+11024;;2023;B Gezondheidswetenschappen;DEMO;man;18;westerse achtergrond;vwo profiel natuur & techniek;8.0;5.0;3.6;4.3;4.37;259;niet geselecteerd
+11025;;2023;B Gezondheidswetenschappen;DEMO;man;18;Suriname/Antillen;vwo profiel cultuur & maatschappij;7.3;2.6;3.4;2.6;2.76;385;niet geselecteerd
+11026;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;vwo profiel natuur & gezondheid;7.6;3.1;5.8;3.7;3.94;305;niet geselecteerd
+11027;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.9;4.9;4.7;5.8;5.31;137;niet geselecteerd
+11028;;2023;B Gezondheidswetenschappen;DEMO;man;21;overig niet-westers;vwo profiel natuur & gezondheid;7.9;2.0;1.7;1.9;1.89;400;niet geselecteerd
+11029;;2023;B Gezondheidswetenschappen;DEMO;man;22;westerse achtergrond;vwo profiel natuur & techniek;8.3;3.5;1.7;3.1;2.94;378;niet geselecteerd
+11030;11030.0;2023;B Gezondheidswetenschappen;DEMO;anders;20;Nederland;vwo profiel cultuur & maatschappij;6.7;6.6;6.6;7.4;7.0;18;geselecteerd
+11031;11031.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;6.2;6.1;6.2;6.5;6.32;57;geselecteerd
+11032;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;7.7;5.6;5.7;4.7;5.17;157;niet geselecteerd
+11033;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;7.1;4.9;2.4;4.6;4.25;278;niet geselecteerd
+11034;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel cultuur & maatschappij;7.2;5.8;3.8;4.8;4.9;191;niet geselecteerd
+11035;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;7.2;3.1;3.2;3.1;3.12;369;niet geselecteerd
+11036;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel cultuur & maatschappij;8.0;3.8;5.6;3.8;4.16;286;niet geselecteerd
+11037;;2023;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel cultuur & maatschappij;7.8;6.4;5.2;4.6;5.26;144;niet geselecteerd
+11038;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;9.2;6.2;4.8;4.7;5.17;158;niet geselecteerd
+11039;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.3;5.0;4.8;5.1;5.01;174;niet geselecteerd
+11040;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;hbo-propedeuse;7.3;3.7;4.5;4.1;4.06;291;niet geselecteerd
+11041;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;7.0;4.6;3.9;4.4;4.36;262;niet geselecteerd
+11042;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & techniek;7.1;4.6;4.0;5.4;4.88;194;niet geselecteerd
+11043;11043.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Marokko;vwo profiel natuur & gezondheid;7.6;6.5;6.4;5.5;5.98;83;geselecteerd
+11044;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;7.0;4.1;6.4;4.7;4.86;199;niet geselecteerd
+11045;11045.0;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel economie & maatschappij;6.9;6.0;4.7;6.7;6.09;72;geselecteerd
+11046;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Suriname/Antillen;vwo profiel natuur & techniek;8.1;4.0;3.0;3.9;3.75;329;niet geselecteerd
+11047;;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Suriname/Antillen;vwo profiel natuur & gezondheid;6.5;3.9;4.3;4.4;4.23;280;niet geselecteerd
+11048;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.6;3.5;4.0;3.0;3.35;360;niet geselecteerd
+11049;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;6.9;4.0;6.0;5.9;5.35;132;niet geselecteerd
+11050;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;8.0;1.4;1.7;2.3;1.91;399;niet geselecteerd
+11051;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;6.6;5.8;3.9;5.1;5.07;169;niet geselecteerd
+11052;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;5.8;4.7;4.4;6.2;5.39;128;niet geselecteerd
+11053;;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & gezondheid;6.4;4.1;4.7;5.6;4.97;181;niet geselecteerd
+11054;;2023;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & techniek;6.3;6.5;3.5;4.7;5.0;176;niet geselecteerd
+11055;;2023;B Gezondheidswetenschappen;DEMO;anders;19;Turkije;vwo profiel natuur & gezondheid;6.9;4.4;5.5;5.2;5.02;171;niet geselecteerd
+11056;;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;overig niet-westers;vwo profiel cultuur & maatschappij;6.1;4.8;5.0;5.5;5.19;154;niet geselecteerd
+11057;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.4;3.5;4.2;4.0;3.89;311;niet geselecteerd
+11058;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;anders;5.7;4.5;3.3;3.4;3.71;333;niet geselecteerd
+11059;11059.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & gezondheid;7.4;7.1;5.1;6.1;6.2;65;geselecteerd
+11060;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;6.7;4.8;3.9;5.0;4.72;217;niet geselecteerd
+11061;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;8.0;2.5;2.2;2.2;2.29;394;niet geselecteerd
+11062;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.1;2.3;2.4;1.8;2.07;397;niet geselecteerd
+11063;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;overig niet-westers;hbo-propedeuse;6.1;5.0;4.5;4.1;4.45;251;niet geselecteerd
+11064;11064.0;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & techniek;7.2;5.3;6.7;5.9;5.88;92;geselecteerd
+11065;;2023;B Gezondheidswetenschappen;DEMO;vrouw;22;Marokko;vwo profiel natuur & gezondheid;6.2;1.7;2.4;2.5;2.24;396;niet geselecteerd
+11066;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;westerse achtergrond;vwo profiel natuur & gezondheid;7.5;3.3;3.2;4.6;3.93;307;niet geselecteerd
+11067;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel cultuur & maatschappij;6.4;3.6;4.9;5.5;4.81;206;niet geselecteerd
+11068;11068.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.1;5.4;6.5;5.7;5.77;97;geselecteerd
+11069;11069.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;6.8;6.5;5.0;6.5;6.2;66;geselecteerd
+11070;11070.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;7.3;8.2;6.7;7.4;7.5;6;geselecteerd
+11071;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;6.8;4.2;4.6;5.8;5.08;167;niet geselecteerd
+11072;;2023;B Gezondheidswetenschappen;DEMO;vrouw;22;Suriname/Antillen;vwo profiel natuur & gezondheid;7.0;4.0;3.7;4.3;4.09;289;niet geselecteerd
+11073;11073.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & techniek;6.6;7.5;5.7;6.9;6.84;28;geselecteerd
+11074;11074.0;2023;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel economie & maatschappij;7.3;7.6;7.3;7.4;7.44;7;geselecteerd
+11075;11075.0;2023;B Gezondheidswetenschappen;DEMO;man;21;overig niet-westers;vwo profiel natuur & gezondheid;6.7;6.7;4.0;6.2;5.91;87;geselecteerd
+11076;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;5.6;6.3;4.3;5.1;5.3;138;niet geselecteerd
+11077;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;8.3;2.9;4.3;3.8;3.63;341;niet geselecteerd
+11078;11078.0;2023;B Gezondheidswetenschappen;DEMO;man;20;westerse achtergrond;vwo profiel economie & maatschappij;6.3;5.5;6.9;7.3;6.68;36;geselecteerd
+11079;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;vwo profiel natuur & techniek;6.8;2.7;2.6;3.8;3.23;365;niet geselecteerd
+11080;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.2;3.4;4.7;3.7;3.81;322;niet geselecteerd
+11081;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.4;6.0;5.1;4.3;4.97;182;niet geselecteerd
+11082;11082.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel economie & maatschappij;6.8;6.5;6.6;7.7;7.12;15;geselecteerd
+11083;;2023;B Gezondheidswetenschappen;DEMO;man;19;westerse achtergrond;vwo profiel natuur & gezondheid;7.3;4.6;4.6;4.7;4.65;228;niet geselecteerd
+11084;;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & gezondheid;7.0;4.5;4.0;4.8;4.55;238;niet geselecteerd
+11085;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.5;4.4;5.0;4.4;4.52;243;niet geselecteerd
+11086;11086.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;8.2;7.5;4.8;4.9;5.66;108;reserve
+11087;;2023;B Gezondheidswetenschappen;DEMO;anders;20;Nederland;vwo profiel natuur & techniek;8.0;4.2;4.2;3.4;3.8;324;niet geselecteerd
+11088;11088.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Turkije;vwo profiel natuur & gezondheid;7.1;4.7;7.1;8.1;6.88;26;geselecteerd
+11089;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.1;4.4;4.1;2.6;3.44;354;niet geselecteerd
+11090;11090.0;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.2;7.5;8.7;8.1;8.04;1;geselecteerd
+11091;;2023;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & gezondheid;6.4;4.4;5.3;3.9;4.33;264;niet geselecteerd
+11092;11092.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;8.0;5.7;5.7;6.7;6.2;67;geselecteerd
+11093;;2023;B Gezondheidswetenschappen;DEMO;man;22;Nederland;vwo profiel cultuur & maatschappij;6.2;5.8;5.5;4.7;5.19;155;niet geselecteerd
+11094;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;hbo-propedeuse;7.2;3.6;4.7;5.0;4.52;244;niet geselecteerd
+11095;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;overig niet-westers;vwo profiel natuur & gezondheid;7.2;5.4;1.8;3.6;3.78;326;niet geselecteerd
+11096;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;anders;4.7;4.0;3.9;2.3;3.13;368;niet geselecteerd
+11097;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;6.9;3.9;1.6;4.1;3.54;348;niet geselecteerd
+11098;;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;anders;7.0;4.6;5.2;3.9;4.37;260;niet geselecteerd
+11099;;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel cultuur & maatschappij;6.4;5.2;3.9;4.2;4.44;254;niet geselecteerd
+11100;;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel cultuur & maatschappij;7.0;4.4;6.0;4.2;4.62;230;niet geselecteerd
+11101;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.6;4.7;3.8;4.2;4.27;276;niet geselecteerd
+11102;;2023;B Gezondheidswetenschappen;DEMO;man;19;Suriname/Antillen;vwo profiel cultuur & maatschappij;6.7;4.0;3.2;3.7;3.69;335;niet geselecteerd
+11103;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;hbo-propedeuse;6.6;3.3;2.3;2.5;2.7;388;niet geselecteerd
+11104;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.1;2.6;4.2;2.3;2.77;384;niet geselecteerd
+11105;11105.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & techniek;7.4;6.0;5.6;6.6;6.22;62;geselecteerd
+11106;11106.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;5.8;6.6;7.1;6.8;6.8;30;geselecteerd
+11107;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;8.0;5.3;4.3;4.9;4.9;192;niet geselecteerd
+11108;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel cultuur & maatschappij;6.0;1.6;1.8;2.4;2.04;398;niet geselecteerd
+11109;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;anders;6.8;5.5;4.1;5.0;4.97;183;niet geselecteerd
+11110;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;westerse achtergrond;vwo profiel economie & maatschappij;5.5;3.8;5.4;3.8;4.12;288;niet geselecteerd
+11111;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;westerse achtergrond;vwo profiel natuur & gezondheid;6.6;5.2;6.0;4.3;4.91;190;niet geselecteerd
+11112;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;7.6;5.0;5.1;2.9;3.97;298;niet geselecteerd
+11113;11113.0;2023;B Gezondheidswetenschappen;DEMO;man;18;Suriname/Antillen;vwo profiel cultuur & maatschappij;7.5;5.7;5.9;6.9;6.34;56;geselecteerd
+11114;;2023;B Gezondheidswetenschappen;DEMO;man;18;Suriname/Antillen;vwo profiel natuur & gezondheid;6.5;4.4;4.5;5.1;4.77;212;niet geselecteerd
+11115;11115.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;vwo profiel economie & maatschappij;7.6;5.8;5.1;5.9;5.71;105;reserve
+11116;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;6.4;4.1;4.2;3.0;3.57;347;niet geselecteerd
+11117;11117.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;7.1;6.3;5.9;7.5;6.82;29;geselecteerd
+11118;;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & gezondheid;7.3;3.9;2.4;2.1;2.7;389;niet geselecteerd
+11119;;2023;B Gezondheidswetenschappen;DEMO;man;22;Nederland;vwo profiel cultuur & maatschappij;6.6;5.0;4.6;4.6;4.72;218;niet geselecteerd
+11120;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;7.8;5.1;5.1;4.8;4.95;184;niet geselecteerd
+11121;11121.0;2023;B Gezondheidswetenschappen;DEMO;man;20;westerse achtergrond;vwo profiel cultuur & maatschappij;6.9;6.3;7.0;7.3;6.94;21;geselecteerd
+11122;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;overig niet-westers;vwo profiel natuur & techniek;8.0;4.9;6.1;4.5;4.94;186;niet geselecteerd
+11123;;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & gezondheid;7.3;4.4;5.3;3.8;4.28;274;niet geselecteerd
+11124;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;hbo-propedeuse;7.2;3.9;4.3;4.4;4.23;281;niet geselecteerd
+11125;11125.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel cultuur & maatschappij;8.1;6.6;5.8;6.2;6.24;60;geselecteerd
+11126;11126.0;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.3;6.0;5.9;6.5;6.23;61;geselecteerd
+11127;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Marokko;vwo profiel natuur & techniek;6.9;4.7;5.0;4.3;4.56;237;niet geselecteerd
+11128;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.8;4.5;6.5;5.4;5.35;133;niet geselecteerd
+11129;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & gezondheid;7.7;4.2;3.7;3.9;3.95;302;niet geselecteerd
+11130;11130.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;overig niet-westers;vwo profiel natuur & gezondheid;7.3;4.4;5.5;6.7;5.77;98;geselecteerd
+11131;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel natuur & techniek;7.6;4.5;5.8;5.0;5.01;175;niet geselecteerd
+11132;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;6.5;2.4;4.0;4.2;3.62;342;niet geselecteerd
+11133;11133.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;westerse achtergrond;anders;5.6;5.8;5.1;6.3;5.91;88;geselecteerd
+11134;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.9;3.1;4.1;4.0;3.75;330;niet geselecteerd
+11135;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.6;5.3;5.0;5.7;5.44;126;niet geselecteerd
+11136;11136.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Suriname/Antillen;vwo profiel natuur & gezondheid;7.0;5.6;6.8;5.5;5.79;96;geselecteerd
+11137;;2023;B Gezondheidswetenschappen;DEMO;man;18;westerse achtergrond;vwo profiel economie & maatschappij;5.9;3.5;4.9;5.7;4.88;195;niet geselecteerd
+11138;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Suriname/Antillen;vwo profiel cultuur & maatschappij;7.8;3.5;4.0;4.3;4.0;297;niet geselecteerd
+11139;11139.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & techniek;7.1;5.1;7.4;7.3;6.66;37;geselecteerd
+11140;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;anders;6.2;3.9;2.9;4.4;3.95;303;niet geselecteerd
+11141;11141.0;2023;B Gezondheidswetenschappen;DEMO;man;21;westerse achtergrond;vwo profiel natuur & techniek;6.9;6.1;7.9;7.7;7.26;11;geselecteerd
+11142;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & techniek;7.6;5.6;3.9;5.3;5.11;164;niet geselecteerd
+11143;11143.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;overig niet-westers;vwo profiel natuur & gezondheid;8.1;5.8;5.4;5.7;5.67;107;reserve
+11144;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;westerse achtergrond;vwo profiel natuur & techniek;7.3;4.3;5.8;5.1;5.0;177;niet geselecteerd
+11145;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel economie & maatschappij;6.9;5.5;2.9;3.7;4.08;290;niet geselecteerd
+11146;;2023;B Gezondheidswetenschappen;DEMO;man;20;Marokko;vwo profiel natuur & techniek;7.1;3.6;4.9;5.2;4.66;225;niet geselecteerd
+11147;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & gezondheid;7.4;3.4;3.2;3.1;3.21;366;niet geselecteerd
+11148;11148.0;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;anders;6.7;6.8;5.4;6.2;6.22;63;geselecteerd
+11149;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.3;2.9;2.8;2.9;2.88;379;niet geselecteerd
+11150;11150.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;8.0;6.6;4.8;5.6;5.74;102;reserve
+11151;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel cultuur & maatschappij;6.4;5.2;4.8;5.7;5.37;130;niet geselecteerd
+11152;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.0;3.3;4.1;3.6;3.61;343;niet geselecteerd
+11153;11153.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;6.2;4.7;6.3;6.2;5.77;99;geselecteerd
+11154;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;7.2;5.5;4.1;4.5;4.72;219;niet geselecteerd
+11155;;2023;B Gezondheidswetenschappen;DEMO;man;22;overig niet-westers;vwo profiel natuur & gezondheid;8.0;4.6;5.2;4.1;4.47;247;niet geselecteerd
+11156;;2023;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & gezondheid;7.4;4.3;7.1;3.9;4.66;226;niet geselecteerd
+11157;11157.0;2023;B Gezondheidswetenschappen;DEMO;man;20;overig niet-westers;vwo profiel natuur & gezondheid;7.4;7.8;7.1;8.3;7.91;2;geselecteerd
+11158;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;6.5;4.0;4.5;5.0;4.6;232;niet geselecteerd
+11159;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Marokko;hbo-propedeuse;7.1;3.9;4.8;3.2;3.73;332;niet geselecteerd
+11160;;2023;B Gezondheidswetenschappen;DEMO;man;19;overig niet-westers;vwo profiel cultuur & maatschappij;7.6;6.6;5.1;4.9;5.45;125;niet geselecteerd
+11161;11161.0;2023;B Gezondheidswetenschappen;DEMO;man;18;overig niet-westers;vwo profiel natuur & gezondheid;7.4;5.2;5.4;6.1;5.69;106;reserve
+11162;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & techniek;6.5;4.5;5.9;5.2;5.13;162;niet geselecteerd
+11163;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;hbo-propedeuse;6.7;4.7;3.9;3.5;3.94;306;niet geselecteerd
+11164;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;hbo-propedeuse;7.0;2.6;4.8;4.2;3.84;317;niet geselecteerd
+11165;;2023;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel economie & maatschappij;7.1;3.6;2.1;2.7;2.85;381;niet geselecteerd
+11166;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;7.4;4.2;6.3;5.0;5.02;172;niet geselecteerd
+11167;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;7.4;3.6;4.9;3.5;3.81;323;niet geselecteerd
+11168;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;7.6;4.2;5.3;4.8;4.72;220;niet geselecteerd
+11169;;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel cultuur & maatschappij;6.6;6.2;4.4;4.2;4.84;203;niet geselecteerd
+11170;;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.5;4.3;4.3;5.1;4.7;221;niet geselecteerd
+11171;;2023;B Gezondheidswetenschappen;DEMO;man;19;westerse achtergrond;vwo profiel natuur & gezondheid;7.7;4.4;4.2;5.4;4.86;200;niet geselecteerd
+11172;;2023;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel economie & maatschappij;7.1;4.2;3.9;4.5;4.29;273;niet geselecteerd
+11173;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;6.5;5.9;3.5;4.6;4.77;213;niet geselecteerd
+11174;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Suriname/Antillen;hbo-propedeuse;5.2;2.3;3.1;2.8;2.71;387;niet geselecteerd
+11175;;2023;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & techniek;7.7;4.5;3.7;3.0;3.59;345;niet geselecteerd
+11176;11176.0;2023;B Gezondheidswetenschappen;DEMO;man;21;Marokko;vwo profiel natuur & gezondheid;8.7;6.4;6.3;5.7;6.03;79;geselecteerd
+11177;11177.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel economie & maatschappij;7.5;7.3;6.3;6.0;6.45;46;geselecteerd
+11178;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;7.7;2.6;4.2;1.9;2.57;390;niet geselecteerd
+11179;;2023;B Gezondheidswetenschappen;DEMO;man;17;Nederland;vwo profiel natuur & gezondheid;6.4;2.2;4.2;3.6;3.3;362;niet geselecteerd
+11180;11180.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel cultuur & maatschappij;7.5;6.5;7.0;6.1;6.4;51;geselecteerd
+11181;;2023;B Gezondheidswetenschappen;DEMO;vrouw;17;overig niet-westers;vwo profiel economie & maatschappij;7.4;3.8;4.4;3.7;3.87;315;niet geselecteerd
+11182;11182.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel economie & maatschappij;6.8;5.4;6.6;5.9;5.89;91;geselecteerd
+11183;11183.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;8.7;6.5;5.5;5.8;5.95;85;geselecteerd
+11184;11184.0;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & gezondheid;6.5;6.2;5.9;7.7;6.89;25;geselecteerd
+11185;;2023;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel cultuur & maatschappij;7.4;2.4;3.9;4.0;3.5;353;niet geselecteerd
+11186;;2023;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel natuur & gezondheid;7.0;4.3;2.8;3.9;3.8;325;niet geselecteerd
+11187;11187.0;2023;B Gezondheidswetenschappen;DEMO;anders;20;Nederland;vwo profiel natuur & gezondheid;7.8;5.0;5.6;6.9;6.07;73;geselecteerd
+11188;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel cultuur & maatschappij;7.9;4.7;5.3;4.8;4.87;198;niet geselecteerd
+11189;11189.0;2023;B Gezondheidswetenschappen;DEMO;man;20;Nederland;vwo profiel economie & maatschappij;6.8;5.0;6.7;7.3;6.49;40;geselecteerd
+11190;;2023;B Gezondheidswetenschappen;DEMO;man;21;Suriname/Antillen;vwo profiel natuur & techniek;6.2;5.2;5.2;4.8;5.0;178;niet geselecteerd
+11191;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & techniek;8.1;4.5;3.5;4.6;4.35;263;niet geselecteerd
+11192;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;hbo-propedeuse;5.8;2.5;3.1;4.3;3.52;350;niet geselecteerd
+11193;11193.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Marokko;vwo profiel natuur & gezondheid;8.2;6.3;4.9;6.4;6.07;74;geselecteerd
+11194;;2023;B Gezondheidswetenschappen;DEMO;vrouw;19;Nederland;vwo profiel natuur & gezondheid;6.8;4.3;5.0;4.6;4.59;233;niet geselecteerd
+11195;;2023;B Gezondheidswetenschappen;DEMO;man;19;Nederland;vwo profiel natuur & techniek;6.4;3.8;3.9;3.5;3.67;338;niet geselecteerd
+11196;11196.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;overig niet-westers;vwo profiel cultuur & maatschappij;6.8;5.4;5.9;5.6;5.6;115;reserve
+11197;;2023;B Gezondheidswetenschappen;DEMO;vrouw;20;Nederland;vwo profiel natuur & gezondheid;7.7;5.9;6.0;4.5;5.22;149;niet geselecteerd
+11198;11198.0;2023;B Gezondheidswetenschappen;DEMO;vrouw;22;Nederland;vwo profiel economie & maatschappij;6.8;7.6;6.4;6.9;7.01;17;geselecteerd
+11199;11199.0;2023;B Gezondheidswetenschappen;DEMO;man;21;Nederland;vwo profiel natuur & gezondheid;7.2;5.7;5.5;5.7;5.66;109;reserve
+11200;;2023;B Gezondheidswetenschappen;DEMO;vrouw;21;Nederland;vwo profiel natuur & gezondheid;8.3;5.2;4.6;4.8;4.88;196;niet geselecteerd

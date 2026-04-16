@@ -1,14 +1,10 @@
-.Rproj.user
-.Rhistory
-.RData
-.Ruserdata
-renv/library/
-renv/staging/
+.venv/
+__pycache__/
+*.pyc
 
-# Data (echte data nooit in git)
+# Echte data nooit in git
 data/real/
 data/raw/
-*.csv.gz
 
 # OS
 .DS_Store

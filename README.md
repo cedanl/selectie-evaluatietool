@@ -5,61 +5,87 @@ aan 1CHO-data om studiesucces in kaart te brengen.
 
 ## Drie groepen
 
-De tool verdeelt kandidaten in drie groepen:
-
-**Niet gestart** - Student is niet geselecteerd, of is geselecteerd maar staat
+**Niet gestart** — Student is niet geselecteerd, of is geselecteerd maar staat
 niet in 1CHO (aanmelding ingetrokken, studie nooit gestart).
 
-**Gestart, niet naar jaar 2** - Student staat wel in 1CHO voor jaar 1, maar heeft
-geen jaar-2 rij voor dezelfde opleiding+instelling. Dit is de indicator voor uitval
-of overstap na het eerste jaar.
+**Gestart, niet naar jaar 2** — Student staat wel in 1CHO voor jaar 1, maar heeft
+geen jaar-2 rij voor dezelfde opleiding+instelling. Geen tweede jaar = uitval of
+overstap na het eerste jaar.
 
-**Doorgestroomd naar jaar 2** - Student heeft zowel een jaar-1 als een jaar-2 rij
+**Doorgestroomd naar jaar 2** — Student heeft zowel een jaar-1 als een jaar-2 rij
 in 1CHO.
 
-## Data
+## Projectstructuur
 
-De map `data/synthetic/` bevat synthetische voorbeelddata. Echte data nooit
-in git zetten.
-
-| Bestand | Inhoud |
-|---|---|
-| `selectiedata_voorbeeld.csv` | Selectiedata (kandidaten, scores, uitkomsten) |
-| `EV_DEMO_selectieopleiding.csv` | 1CHO-stijl inschrijvingsdata (enriched formaat) |
-| `gekoppeld.rds` | Gekoppelde dataset met groepsindeling (aangemaakt door koppelscript) |
+```
+evaluatietool-voorbeeld/
+├── app.py                          # Streamlit dashboard
+├── pyproject.toml                  # Python dependencies (uv)
+├── scripts/
+│   └── maak_data.py                # Genereert synthetische selectie- en 1CHO-data
+└── data/
+    └── synthetic/                  # Output van maak_data.py (lokaal, niet in git)
+        ├── selectiedata_voorbeeld.csv
+        ├── EV_DEMO_selectieopleiding.csv   # Raw EV formaat (zelfde als 1cijferho output)
+        └── gekoppeld.parquet               # Gekoppelde dataset voor het dashboard
+```
 
 ## Gebruik
 
-Genereer de synthetische data en draai daarna de app:
-
-```r
-source("R/maak_selectiedata.R")
-source("R/maak_1cho_data.R")
-source("R/koppel_en_classificeer.R")
-shiny::runApp("app.R")
-```
-
-Of via de terminal vanuit de projectmap:
-
 ```bash
-Rscript R/maak_selectiedata.R
-Rscript R/maak_1cho_data.R
-Rscript R/koppel_en_classificeer.R
-Rscript -e "shiny::runApp('app.R')"
+# Eenmalig opzetten
+uv sync
+
+# Synthetische data aanmaken
+uv run python scripts/maak_data.py
+
+# Dashboard starten
+uv run streamlit run app.py
 ```
 
-## Echte data koppelen
+## Data
 
-Selectiedata verschilt per opleiding in formaat en variabelen. Pas
-`R/maak_selectiedata.R` aan of vervang het door een inleesscript voor
-de echte data. Zorg dat de kolom `persoonsgebonden_nummer` in beide datasets
-overeenkomt.
+### Selectiedata
 
-De 1CHO-data (`EV_*.csv`) heeft altijd hetzelfde formaat en komt rechtstreeks
-uit de output van 1cijferho. Gebruik het enriched-formaat (`EV_*_enriched.csv`).
+Selectiedata verschilt per opleiding in formaat en variabelen. De synthetische
+data in `data/synthetic/selectiedata_voorbeeld.csv` simuleert een veelvoorkomend
+format met drie selectie-instrumenten (motivatiebrief, CV, interview) en een
+gewogen totaalscore.
+
+Kolommen: `kandidaat_id`, `persoonsgebonden_nummer`, `selectiejaar`, `opleiding`,
+`geslacht`, `leeftijd`, `herkomst`, `hoogste_vooropleiding`, `gem_eindcijfer_vo`,
+`motivatiescore`, `cv_score`, `interview_score`, `totaalscore`, `rangorde`,
+`selectie_uitkomst`.
+
+### 1CHO-data
+
+De 1CHO-data (`EV_DEMO_selectieopleiding.csv`) volgt het raw EV_* formaat van
+1cijferho, inclusief numerieke codes:
+
+| Kolom | Codering |
+|---|---|
+| `geslacht` | V / M / O |
+| `opleidingsvorm` | 1 = voltijd, 2 = deeltijd |
+| `opleidingsfase` | B = bachelor, M = master |
+| `hoogste_vooropleiding` | 402-502 (zie Dec_vooropl.csv van 1cijferho) |
+| `herkomst_indikking_volgens_cbs_definitie` | 1 = NL, 2 = westers, 3-7 = niet-westers |
+| `indicatie_actief_op_peildatum` | 1 = actief op 1 oktober |
+| `soort_inschrijving_continu_type_ho_binnen_ho` | 1 = eerstejaars, 2 = hogerejaars |
+
+De koppelsleutel tussen selectiedata en 1CHO is `persoonsgebonden_nummer`.
+In de praktijk moet dit via een beveiligd koppelproces verlopen.
+
+### Echte data koppelen
+
+Vervang de data-generatie in `scripts/maak_data.py` door inleesscripts voor de
+echte bestanden. De 1CHO-data (`EV_*_enriched.csv` of raw `EV_*.csv`) komt
+rechtstreeks uit de output van 1cijferho. Gebruik `decodeer_cho()` in het script
+om raw codes om te zetten naar leesbare waarden voor het dashboard.
 
 ## Afhankelijkheden
 
-```r
-install.packages(c("shiny", "bslib", "tidyverse"))
 ```
+streamlit, pandas, numpy, plotly
+```
+
+Beheerd via uv (`pyproject.toml`).
