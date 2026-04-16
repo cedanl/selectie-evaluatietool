@@ -171,6 +171,37 @@ with tab_scores:
         fix_xas_labels(fig)
         col.plotly_chart(fig, width="stretch")
 
+    # Puntenwolk
+    st.divider()
+    st.subheader("Puntenwolk selectiescores")
+
+    score_opties = {
+        "Interview":      "interview_score",
+        "Motivatiebrief": "motivatiescore",
+        "CV":             "cv_score",
+        "Totaalscore":    "totaalscore",
+    }
+
+    col_x, col_y, _ = st.columns([2, 2, 4])
+    x_label = col_x.selectbox("X-as", list(score_opties.keys()), index=0, key="scatter_x")
+    y_label = col_y.selectbox("Y-as", list(score_opties.keys()), index=1, key="scatter_y")
+    x_var = score_opties[x_label]
+    y_var = score_opties[y_label]
+
+    fig_scatter = px.scatter(
+        df[df["groep"].notna()],
+        x=x_var, y=y_var,
+        color="groep",
+        color_discrete_map=GROEP_KLEUREN,
+        category_orders={"groep": GROEP_VOLGORDE},
+        labels={x_var: x_label, y_var: y_label, "groep": ""},
+        opacity=0.55,
+        height=520,
+    )
+    fig_scatter.update_traces(marker=dict(size=6))
+    fig_scatter.update_layout(legend=dict(orientation="h", y=-0.15))
+    st.plotly_chart(fig_scatter, width="stretch")
+
     # Gemiddelden tabel
     st.divider()
     st.subheader("Gemiddelden per groep")
