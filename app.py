@@ -73,11 +73,6 @@ geslacht = st.sidebar.selectbox("Geslacht", geslacht_keuzes)
 vooropl_keuzes = ["Alle"] + sorted(data["hoogste_vooropleiding"].unique().tolist())
 vooropleiding = st.sidebar.selectbox("Vooropleiding", vooropl_keuzes)
 
-st.sidebar.divider()
-n_gefilterd = len(filter_data(data))
-st.sidebar.metric("Kandidaten in selectie", n_gefilterd)
-st.sidebar.caption("Synthetische voorbeelddata.")
-
 
 def filter_data(df: pd.DataFrame, incl_cohort: bool = True) -> pd.DataFrame:
     if incl_cohort and cohort != "Alle cohorten":
@@ -87,6 +82,12 @@ def filter_data(df: pd.DataFrame, incl_cohort: bool = True) -> pd.DataFrame:
     if vooropleiding != "Alle":
         df = df[df["hoogste_vooropleiding"] == vooropleiding]
     return df
+
+
+st.sidebar.divider()
+n_gefilterd = len(filter_data(data))
+st.sidebar.metric("Kandidaten in selectie", n_gefilterd)
+st.sidebar.caption("Synthetische voorbeelddata.")
 
 
 # --- Tabs ---
