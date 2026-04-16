@@ -46,6 +46,9 @@ st.set_page_config(
     layout="wide",
 )
 
+st.title("Evaluatietool Selectie")
+st.caption("B Gezondheidswetenschappen — DEMO Hogeschool")
+
 
 @st.cache_data
 def laad_data() -> pd.DataFrame:
@@ -71,6 +74,8 @@ vooropl_keuzes = ["Alle"] + sorted(data["hoogste_vooropleiding"].unique().tolist
 vooropleiding = st.sidebar.selectbox("Vooropleiding", vooropl_keuzes)
 
 st.sidebar.divider()
+n_gefilterd = len(filter_data(data))
+st.sidebar.metric("Kandidaten in selectie", n_gefilterd)
 st.sidebar.caption("Synthetische voorbeelddata.")
 
 
