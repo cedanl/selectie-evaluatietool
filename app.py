@@ -131,8 +131,7 @@ with tab_scores:
         title="Totaalscore (gewogen: interview 50%, motivatie 30%, CV 20%)",
         yaxis_title="Score (1-10)",
         height=500,
-        showlegend=True,
-        legend=dict(orientation="h", y=-0.15),
+        showlegend=False,
         violingap=0.3,
     )
     fix_xas_labels(fig_totaal)
@@ -180,7 +179,9 @@ with tab_scores:
         .agg(["mean", "std"])
         .round(2)
     )
-    tabel_scores.columns = [f"{SCORES[var]} ({stat})" for var, stat in tabel_scores.columns]
+    tabel_scores.columns = pd.MultiIndex.from_tuples(
+        [(SCORES[var], "gem." if stat == "mean" else "SD") for var, stat in tabel_scores.columns]
+    )
     st.dataframe(tabel_scores, use_container_width=True)
 
 
