@@ -220,6 +220,12 @@ with tab_scores:
 # ── Tab 2: Verdeling ─────────────────────────────────────────────────────────
 with tab_overzicht:
     st.header("Verdeling per groep")
+    filter_labels = [cohort if cohort != "Alle cohorten" else "alle cohorten"]
+    if geslacht != "Alle":
+        filter_labels.append(geslacht)
+    if vooropleiding != "Alle":
+        filter_labels.append(vooropleiding)
+    st.caption(f"Gefilterd op: {', '.join(filter_labels)}")
     df = filter_data(data)
 
     col1, col2, col3 = st.columns(3)
