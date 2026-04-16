@@ -107,15 +107,47 @@ def maak_selectiedata() -> pd.DataFrame:
     return pd.concat(cohorten, ignore_index=True)
 
 
+# Coderingen die overeenkomen met het raw EV_* formaat van 1cijferho
+# Bron: EV299XX24_DEMO.csv + Dec_* bestanden
+GESLACHT_CODES = {"vrouw": "V", "man": "M", "anders": "O"}
+
+VOOROPLEIDING_CODES = {
+    "vwo profiel natuur & gezondheid":     405,
+    "vwo profiel natuur & techniek":       411,
+    "vwo profiel cultuur & maatschappij":  404,
+    "vwo profiel economie & maatschappij": 403,
+    "hbo-propedeuse":                      502,
+    "anders":                              402,
+}
+
+# herkomst_indikking_volgens_cbs_definitie (1CHO/CBS codering)
+HERKOMST_CODES = {
+    "Nederland":            1,
+    "westerse achtergrond": 2,
+    "Marokko":              3,
+    "Turkije":              4,
+    "Suriname/Antillen":    5,
+    "overig niet-westers":  7,
+}
+
+# Omgekeerde mappings voor decodering in de koppelstap
+GESLACHT_DECODE    = {v: k for k, v in GESLACHT_CODES.items()}
+HERKOMST_DECODE    = {v: k for k, v in HERKOMST_CODES.items()}
+VOOROPLEIDING_DECODE = {v: k for k, v in VOOROPLEIDING_CODES.items()}
+
+
 def maak_1cho_data(selectiedata: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Genereert 1CHO-inschrijvingsrijen en retourneert ook de groepsindeling per pgn.
+    Genereert 1CHO-inschrijvingsrijen in het raw EV_* formaat van 1cijferho.
 
-    De groep is hier al bekend: tijdens generatie weten we wie doorstroomt.
-    Dat hoeft niet later opnieuw te worden berekend op basis van de 1CHO-rijen.
+    Kolommen gebruiken de numerieke en letter-codes zoals in de echte data:
+      geslacht V/M, opleidingsvorm 1/2, hoogste_vooropleiding numeriek, etc.
+
+    De groepsindeling wordt ook teruggegeven: tijdens generatie weten we al
+    wie doorstroomt, dus een tweede lookup achteraf is niet nodig.
 
     Returns:
-        cho_data: inschrijvingsrijen (EV-stijl)
+        cho_data: inschrijvingsrijen (raw EV-formaat)
         groep_per_pgn: DataFrame met persoonsgebonden_nummer + groep
     """
     def logistic(x):
@@ -140,27 +172,36 @@ def maak_1cho_data(selectiedata: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFra
         for verblijfsjaar in [1, 2] if s["doorstroomt"] else [1]:
             inschrijvingsjaar = int(s["selectiejaar"]) + (verblijfsjaar - 1)
             rijen.append({
-                "persoonsgebonden_nummer":                    s["persoonsgebonden_nummer"],
-                "inschrijvingsjaar":                         inschrijvingsjaar,
-                "instellingscode":                           "DEMO",
-                "actuele_instelling_naam":                   "DEMO Hogeschool",
-                "opleidingscode_naam_opleiding":             s["opleiding"],
-                "opleidingsvorm":                            "voltijd",
-                "opleidingsfase":                            "bachelor",
-                "eerste_jaar_aan_deze_opleiding_instelling": int(s["selectiejaar"]),
-                "verblijfsjaar_hoger_onderwijs":             verblijfsjaar,
-                "geslacht":                                  s["geslacht"],
-                "leeftijd_per_peildatum_1_oktober":          int(s["leeftijd"]) + (verblijfsjaar - 1),
-                "herkomstland_naam":                         s["herkomst"],
-                "hoogste_vooropleiding_omschrijving":        s["hoogste_vooropleiding"],
-                "gem_eindcijfer_vo":                         s["gem_eindcijfer_vo"],
-                "indicatie_eerstejaars":                     "eerstejaars" if verblijfsjaar == 1 else "hogerejaars",
-                "datum_inschrijving":                        f"{inschrijvingsjaar}0901",
+                "persoonsgebonden_nummer":                          int(s["persoonsgebonden_nummer"]),
+                "inschrijvingsjaar":                               inschrijvingsjaar,
+                "instellingscode":                                 "DEMO",
+                "actuele_instelling":                              "DEMO",
+                "opleidingscode":                                  99001,
+                "opleidingsvorm":                                  1,
+                "opleidingsfase":                                  "B",
+                "maand_vanaf":                                     9,
+                "code_beeindiging":                                0,
+                "eerste_jaar_aan_deze_instelling":                 int(s["selectiejaar"]),
+                "eerste_jaar_in_het_hoger_onderwijs":              int(s["selectiejaar"]) - (
+                    RNG.integers(1, 4) if s["hoogste_vooropleiding"] == "hbo-propedeuse" else 0
+                ),
+                "eerste_jaar_aan_deze_opleiding_instelling":       int(s["selectiejaar"]),
+                "verblijfsjaar_hoger_onderwijs":                   verblijfsjaar,
+                "geslacht":                                        GESLACHT_CODES.get(s["geslacht"], "O"),
+                "leeftijd_per_peildatum_1_oktober":                int(s["leeftijd"]) + (verblijfsjaar - 1),
+                "hoogste_vooropleiding":                           VOOROPLEIDING_CODES.get(s["hoogste_vooropleiding"], 402),
+                "diplomajaar_van_de_hoogste_vooropl_voor_het_ho":  int(s["selectiejaar"]) - RNG.integers(0, 3),
+                "herkomst_indikking_volgens_cbs_definitie":        HERKOMST_CODES.get(s["herkomst"], 7),
+                "gem_eindcijfer_vo_van_de_hoogste_vooropl_voor_het_ho": s["gem_eindcijfer_vo"],
+                "indicatie_actief_op_peildatum":                   1,
+                "soort_inschrijving_continu_type_ho_binnen_ho":    1 if verblijfsjaar == 1 else 2,
+                "indicatie_eerstejaars_continu_type_ho_binnen_ho": 1 if verblijfsjaar == 1 else 2,
+                "datum_inschrijving":                              f"{inschrijvingsjaar}0901",
+                "datum_uitschrijving":                             f"{inschrijvingsjaar}0831" if verblijfsjaar == 1 and not s["doorstroomt"] else 0,
             })
 
     cho_data = pd.DataFrame(rijen)
 
-    # Groepsindeling is hier al bekend: geen tweede lookup nodig achteraf.
     groep_per_pgn = ingeschrevenen[["persoonsgebonden_nummer", "doorstroomt"]].assign(
         groep=np.where(
             ingeschrevenen["doorstroomt"],
@@ -172,6 +213,18 @@ def maak_1cho_data(selectiedata: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFra
     return cho_data, groep_per_pgn
 
 
+def decodeer_cho(cho_data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Decodeert de raw EV-codes naar leesbare waarden voor gebruik in het dashboard.
+    In een echte pipeline zou dit via de Dec_* bestanden van 1cijferho lopen.
+    """
+    return cho_data.assign(
+        geslacht=cho_data["geslacht"].map(GESLACHT_DECODE).fillna("onbekend"),
+        herkomst=cho_data["herkomst_indikking_volgens_cbs_definitie"].map(HERKOMST_DECODE).fillna("overig"),
+        hoogste_vooropleiding=cho_data["hoogste_vooropleiding"].map(VOOROPLEIDING_DECODE).fillna("onbekend"),
+    )
+
+
 if __name__ == "__main__":
     print("Selectiedata genereren...")
     selectiedata = maak_selectiedata()
@@ -180,15 +233,38 @@ if __name__ == "__main__":
 
     print("1CHO-data genereren + groepen bepalen...")
     cho_data, groep_per_pgn = maak_1cho_data(selectiedata)
+    # Sla raw format op — zelfde structuur als echte EV_*.csv van 1cijferho
     cho_data.to_csv(DATA_DIR / "EV_DEMO_selectieopleiding.csv", index=False, sep=";")
     jaar1 = (cho_data["verblijfsjaar_hoger_onderwijs"] == 1).sum()
     jaar2 = (cho_data["verblijfsjaar_hoger_onderwijs"] == 2).sum()
     print(f"  {len(cho_data)} rijen — jaar 1: {jaar1}, jaar 2: {jaar2}, uitval: {jaar1 - jaar2}")
 
+    # Decodeer CHO voor gebruik in het dashboard.
+    # In een echte pipeline: lees de Dec_* bestanden van 1cijferho voor de mapping.
+    cho_decoded = decodeer_cho(cho_data[cho_data["verblijfsjaar_hoger_onderwijs"] == 1])
+
     gekoppeld = (
         selectiedata
         .merge(groep_per_pgn, on="persoonsgebonden_nummer", how="left")
         .assign(groep=lambda df: df["groep"].fillna("Niet gestart"))
+        # Voeg CHO-kolommen toe: in echte data is dit de bron voor demographics
+        .merge(
+            cho_decoded[["persoonsgebonden_nummer", "geslacht", "herkomst",
+                         "hoogste_vooropleiding",
+                         "gem_eindcijfer_vo_van_de_hoogste_vooropl_voor_het_ho"]],
+            on="persoonsgebonden_nummer", how="left", suffixes=("_sel", "_cho")
+        )
+        # Gebruik CHO als beschikbaar, anders selectiedata
+        .assign(
+            geslacht=lambda df: df["geslacht_cho"].fillna(df["geslacht_sel"]),
+            herkomst=lambda df: df["herkomst_cho"].fillna(df["herkomst_sel"]),
+            hoogste_vooropleiding=lambda df: df["hoogste_vooropleiding_cho"].fillna(df["hoogste_vooropleiding_sel"]),
+            gem_eindcijfer_vo_cho=lambda df: df["gem_eindcijfer_vo_van_de_hoogste_vooropl_voor_het_ho"],
+        )
+        .drop(columns=["geslacht_sel", "geslacht_cho",
+                        "herkomst_sel", "herkomst_cho",
+                        "hoogste_vooropleiding_sel", "hoogste_vooropleiding_cho",
+                        "gem_eindcijfer_vo_van_de_hoogste_vooropl_voor_het_ho"])
     )
     gekoppeld.to_parquet(DATA_DIR / "gekoppeld.parquet", index=False)
     print(gekoppeld.groupby(["selectiejaar", "groep"]).size().unstack(fill_value=0).to_string())
