@@ -107,7 +107,17 @@ def maak_selectiedata() -> pd.DataFrame:
     return pd.concat(cohorten, ignore_index=True)
 
 
-def maak_1cho_data(selectiedata: pd.DataFrame) -> pd.DataFrame:
+def maak_1cho_data(selectiedata: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Genereert 1CHO-inschrijvingsrijen en retourneert ook de groepsindeling per pgn.
+
+    De groep is hier al bekend: tijdens generatie weten we wie doorstroomt.
+    Dat hoeft niet later opnieuw te worden berekend op basis van de 1CHO-rijen.
+
+    Returns:
+        cho_data: inschrijvingsrijen (EV-stijl)
+        groep_per_pgn: DataFrame met persoonsgebonden_nummer + groep
+    """
     def logistic(x):
         return 1 / (1 + np.exp(-x))
 
@@ -115,7 +125,6 @@ def maak_1cho_data(selectiedata: pd.DataFrame) -> pd.DataFrame:
         selectiedata["selectie_uitkomst"].isin(["geselecteerd", "reserve"])
     ].copy()
 
-    # Kans op inschrijving en doorstroom
     gaat_studeren_kans = np.where(
         ingeschrevenen["selectie_uitkomst"] == "geselecteerd", 0.95, 0.38
     )
@@ -131,44 +140,36 @@ def maak_1cho_data(selectiedata: pd.DataFrame) -> pd.DataFrame:
         for verblijfsjaar in [1, 2] if s["doorstroomt"] else [1]:
             inschrijvingsjaar = int(s["selectiejaar"]) + (verblijfsjaar - 1)
             rijen.append({
-                "persoonsgebonden_nummer":                        s["persoonsgebonden_nummer"],
-                "inschrijvingsjaar":                             inschrijvingsjaar,
-                "instellingscode":                               "DEMO",
-                "actuele_instelling_naam":                       "DEMO Hogeschool",
-                "opleidingscode_naam_opleiding":                 s["opleiding"],
-                "opleidingsvorm":                                "voltijd",
-                "opleidingsfase":                                "bachelor",
-                "eerste_jaar_aan_deze_opleiding_instelling":     int(s["selectiejaar"]),
-                "verblijfsjaar_hoger_onderwijs":                 verblijfsjaar,
-                "geslacht":                                      s["geslacht"],
-                "leeftijd_per_peildatum_1_oktober":              int(s["leeftijd"]) + (verblijfsjaar - 1),
-                "herkomstland_naam":                             s["herkomst"],
-                "hoogste_vooropleiding_omschrijving":            s["hoogste_vooropleiding"],
-                "gem_eindcijfer_vo":                             s["gem_eindcijfer_vo"],
-                "indicatie_eerstejaars":                         "eerstejaars" if verblijfsjaar == 1 else "hogerejaars",
-                "datum_inschrijving":                            f"{inschrijvingsjaar}0901",
+                "persoonsgebonden_nummer":                    s["persoonsgebonden_nummer"],
+                "inschrijvingsjaar":                         inschrijvingsjaar,
+                "instellingscode":                           "DEMO",
+                "actuele_instelling_naam":                   "DEMO Hogeschool",
+                "opleidingscode_naam_opleiding":             s["opleiding"],
+                "opleidingsvorm":                            "voltijd",
+                "opleidingsfase":                            "bachelor",
+                "eerste_jaar_aan_deze_opleiding_instelling": int(s["selectiejaar"]),
+                "verblijfsjaar_hoger_onderwijs":             verblijfsjaar,
+                "geslacht":                                  s["geslacht"],
+                "leeftijd_per_peildatum_1_oktober":          int(s["leeftijd"]) + (verblijfsjaar - 1),
+                "herkomstland_naam":                         s["herkomst"],
+                "hoogste_vooropleiding_omschrijving":        s["hoogste_vooropleiding"],
+                "gem_eindcijfer_vo":                         s["gem_eindcijfer_vo"],
+                "indicatie_eerstejaars":                     "eerstejaars" if verblijfsjaar == 1 else "hogerejaars",
+                "datum_inschrijving":                        f"{inschrijvingsjaar}0901",
             })
 
-    return pd.DataFrame(rijen)
+    cho_data = pd.DataFrame(rijen)
 
+    # Groepsindeling is hier al bekend: geen tweede lookup nodig achteraf.
+    groep_per_pgn = ingeschrevenen[["persoonsgebonden_nummer", "doorstroomt"]].assign(
+        groep=np.where(
+            ingeschrevenen["doorstroomt"],
+            "Doorgestroomd naar jaar 2",
+            "Gestart, niet naar jaar 2",
+        )
+    ).drop(columns="doorstroomt")
 
-def koppel_en_classificeer(
-    selectiedata: pd.DataFrame, cho_data: pd.DataFrame
-) -> pd.DataFrame:
-    pgns_jaar1 = set(cho_data.loc[cho_data["verblijfsjaar_hoger_onderwijs"] == 1, "persoonsgebonden_nummer"].dropna())
-    pgns_jaar2 = set(cho_data.loc[cho_data["verblijfsjaar_hoger_onderwijs"] == 2, "persoonsgebonden_nummer"].dropna())
-
-    def groep(row):
-        pgn = row["persoonsgebonden_nummer"]
-        if pd.isna(pgn) or pgn not in pgns_jaar1:
-            return "Niet gestart"
-        if pgn in pgns_jaar2:
-            return "Doorgestroomd naar jaar 2"
-        return "Gestart, niet naar jaar 2"
-
-    df = selectiedata.copy()
-    df["groep"] = df.apply(groep, axis=1)
-    return df
+    return cho_data, groep_per_pgn
 
 
 if __name__ == "__main__":
@@ -177,15 +178,18 @@ if __name__ == "__main__":
     selectiedata.to_csv(DATA_DIR / "selectiedata_voorbeeld.csv", index=False, sep=";")
     print(f"  {len(selectiedata)} kandidaten, {selectiedata['selectie_uitkomst'].value_counts().to_dict()}")
 
-    print("1CHO-data genereren...")
-    cho_data = maak_1cho_data(selectiedata)
+    print("1CHO-data genereren + groepen bepalen...")
+    cho_data, groep_per_pgn = maak_1cho_data(selectiedata)
     cho_data.to_csv(DATA_DIR / "EV_DEMO_selectieopleiding.csv", index=False, sep=";")
     jaar1 = (cho_data["verblijfsjaar_hoger_onderwijs"] == 1).sum()
     jaar2 = (cho_data["verblijfsjaar_hoger_onderwijs"] == 2).sum()
     print(f"  {len(cho_data)} rijen — jaar 1: {jaar1}, jaar 2: {jaar2}, uitval: {jaar1 - jaar2}")
 
-    print("Koppelen en classificeren...")
-    gekoppeld = koppel_en_classificeer(selectiedata, cho_data)
+    gekoppeld = (
+        selectiedata
+        .merge(groep_per_pgn, on="persoonsgebonden_nummer", how="left")
+        .assign(groep=lambda df: df["groep"].fillna("Niet gestart"))
+    )
     gekoppeld.to_parquet(DATA_DIR / "gekoppeld.parquet", index=False)
     print(gekoppeld.groupby(["selectiejaar", "groep"]).size().unstack(fill_value=0).to_string())
     print("\nKlaar. Draai nu: uv run streamlit run app.py")
