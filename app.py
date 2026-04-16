@@ -474,10 +474,31 @@ with tab_vo:
         subset = df_vo[df_vo[label].notna()]
         r = subset["gem_eindcijfer_vo"].corr(subset[label]).round(3)
         cor_rijen.append({"Score": var, "r (Pearson)": r})
+
+    def kleur_r(val):
+        try:
+            r = float(val)
+        except (TypeError, ValueError):
+            return ""
+        if r < -0.2:
+            return "background-color: #fed7aa; color: #7c2d12"   # oranje: onverwacht negatief
+        elif r < 0.3:
+            return "background-color: #bbf7d0; color: #14532d"   # groen: goede discriminante validiteit
+        elif r < 0.5:
+            return "background-color: #fef08a; color: #713f12"   # geel: matige overlap
+        else:
+            return "background-color: #fecaca; color: #7f1d1d"   # rood: grote overlap met VO
+
+    cor_df = pd.DataFrame(cor_rijen)
     st.caption(
         "Pearson r meet de lineaire samenhang tussen VO-eindcijfer en selectiescore. "
-        "r = 0 betekent geen verband: het instrument meet iets anders dan schoolprestaties. "
-        "r = 1 betekent perfect verband: selectie op dezelfde dimensie als VO-cijfers. "
         "Een lage r is wenselijk: het instrument voegt informatie toe die VO-cijfers niet geven."
     )
-    st.dataframe(pd.DataFrame(cor_rijen), hide_index=True)
+    st.dataframe(cor_df.style.map(kleur_r, subset=["r (Pearson)"]), hide_index=True)
+    st.caption(
+        "Kleuren: "
+        "groen (r < 0.3) = instrument meet iets anders dan schoolprestaties, goede discriminante validiteit. "
+        "geel (0.3 tot 0.5) = enige overlap met VO-prestaties. "
+        "rood (r >= 0.5) = instrument selecteert grotendeels op dezelfde dimensie als VO-cijfers. "
+        "oranje (r < -0.2) = onverwacht negatief verband, nader onderzoek aanbevolen."
+    )
