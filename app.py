@@ -86,6 +86,16 @@ def filter_data(df: pd.DataFrame, incl_cohort: bool = True) -> pd.DataFrame:
 
 
 st.sidebar.divider()
+jaren = sorted(data["selectiejaar"].unique())
+aantallen_per_jaar = (
+    filter_data(data, incl_cohort=False)
+    .groupby("selectiejaar")
+    .size()
+)
+st.sidebar.caption("Kandidaten per cohort")
+cols_jaar = st.sidebar.columns(len(jaren))
+for col, jaar in zip(cols_jaar, jaren):
+    col.metric(str(jaar), int(aantallen_per_jaar.get(jaar, 0)))
 st.sidebar.caption("Synthetische voorbeelddata.")
 
 
@@ -245,7 +255,7 @@ with tab_scores:
 # ── Tab 2: Verdeling ─────────────────────────────────────────────────────────
 with tab_overzicht:
     st.header("Verdeling per groep")
-    filter_labels = [cohort if cohort != "Alle cohorten" else "alle cohorten"]
+    filter_labels = [str(cohort) if cohort != "Alle cohorten" else "alle cohorten"]
     if geslacht != "Alle":
         filter_labels.append(geslacht)
     if vooropleiding != "Alle":
