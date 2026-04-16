@@ -362,7 +362,8 @@ with tab_demo:
 
     with col_h:
         agg_h = (
-            df.assign(herkomst_kort=df["herkomst"].map(
+            df[df["herkomst"].notna()]
+            .assign(herkomst_kort=lambda df: df["herkomst"].map(
                 lambda x: "Nederland" if x == "Nederland" else "niet-Nederland"
             ))
             .groupby(["groep", "herkomst_kort"], observed=True)
