@@ -84,19 +84,18 @@ with tab_scores:
     )
 
     df = filter_data(data)
-    df_gestart = df[df["groep"] != "Niet gestart"]
 
     SCORES = {
-        "totaalscore":    "Totaalscore",
+        "totaalscore":     "Totaalscore",
         "interview_score": "Interview",
-        "motivatiescore": "Motivatiebrief",
-        "cv_score":       "CV",
+        "motivatiescore":  "Motivatiebrief",
+        "cv_score":        "CV",
     }
 
     # Totaalscore: groot, volledig breed
     fig_totaal = go.Figure()
-    for groep in ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]:
-        subset = df_gestart[df_gestart["groep"] == groep]["totaalscore"].dropna()
+    for groep in GROEP_VOLGORDE:
+        subset = df[df["groep"] == groep]["totaalscore"].dropna()
         fig_totaal.add_trace(go.Violin(
             y=subset,
             name=groep,
@@ -126,8 +125,8 @@ with tab_scores:
         [("interview_score", "Interview"), ("motivatiescore", "Motivatiebrief"), ("cv_score", "CV")]
     ):
         fig = go.Figure()
-        for groep in ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]:
-            subset = df_gestart[df_gestart["groep"] == groep][var].dropna()
+        for groep in GROEP_VOLGORDE:
+            subset = df[df["groep"] == groep][var].dropna()
             fig.add_trace(go.Violin(
                 y=subset,
                 name=groep,
@@ -151,7 +150,7 @@ with tab_scores:
     st.divider()
     st.subheader("Gemiddelden per groep")
     tabel_scores = (
-        df_gestart
+        df
         .groupby("groep", observed=True)[list(SCORES.keys())]
         .agg(["mean", "std"])
         .round(2)
