@@ -103,7 +103,7 @@ st.sidebar.caption("Synthetische voorbeelddata.")
 
 # --- Tabs ---
 tab_scores, tab_overzicht, tab_demo, tab_puntenwolk, tab_vo = st.tabs([
-    "Selectiescores", "Verdeling", "Demografisch", "Puntenwolk", "VO-cijfer"
+    "Selectiescores", "Verdeling", "Demografisch", "Instrumentvergelijking", "VO-cijfer"
 ])
 
 
@@ -409,8 +409,15 @@ with tab_puntenwolk:
 with tab_vo:
     st.header("VO-eindcijfer vs selectiescores")
     st.caption(
-        "Laat zien of de selectie-instrumenten iets anders meten dan schoolprestaties. "
-        "VO-eindcijfer is afkomstig uit 1CHO (EV-bestand) en alleen beschikbaar voor ingeschreven studenten."
+        "Het VO-eindcijfer is het gemiddeld eindexamencijfer van de hoogste vooropleiding "
+        "vóór het hoger onderwijs — voor de meeste studenten het VWO-diploma. "
+        "Het komt rechtstreeks uit het EV-bestand van 1CHO en is daardoor onafhankelijk van "
+        "wat de opleiding zelf heeft gemeten tijdens de selectie. "
+        "De grafiek laat zien of de selectie-instrumenten informatie toevoegen die de school "
+        "nog niet had. Een lage samenhang (r ≈ 0) betekent dat het instrument iets wezenlijk "
+        "anders meet dan cognitieve schoolprestaties, zoals motivatie of communicatievaardigheid. "
+        "Een hoge samenhang (r ≈ 1) suggereert dat de selectie grotendeels herhaalt wat het "
+        "VO-cijfer al zegt. Alleen ingeschreven studenten zijn zichtbaar."
     )
     df = filter_data(data)
     df_vo = df[df["gem_eindcijfer_vo"].notna()]
