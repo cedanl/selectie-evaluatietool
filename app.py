@@ -100,8 +100,8 @@ st.sidebar.caption("Synthetische voorbeelddata.")
 
 
 # --- Tabs ---
-tab_scores, tab_overzicht, tab_demo, tab_aantallen = st.tabs([
-    "Selectiescores", "Verdeling", "Demografisch", "Aantallen"
+tab_scores, tab_overzicht, tab_demo = st.tabs([
+    "Selectiescores", "Verdeling", "Demografisch"
 ])
 
 
@@ -328,11 +328,30 @@ with tab_overzicht:
         color_discrete_map=GROEP_KLEUREN,
         category_orders={"groep": GROEP_VOLGORDE},
         labels={"selectiejaar": "Cohort", "pct": "Percentage (%)", "groep": ""},
+        text="n",
         custom_data=["n"],
     )
-    fig.update_traces(hovertemplate="%{fullData.name}<br>%{y:.1f}%  (n=%{customdata[0]})<extra></extra>")
+    fig.update_traces(
+        texttemplate="%{text}",
+        textposition="inside",
+        hovertemplate="%{fullData.name}<br>%{y:.1f}%  (n=%{customdata[0]})<extra></extra>",
+    )
     fig.update_layout(height=500, legend=dict(orientation="h", y=-0.15))
     st.plotly_chart(fig, width="stretch")
+
+    st.divider()
+
+    tabel = (
+        filter_data(data, incl_cohort=False)
+        .groupby(["selectiejaar", "groep"], observed=True)
+        .size().unstack(fill_value=0).reset_index()
+        .rename(columns={"selectiejaar": "Cohort"})
+    )
+    for groep in GROEP_VOLGORDE:
+        if groep not in tabel.columns:
+            tabel[groep] = 0
+    tabel["Totaal"] = tabel[list(GROEP_VOLGORDE)].sum(axis=1)
+    st.dataframe(tabel, width="stretch", hide_index=True)
 
 
 # ── Tab 3: Demografisch ───────────────────────────────────────────────────────
@@ -426,18 +445,3 @@ with tab_demo:
     fix_xas_labels(fig6)
     st.plotly_chart(fig6, width="stretch")
 
-
-# ── Tab 4: Aantallen ─────────────────────────────────────────────────────────
-with tab_aantallen:
-    st.header("Aantallen per cohort")
-    tabel = (
-        filter_data(data)
-        .groupby(["selectiejaar", "groep"], observed=True)
-        .size().unstack(fill_value=0).reset_index()
-        .rename(columns={"selectiejaar": "Cohort"})
-    )
-    for groep in GROEP_VOLGORDE:
-        if groep not in tabel.columns:
-            tabel[groep] = 0
-    tabel["Totaal"] = tabel[list(GROEP_VOLGORDE)].sum(axis=1)
-    st.dataframe(tabel, width="stretch", hide_index=True)
