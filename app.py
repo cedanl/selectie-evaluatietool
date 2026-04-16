@@ -101,8 +101,8 @@ st.sidebar.caption("Synthetische voorbeelddata.")
 
 
 # --- Tabs ---
-tab_scores, tab_overzicht, tab_demo = st.tabs([
-    "Selectiescores", "Verdeling", "Demografisch"
+tab_scores, tab_overzicht, tab_demo, tab_puntenwolk, tab_vo = st.tabs([
+    "Selectiescores", "Verdeling", "Demografisch", "Puntenwolk", "VO-cijfer"
 ])
 
 
@@ -181,37 +181,6 @@ with tab_scores:
         fix_xas_labels(fig)
         col.plotly_chart(fig, width="stretch")
 
-    # Puntenwolk
-    st.divider()
-    st.subheader("Puntenwolk selectiescores")
-
-    score_opties = {
-        "Interview":      "interview_score",
-        "Motivatiebrief": "motivatiescore",
-        "CV":             "cv_score",
-        "Totaalscore":    "totaalscore",
-    }
-
-    col_x, col_y, _ = st.columns([2, 2, 4])
-    x_label = col_x.selectbox("X-as", list(score_opties.keys()), index=0, key="scatter_x")
-    y_label = col_y.selectbox("Y-as", list(score_opties.keys()), index=1, key="scatter_y")
-    x_var = score_opties[x_label]
-    y_var = score_opties[y_label]
-
-    fig_scatter = px.scatter(
-        df[df["groep"].notna()],
-        x=x_var, y=y_var,
-        color="groep",
-        color_discrete_map=GROEP_KLEUREN,
-        category_orders={"groep": GROEP_VOLGORDE},
-        labels={x_var: x_label, y_var: y_label, "groep": ""},
-        opacity=0.55,
-        height=520,
-    )
-    fig_scatter.update_traces(marker=dict(size=6))
-    fig_scatter.update_layout(legend=dict(orientation="h", y=-0.15))
-    st.plotly_chart(fig_scatter, width="stretch")
-
     # Gemiddelden tabel
     st.divider()
     st.subheader("Gemiddelden per groep")
@@ -252,69 +221,6 @@ with tab_scores:
     )
     st.dataframe(pd.DataFrame(sig_rijen), hide_index=True, width="stretch")
 
-    # VO-cijfer vs selectiescores
-    st.divider()
-    st.subheader("VO-eindcijfer vs selectiescores")
-    st.caption(
-        "Laat zien of de selectie-instrumenten iets anders meten dan schoolprestaties. "
-        "Alleen beschikbaar voor ingeschreven studenten (VO-cijfer uit 1CHO)."
-    )
-
-    df_vo = df[df["gem_eindcijfer_vo"].notna()]
-
-    col_vo, _ = st.columns([2, 6])
-    score_label_vo = col_vo.selectbox(
-        "Selectiescore (y-as)",
-        list(score_opties.keys()),
-        index=0,
-        key="scatter_vo_y",
-    )
-    score_var_vo = score_opties[score_label_vo]
-
-    fig_vo = px.scatter(
-        df_vo[df_vo["groep"].isin(["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"])],
-        x="gem_eindcijfer_vo",
-        y=score_var_vo,
-        color="groep",
-        color_discrete_map=GROEP_KLEUREN,
-        category_orders={"groep": GROEP_VOLGORDE},
-        labels={"gem_eindcijfer_vo": "VO-eindcijfer", score_var_vo: score_label_vo, "groep": ""},
-        opacity=0.55,
-        height=480,
-    )
-    fig_vo.update_traces(marker=dict(size=6))
-
-    # Trendlijn per groep via numpy (geen statsmodels nodig)
-    for groep in ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]:
-        sub = df_vo[df_vo["groep"] == groep][["gem_eindcijfer_vo", score_var_vo]].dropna()
-        if len(sub) >= 2:
-            m, b = np.polyfit(sub["gem_eindcijfer_vo"], sub[score_var_vo], 1)
-            x_line = np.linspace(sub["gem_eindcijfer_vo"].min(), sub["gem_eindcijfer_vo"].max(), 50)
-            fig_vo.add_trace(go.Scatter(
-                x=x_line, y=m * x_line + b,
-                mode="lines",
-                line=dict(color=GROEP_KLEUREN[groep], width=2, dash="dot"),
-                showlegend=False,
-                hoverinfo="skip",
-            ))
-
-    fig_vo.update_layout(legend=dict(orientation="h", y=-0.15))
-    st.plotly_chart(fig_vo, width="stretch")
-
-    # Correlaties VO vs selectiescores
-    cor_rijen = []
-    for var, label in SCORES.items():
-        subset = df_vo[df_vo[var].notna()]
-        r = subset["gem_eindcijfer_vo"].corr(subset[var]).round(3)
-        cor_rijen.append({"Score": label, "r (Pearson)": r})
-    st.caption(
-        "Pearson r meet de lineaire samenhang tussen VO-eindcijfer en selectiescore "
-        "(alleen ingeschreven studenten, afkomstig uit 1CHO). "
-        "r = 0: geen verband — het instrument meet iets anders dan schoolprestaties. "
-        "r = 1: perfect verband — selectie is grotendeels gebaseerd op dezelfde dimensie als VO-cijfers. "
-        "Een lage r is wenselijk: het instrument voegt informatie toe die VO-cijfers niet geven."
-    )
-    st.dataframe(pd.DataFrame(cor_rijen), hide_index=True)
 
 
 # ── Tab 2: Verdeling ─────────────────────────────────────────────────────────
@@ -358,22 +264,17 @@ with tab_overzicht:
         textposition="inside",
         hovertemplate="%{fullData.name}<br>%{y:.1f}%  (n=%{customdata[0]})<extra></extra>",
     )
-    fig.update_layout(height=500, legend=dict(orientation="h", y=-0.15))
+    totaal_per_jaar = agg.groupby("selectiejaar")["n"].sum()
+    for jaar, tot in totaal_per_jaar.items():
+        fig.add_annotation(
+            x=jaar, y=101,
+            text=f"n={tot}",
+            showarrow=False,
+            yshift=6,
+            font=dict(size=12),
+        )
+    fig.update_layout(height=500, legend=dict(orientation="h", y=-0.15), yaxis_range=[0, 115])
     st.plotly_chart(fig, width="stretch")
-
-    st.divider()
-
-    tabel = (
-        filter_data(data, incl_cohort=False)
-        .groupby(["selectiejaar", "groep"], observed=True)
-        .size().unstack(fill_value=0).reset_index()
-        .rename(columns={"selectiejaar": "Cohort"})
-    )
-    for groep in GROEP_VOLGORDE:
-        if groep not in tabel.columns:
-            tabel[groep] = 0
-    tabel["Totaal"] = tabel[list(GROEP_VOLGORDE)].sum(axis=1)
-    st.dataframe(tabel, width="stretch", hide_index=True)
 
 
 # ── Tab 3: Demografisch ───────────────────────────────────────────────────────
@@ -467,3 +368,110 @@ with tab_demo:
     fix_xas_labels(fig6)
     st.plotly_chart(fig6, width="stretch")
 
+
+# ── Tab 4: Puntenwolk ────────────────────────────────────────────────────────
+with tab_puntenwolk:
+    st.header("Puntenwolk selectiescores")
+    st.caption(
+        "Vergelijk twee selectie-instrumenten tegen elkaar. "
+        "Punten ver van de diagonaal zijn kandidaten die op de twee instrumenten sterk verschillen."
+    )
+    df = filter_data(data)
+
+    score_opties = {
+        "Interview":      "interview_score",
+        "Motivatiebrief": "motivatiescore",
+        "CV":             "cv_score",
+        "Totaalscore":    "totaalscore",
+    }
+
+    col_x, col_y, _ = st.columns([2, 2, 4])
+    x_label = col_x.selectbox("X-as", list(score_opties.keys()), index=0, key="scatter_x")
+    y_label = col_y.selectbox("Y-as", list(score_opties.keys()), index=1, key="scatter_y")
+    x_var = score_opties[x_label]
+    y_var = score_opties[y_label]
+
+    fig_scatter = px.scatter(
+        df[df["groep"].notna()],
+        x=x_var, y=y_var,
+        color="groep",
+        color_discrete_map=GROEP_KLEUREN,
+        category_orders={"groep": GROEP_VOLGORDE},
+        labels={x_var: x_label, y_var: y_label, "groep": ""},
+        opacity=0.55,
+        height=560,
+    )
+    fig_scatter.update_traces(marker=dict(size=6))
+    fig_scatter.update_layout(legend=dict(orientation="h", y=-0.15))
+    st.plotly_chart(fig_scatter, width="stretch")
+
+
+# ── Tab 5: VO-cijfer ─────────────────────────────────────────────────────────
+with tab_vo:
+    st.header("VO-eindcijfer vs selectiescores")
+    st.caption(
+        "Laat zien of de selectie-instrumenten iets anders meten dan schoolprestaties. "
+        "VO-eindcijfer is afkomstig uit 1CHO (EV-bestand) en alleen beschikbaar voor ingeschreven studenten."
+    )
+    df = filter_data(data)
+    df_vo = df[df["gem_eindcijfer_vo"].notna()]
+
+    score_opties_vo = {
+        "Interview":      "interview_score",
+        "Motivatiebrief": "motivatiescore",
+        "CV":             "cv_score",
+        "Totaalscore":    "totaalscore",
+    }
+
+    col_vo, _ = st.columns([2, 6])
+    score_label_vo = col_vo.selectbox(
+        "Selectiescore (y-as)",
+        list(score_opties_vo.keys()),
+        index=0,
+        key="scatter_vo_y",
+    )
+    score_var_vo = score_opties_vo[score_label_vo]
+
+    fig_vo = px.scatter(
+        df_vo[df_vo["groep"].isin(["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"])],
+        x="gem_eindcijfer_vo",
+        y=score_var_vo,
+        color="groep",
+        color_discrete_map=GROEP_KLEUREN,
+        category_orders={"groep": GROEP_VOLGORDE},
+        labels={"gem_eindcijfer_vo": "VO-eindcijfer", score_var_vo: score_label_vo, "groep": ""},
+        opacity=0.55,
+        height=500,
+    )
+    fig_vo.update_traces(marker=dict(size=6))
+
+    for groep in ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]:
+        sub = df_vo[df_vo["groep"] == groep][["gem_eindcijfer_vo", score_var_vo]].dropna()
+        if len(sub) >= 2:
+            m, b = np.polyfit(sub["gem_eindcijfer_vo"], sub[score_var_vo], 1)
+            x_line = np.linspace(sub["gem_eindcijfer_vo"].min(), sub["gem_eindcijfer_vo"].max(), 50)
+            fig_vo.add_trace(go.Scatter(
+                x=x_line, y=m * x_line + b,
+                mode="lines",
+                line=dict(color=GROEP_KLEUREN[groep], width=2, dash="dot"),
+                showlegend=False,
+                hoverinfo="skip",
+            ))
+
+    fig_vo.update_layout(legend=dict(orientation="h", y=-0.15))
+    st.plotly_chart(fig_vo, width="stretch")
+
+    st.divider()
+
+    cor_rijen = []
+    for var, label in score_opties_vo.items():
+        subset = df_vo[df_vo[label].notna()]
+        r = subset["gem_eindcijfer_vo"].corr(subset[label]).round(3)
+        cor_rijen.append({"Score": var, "r (Pearson)": r})
+    st.caption(
+        "Pearson r meet de lineaire samenhang tussen VO-eindcijfer en selectiescore. "
+        "r = 0: geen verband — instrument meet iets anders dan schoolprestaties. "
+        "r = 1: perfect verband — selectie op dezelfde dimensie als VO-cijfers. "
+        "Een lage r is wenselijk: het instrument voegt informatie toe die VO-cijfers niet geven."
+    )
+    st.dataframe(pd.DataFrame(cor_rijen), hide_index=True)
