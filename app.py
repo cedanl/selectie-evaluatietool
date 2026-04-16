@@ -217,7 +217,11 @@ with tab_scores:
             sig_rijen.append({"Score": label, "p-waarde": "n.v.t.", "Sig.": ""})
 
     st.caption(
-        "Mann-Whitney U toets: gestart niet naar jaar 2 vs doorgestroomd naar jaar 2. "
+        "Mann-Whitney U toets — vergelijkt de scoreverdeling van studenten die niet doorstroomden "
+        "naar jaar 2 met studenten die dat wel deden. Een significante uitkomst betekent dat de twee "
+        "groepen systematisch anders scoren op dat instrument, wat wijst op predictieve validiteit. "
+        "De toets maakt geen aanname over een normale verdeling en is daardoor geschikt voor scores "
+        "op een begrensde schaal (1-10). "
         "ns = niet significant (p≥0.05).  \\* p<0.05  \\*\\* p<0.01  \\*\\*\\* p<0.001"
     )
     st.dataframe(pd.DataFrame(sig_rijen), hide_index=True, width="stretch")
