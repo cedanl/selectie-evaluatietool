@@ -251,7 +251,7 @@ with tab_scores:
     st.caption(
         "KW = Kruskal-Wallis (alle 3 groepen). "
         "MW = Mann-Whitney U (gestart niet naar jaar 2 vs doorgestroomd naar jaar 2). "
-        "\\* p<0.05  \\*\\* p<0.01  \\*\\*\\* p<0.001"
+        "ns = niet significant (p≥0.05).  \\* p<0.05  \\*\\* p<0.01  \\*\\*\\* p<0.001"
     )
     st.dataframe(pd.DataFrame(sig_rijen), hide_index=True, width="stretch")
 
