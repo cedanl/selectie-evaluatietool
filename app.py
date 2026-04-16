@@ -215,8 +215,9 @@ with tab_scores:
     )
     st.dataframe(tabel_scores, width="stretch")
 
-    # Significantietoetsen per score
-    groep_data = {g: df[df["groep"] == g] for g in GROEP_VOLGORDE}
+    # Mann-Whitney U: gestart niet naar jaar 2 vs doorgestroomd naar jaar 2
+    a_groep = df[df["groep"] == "Gestart, niet naar jaar 2"]
+    b_groep = df[df["groep"] == "Doorgestroomd naar jaar 2"]
 
     def sig_sym(p):
         return "***" if p < 0.001 else "**" if p < 0.01 else "*" if p < 0.05 else "ns"
@@ -226,31 +227,16 @@ with tab_scores:
 
     sig_rijen = []
     for var, label in SCORES.items():
-        samples_alle = [groep_data[g][var].dropna() for g in GROEP_VOLGORDE]
-        a = groep_data["Gestart, niet naar jaar 2"][var].dropna()
-        b = groep_data["Doorgestroomd naar jaar 2"][var].dropna()
-
-        if all(len(s) >= 2 for s in samples_alle):
-            _, p_kw = stats.kruskal(*samples_alle)
-            kw_str = f"{fmt_p(p_kw)}  {sig_sym(p_kw)}"
-        else:
-            kw_str = "n.v.t."
-
+        a = a_groep[var].dropna()
+        b = b_groep[var].dropna()
         if len(a) >= 2 and len(b) >= 2:
-            _, p_mw = stats.mannwhitneyu(a, b, alternative="two-sided")
-            mw_str = f"{fmt_p(p_mw)}  {sig_sym(p_mw)}"
+            _, p = stats.mannwhitneyu(a, b, alternative="two-sided")
+            sig_rijen.append({"Score": label, "p-waarde": fmt_p(p), "Sig.": sig_sym(p)})
         else:
-            mw_str = "n.v.t."
-
-        sig_rijen.append({
-            "Score": label,
-            "p KW (3 groepen)": kw_str,
-            "p MW (jaar 2 vs uitval)": mw_str,
-        })
+            sig_rijen.append({"Score": label, "p-waarde": "n.v.t.", "Sig.": ""})
 
     st.caption(
-        "KW = Kruskal-Wallis (alle 3 groepen). "
-        "MW = Mann-Whitney U (gestart niet naar jaar 2 vs doorgestroomd naar jaar 2). "
+        "Mann-Whitney U toets: gestart niet naar jaar 2 vs doorgestroomd naar jaar 2. "
         "ns = niet significant (p≥0.05).  \\* p<0.05  \\*\\* p<0.01  \\*\\*\\* p<0.001"
     )
     st.dataframe(pd.DataFrame(sig_rijen), hide_index=True, width="stretch")
