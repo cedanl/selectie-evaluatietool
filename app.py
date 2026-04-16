@@ -264,21 +264,23 @@ with tab_demo:
         fix_xas_labels(fig4)
         st.plotly_chart(fig4, use_container_width=True)
 
-    # Vooropleiding volledig breed
+    # Vooropleiding: horizontale grouped bar — leesbaarder dan gestapeld met 6 kleuren
     agg_v = (
-        df.groupby(["groep", "hoogste_vooropleiding"], observed=True)
+        df.groupby(["hoogste_vooropleiding", "groep"], observed=True)
         .size().reset_index(name="n")
     )
     totals_v = agg_v.groupby("groep")["n"].transform("sum")
     agg_v["pct"] = (agg_v["n"] / totals_v * 100).round(1)
     fig5 = px.bar(
-        agg_v, x="groep", y="pct", color="hoogste_vooropleiding",
-        barmode="stack",
-        labels={"groep": "", "pct": "%", "hoogste_vooropleiding": "Vooropleiding"},
+        agg_v, y="hoogste_vooropleiding", x="pct", color="groep",
+        barmode="group",
+        orientation="h",
+        color_discrete_map=GROEP_KLEUREN,
+        category_orders={"groep": GROEP_VOLGORDE},
+        labels={"hoogste_vooropleiding": "", "pct": "%", "groep": ""},
         title="Vooropleiding per groep (%)",
     )
-    fig5.update_layout(height=460, legend=dict(orientation="h", y=-0.25))
-    fix_xas_labels(fig5)
+    fig5.update_layout(height=420, legend=dict(orientation="h", y=-0.2))
     st.plotly_chart(fig5, use_container_width=True)
 
 
