@@ -65,6 +65,7 @@ def laad_data() -> pd.DataFrame:
 data = laad_data()
 
 # --- Sidebar ---
+st.sidebar.image("nko-logo.svg", use_container_width=True)
 st.sidebar.title("Filters")
 cohort_keuzes = ["Alle cohorten"] + sorted(data["selectiejaar"].unique().tolist())
 cohort = st.sidebar.selectbox("Cohort", cohort_keuzes)
