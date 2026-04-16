@@ -68,10 +68,10 @@ st.sidebar.title("Filters")
 cohort_keuzes = ["Alle cohorten"] + sorted(data["selectiejaar"].unique().tolist())
 cohort = st.sidebar.selectbox("Cohort", cohort_keuzes)
 
-geslacht_keuzes = ["Alle"] + sorted(data["geslacht"].unique().tolist())
+geslacht_keuzes = ["Alle"] + sorted(data["geslacht"].dropna().unique().tolist())
 geslacht = st.sidebar.selectbox("Geslacht", geslacht_keuzes)
 
-vooropl_keuzes = ["Alle"] + sorted(data["hoogste_vooropleiding"].unique().tolist())
+vooropl_keuzes = ["Alle"] + sorted(data["hoogste_vooropleiding"].dropna().unique().tolist())
 vooropleiding = st.sidebar.selectbox("Vooropleiding", vooropl_keuzes)
 
 
@@ -251,6 +251,49 @@ with tab_scores:
     )
     st.dataframe(pd.DataFrame(sig_rijen), hide_index=True, width="stretch")
 
+    # VO-cijfer vs selectiescores
+    st.divider()
+    st.subheader("VO-eindcijfer vs selectiescores")
+    st.caption(
+        "Laat zien of de selectie-instrumenten iets anders meten dan schoolprestaties. "
+        "Alleen beschikbaar voor ingeschreven studenten (VO-cijfer uit 1CHO)."
+    )
+
+    df_vo = df[df["gem_eindcijfer_vo"].notna()]
+
+    col_vo, _ = st.columns([2, 6])
+    score_label_vo = col_vo.selectbox(
+        "Selectiescore (y-as)",
+        list(score_opties.keys()),
+        index=0,
+        key="scatter_vo_y",
+    )
+    score_var_vo = score_opties[score_label_vo]
+
+    fig_vo = px.scatter(
+        df_vo[df_vo["groep"].isin(["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"])],
+        x="gem_eindcijfer_vo",
+        y=score_var_vo,
+        color="groep",
+        color_discrete_map=GROEP_KLEUREN,
+        category_orders={"groep": GROEP_VOLGORDE},
+        labels={"gem_eindcijfer_vo": "VO-eindcijfer", score_var_vo: score_label_vo, "groep": ""},
+        opacity=0.55,
+        height=480,
+    )
+    fig_vo.update_traces(marker=dict(size=6))
+    fig_vo.update_layout(legend=dict(orientation="h", y=-0.15))
+    st.plotly_chart(fig_vo, width="stretch")
+
+    # Correlaties VO vs selectiescores
+    cor_rijen = []
+    for var, label in SCORES.items():
+        subset = df_vo[df_vo[var].notna()]
+        r = subset["gem_eindcijfer_vo"].corr(subset[var]).round(3)
+        cor_rijen.append({"Score": label, "r (Pearson)": r})
+    st.caption("Pearson correlatie: VO-eindcijfer vs selectiescore (ingeschreven studenten)")
+    st.dataframe(pd.DataFrame(cor_rijen), hide_index=True)
+
 
 # ── Tab 2: Verdeling ─────────────────────────────────────────────────────────
 with tab_overzicht:
@@ -266,8 +309,7 @@ with tab_overzicht:
     col1, col2, col3 = st.columns(3)
     for col, groep in zip([col1, col2, col3], GROEP_VOLGORDE):
         n = (df["groep"] == groep).sum()
-        pct = n / len(df) * 100 if len(df) > 0 else 0
-        col.metric(groep, n, f"{pct:.0f}%", delta_color="off")
+        col.metric(groep, n)
 
     st.divider()
 
@@ -296,6 +338,7 @@ with tab_overzicht:
 # ── Tab 3: Demografisch ───────────────────────────────────────────────────────
 with tab_demo:
     st.header("Demografisch profiel per groep")
+    st.caption("Achtergrondkenmerken komen uit 1CHO en zijn alleen beschikbaar voor ingeschreven studenten.")
     df = filter_data(data)
 
     col_g, col_h = st.columns(2)
@@ -356,6 +399,31 @@ with tab_demo:
     )
     fig5.update_layout(height=420, legend=dict(orientation="h", y=-0.2))
     st.plotly_chart(fig5, width="stretch")
+
+    # Instroom type
+    st.divider()
+    agg_i = (
+        df[df["instroom_type"].notna()]
+        .groupby(["groep", "instroom_type"], observed=True)
+        .size().reset_index(name="n")
+    )
+    totals_i = agg_i.groupby("groep")["n"].transform("sum")
+    agg_i["pct"] = (agg_i["n"] / totals_i * 100).round(1)
+    fig6 = px.bar(
+        agg_i, x="groep", y="pct", color="instroom_type",
+        barmode="stack",
+        color_discrete_map={
+            "direct":     "#3b82f6",
+            "tussenjaar": "#f59e0b",
+            "switcher":   "#8b5cf6",
+        },
+        category_orders={"instroom_type": ["direct", "tussenjaar", "switcher"]},
+        labels={"groep": "", "pct": "%", "instroom_type": "Instroom"},
+        title="Instroomtype per groep (%) — direct, tussenjaar, switcher",
+    )
+    fig6.update_layout(height=460, legend=dict(orientation="h", y=-0.2))
+    fix_xas_labels(fig6)
+    st.plotly_chart(fig6, width="stretch")
 
 
 # ── Tab 4: Aantallen ─────────────────────────────────────────────────────────
