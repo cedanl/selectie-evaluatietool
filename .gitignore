@@ -1,0 +1,15 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+renv/library/
+renv/staging/
+
+# Data (echte data nooit in git)
+data/real/
+data/raw/
+*.csv.gz
+
+# OS
+.DS_Store
+Thumbs.db
