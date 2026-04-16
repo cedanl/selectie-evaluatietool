@@ -201,31 +201,17 @@ with tab_overzicht:
     totals = agg.groupby("selectiejaar")["n"].transform("sum")
     agg["pct"] = (agg["n"] / totals * 100).round(1)
 
-    col_l, col_r = st.columns(2)
-
-    with col_l:
-        fig = px.bar(
-            agg, x="selectiejaar", y="n", color="groep",
-            barmode="stack",
-            color_discrete_map=GROEP_KLEUREN,
-            category_orders={"groep": GROEP_VOLGORDE},
-            labels={"selectiejaar": "Cohort", "n": "Aantal", "groep": ""},
-            title="Absoluut per cohort",
-        )
-        fig.update_layout(height=500, legend=dict(orientation="h", y=-0.2))
-        st.plotly_chart(fig, use_container_width=True)
-
-    with col_r:
-        fig2 = px.bar(
-            agg, x="selectiejaar", y="pct", color="groep",
-            barmode="stack",
-            color_discrete_map=GROEP_KLEUREN,
-            category_orders={"groep": GROEP_VOLGORDE},
-            labels={"selectiejaar": "Cohort", "pct": "Percentage (%)", "groep": ""},
-            title="Procentueel per cohort",
-        )
-        fig2.update_layout(height=500, legend=dict(orientation="h", y=-0.2))
-        st.plotly_chart(fig2, use_container_width=True)
+    fig = px.bar(
+        agg, x="selectiejaar", y="pct", color="groep",
+        barmode="stack",
+        color_discrete_map=GROEP_KLEUREN,
+        category_orders={"groep": GROEP_VOLGORDE},
+        labels={"selectiejaar": "Cohort", "pct": "Percentage (%)", "groep": ""},
+        custom_data=["n"],
+    )
+    fig.update_traces(hovertemplate="%{fullData.name}<br>%{y:.1f}%  (n=%{customdata[0]})<extra></extra>")
+    fig.update_layout(height=500, legend=dict(orientation="h", y=-0.15))
+    st.plotly_chart(fig, use_container_width=True)
 
 
 # ── Tab 3: Demografisch ───────────────────────────────────────────────────────
