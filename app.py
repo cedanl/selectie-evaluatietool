@@ -136,7 +136,7 @@ with tab_scores:
         violingap=0.3,
     )
     fix_xas_labels(fig_totaal)
-    st.plotly_chart(fig_totaal, use_container_width=True)
+    st.plotly_chart(fig_totaal, width="stretch")
 
     st.divider()
 
@@ -169,7 +169,7 @@ with tab_scores:
             margin=dict(t=50, b=10),
         )
         fix_xas_labels(fig)
-        col.plotly_chart(fig, use_container_width=True)
+        col.plotly_chart(fig, width="stretch")
 
     # Gemiddelden tabel
     st.divider()
@@ -183,7 +183,7 @@ with tab_scores:
     tabel_scores.columns = pd.MultiIndex.from_tuples(
         [(SCORES[var], "gem." if stat == "mean" else "SD") for var, stat in tabel_scores.columns]
     )
-    st.dataframe(tabel_scores, use_container_width=True)
+    st.dataframe(tabel_scores, width="stretch")
 
 
 # ── Tab 2: Verdeling ─────────────────────────────────────────────────────────
@@ -218,7 +218,7 @@ with tab_overzicht:
     )
     fig.update_traces(hovertemplate="%{fullData.name}<br>%{y:.1f}%  (n=%{customdata[0]})<extra></extra>")
     fig.update_layout(height=500, legend=dict(orientation="h", y=-0.15))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 # ── Tab 3: Demografisch ───────────────────────────────────────────────────────
@@ -243,7 +243,7 @@ with tab_demo:
         )
         fig3.update_layout(height=460, legend=dict(orientation="h", y=-0.2))
         fix_xas_labels(fig3)
-        st.plotly_chart(fig3, use_container_width=True)
+        st.plotly_chart(fig3, width="stretch")
 
     with col_h:
         agg_h = (
@@ -264,7 +264,7 @@ with tab_demo:
         )
         fig4.update_layout(height=460, legend=dict(orientation="h", y=-0.2))
         fix_xas_labels(fig4)
-        st.plotly_chart(fig4, use_container_width=True)
+        st.plotly_chart(fig4, width="stretch")
 
     # Vooropleiding: horizontale grouped bar — leesbaarder dan gestapeld met 6 kleuren
     agg_v = (
@@ -283,7 +283,7 @@ with tab_demo:
         title="Vooropleiding per groep (%)",
     )
     fig5.update_layout(height=420, legend=dict(orientation="h", y=-0.2))
-    st.plotly_chart(fig5, use_container_width=True)
+    st.plotly_chart(fig5, width="stretch")
 
 
 # ── Tab 4: Aantallen ─────────────────────────────────────────────────────────
@@ -299,4 +299,4 @@ with tab_aantallen:
         if groep not in tabel.columns:
             tabel[groep] = 0
     tabel["Totaal"] = tabel[list(GROEP_VOLGORDE)].sum(axis=1)
-    st.dataframe(tabel, use_container_width=True, hide_index=True)
+    st.dataframe(tabel, width="stretch", hide_index=True)
