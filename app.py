@@ -7,6 +7,7 @@ Data aanmaken: uv run python scripts/maak_data.py
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -282,6 +283,21 @@ with tab_scores:
         height=480,
     )
     fig_vo.update_traces(marker=dict(size=6))
+
+    # Trendlijn per groep via numpy (geen statsmodels nodig)
+    for groep in ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]:
+        sub = df_vo[df_vo["groep"] == groep][["gem_eindcijfer_vo", score_var_vo]].dropna()
+        if len(sub) >= 2:
+            m, b = np.polyfit(sub["gem_eindcijfer_vo"], sub[score_var_vo], 1)
+            x_line = np.linspace(sub["gem_eindcijfer_vo"].min(), sub["gem_eindcijfer_vo"].max(), 50)
+            fig_vo.add_trace(go.Scatter(
+                x=x_line, y=m * x_line + b,
+                mode="lines",
+                line=dict(color=GROEP_KLEUREN[groep], width=2, dash="dot"),
+                showlegend=False,
+                hoverinfo="skip",
+            ))
+
     fig_vo.update_layout(legend=dict(orientation="h", y=-0.15))
     st.plotly_chart(fig_vo, width="stretch")
 
@@ -291,7 +307,13 @@ with tab_scores:
         subset = df_vo[df_vo[var].notna()]
         r = subset["gem_eindcijfer_vo"].corr(subset[var]).round(3)
         cor_rijen.append({"Score": label, "r (Pearson)": r})
-    st.caption("Pearson correlatie: VO-eindcijfer vs selectiescore (ingeschreven studenten)")
+    st.caption(
+        "Pearson r meet de lineaire samenhang tussen VO-eindcijfer en selectiescore "
+        "(alleen ingeschreven studenten, afkomstig uit 1CHO). "
+        "r = 0: geen verband — het instrument meet iets anders dan schoolprestaties. "
+        "r = 1: perfect verband — selectie is grotendeels gebaseerd op dezelfde dimensie als VO-cijfers. "
+        "Een lage r is wenselijk: het instrument voegt informatie toe die VO-cijfers niet geven."
+    )
     st.dataframe(pd.DataFrame(cor_rijen), hide_index=True)
 
 
