@@ -19,7 +19,8 @@ in 1CHO.
 
 ```
 evaluatietool-voorbeeld/
-├── app.py                          # Streamlit dashboard
+├── app.py                          # Dash dashboard
+├── assets/                         # Statische bestanden (CSS, logo)
 ├── pyproject.toml                  # Python dependencies (uv)
 ├── uv.lock
 └── data/
@@ -33,8 +34,10 @@ evaluatietool-voorbeeld/
 
 ```bash
 uv sync
-uv run streamlit run app.py
+uv run python app.py
 ```
+
+De app draait standaard op http://localhost:8050.
 
 ## Data
 
