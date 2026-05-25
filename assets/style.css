@@ -99,3 +99,36 @@ body {
     border: 1px solid #e2e8f0 !important;
     margin-bottom: 0.75rem;
 }
+
+/* Upload overlay */
+.upload-overlay {
+    position: fixed;
+    inset: 0;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    text-align: center;
+}
+
+.upload-card {
+    width: 100%;
+    max-width: 460px;
+    padding: 0 1rem;
+}
+
+.upload-zone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: #64748b;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.upload-zone:hover {
+    border-color: #94a3b8;
+    background: #f1f5f9;
+}
