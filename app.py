@@ -206,31 +206,6 @@ UPLOAD_OVERLAY = html.Div(
                     ),
                     className="mb-3 text-start",
                 ),
-                dbc.Card(
-                    dbc.CardBody(
-                        [
-                            html.H6("Selectiescores uploaden (optioneel)", className="mb-1"),
-                            html.P(
-                                "Upload selectiescores_voorbeeld.csv voor analyse op item- en criterium-niveau.",
-                                className="text-muted small mb-3",
-                            ),
-                            dcc.Upload(
-                                id="upload-scores",
-                                children=html.Div(
-                                    [
-                                        "Sleep een bestand hierheen of ",
-                                        html.A("blader", style={"cursor": "pointer"}),
-                                    ]
-                                ),
-                                className="upload-zone",
-                                accept=".csv",
-                                max_size=50 * 1024 * 1024,
-                            ),
-                            html.Div(id="upload-scores-status", className="mt-2"),
-                        ]
-                    ),
-                    className="mb-3 text-start",
-                ),
                 html.Hr(className="my-3"),
                 html.P("Nog geen eigen data?", className="text-muted small mb-2"),
                 dbc.Button(
@@ -627,56 +602,38 @@ def _parse_csv(contents):
     Output("data-store", "data"),
     Output("scores-store", "data"),
     Output("upload-status", "children"),
-    Output("upload-scores-status", "children"),
     Input("upload-data", "contents"),
-    Input("upload-scores", "contents"),
     Input("btn-demodata", "n_clicks"),
     Input("btn-reset", "n_clicks"),
     State("upload-data", "filename"),
-    State("upload-scores", "filename"),
     prevent_initial_call=True,
 )
-def verwerk_upload(data_contents, scores_contents, _demo, _reset, data_filename, scores_filename):
+def verwerk_upload(contents, _demo, _reset, filename):
     trigger = ctx.triggered_id
 
     if trigger == "btn-reset":
-        return None, None, "", ""
+        return None, None, ""
 
     if trigger == "btn-demodata":
         scores_json = df_scores_demo.to_json(orient="split", date_format="iso") if df_scores_demo is not None else None
-        return df_demo.to_json(orient="split", date_format="iso"), scores_json, "", ""
+        return df_demo.to_json(orient="split", date_format="iso"), scores_json, ""
 
-    if trigger == "upload-data":
-        if data_contents is None:
-            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
-        try:
-            df = _parse_csv(data_contents)
-        except Exception as e:
-            return dash.no_update, dash.no_update, dbc.Alert(f"Kan bestand niet lezen: {e}", color="danger", className="small py-2"), dash.no_update
-        missing = [c for c in VERPLICHTE_KOLOMMEN if c not in df.columns]
-        if missing:
-            return dash.no_update, dash.no_update, dbc.Alert(
-                f"Ontbrekende kolommen: {', '.join(missing)}", color="danger", className="small py-2",
-            ), dash.no_update
-        df["groep"] = df["groep"].fillna("Niet gestart")
-        return df.to_json(orient="split", date_format="iso"), dash.no_update, "", dash.no_update
+    if contents is None:
+        return dash.no_update, dash.no_update, dash.no_update
 
-    if trigger == "upload-scores":
-        if scores_contents is None:
-            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
-        try:
-            df = _parse_csv(scores_contents)
-        except Exception as e:
-            return dash.no_update, dash.no_update, dash.no_update, dbc.Alert(f"Kan bestand niet lezen: {e}", color="danger", className="small py-2")
-        verplicht = ["kandidaat_id", "instrument", "item", "criterium", "score"]
-        missing = [c for c in verplicht if c not in df.columns]
-        if missing:
-            return dash.no_update, dash.no_update, dash.no_update, dbc.Alert(
-                f"Ontbrekende kolommen: {', '.join(missing)}", color="danger", className="small py-2",
-            )
-        return dash.no_update, df.to_json(orient="split", date_format="iso"), dash.no_update, dbc.Alert(f"{scores_filename} geladen.", color="success", className="small py-2")
+    try:
+        df = _parse_csv(contents)
+    except Exception as e:
+        return dash.no_update, dash.no_update, dbc.Alert(f"Kan bestand niet lezen: {e}", color="danger", className="small py-2")
 
-    return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+    missing = [c for c in VERPLICHTE_KOLOMMEN if c not in df.columns]
+    if missing:
+        return dash.no_update, dash.no_update, dbc.Alert(
+            f"Ontbrekende kolommen: {', '.join(missing)}", color="danger", className="small py-2",
+        )
+
+    df["groep"] = df["groep"].fillna("Niet gestart")
+    return df.to_json(orient="split", date_format="iso"), None, ""
 
 
 # ── Sidebar callbacks ──────────────────────────────────────────────────────────
