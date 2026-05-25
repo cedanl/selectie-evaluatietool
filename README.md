@@ -23,11 +23,14 @@ evaluatietool-voorbeeld/
 ├── assets/                         # Statische bestanden (CSS, logo)
 ├── pyproject.toml                  # Python dependencies (uv)
 ├── uv.lock
+├── scripts/
+│   └── maak_data.py                # Genereert synthetische data (dev/demo)
 └── data/
     └── synthetic/
-        ├── selectiedata_voorbeeld.csv         # Synthetische selectiedata
+        ├── selectiedata_voorbeeld.csv         # Synthetische selectiedata (breed: een rij per kandidaat)
+        ├── selectiescores_voorbeeld.csv       # Scores per instrument, item en criterium (lang formaat)
         ├── EV_DEMO_selectieopleiding.csv      # Synthetische 1CHO-data (raw EV formaat)
-        └── gekoppeld.parquet                  # Gekoppelde dataset voor het dashboard
+        └── analysedata.csv                    # Startpunt voor het dashboard (selectie + 1CHO gekoppeld)
 ```
 
 ## Gebruik
@@ -43,9 +46,46 @@ De app draait standaard op http://localhost:8050.
 
 ### Selectiedata
 
-`selectiedata_voorbeeld.csv` simuleert een veelvoorkomend selectieformat met drie
-instrumenten (motivatiebrief, CV, interview) en een gewogen totaalscore. Echte
-selectiedata verschilt per opleiding in formaat en variabelen.
+Een opleiding levert selectiedata aan op instrument-, item- en criterium-niveau.
+Dat is het verwachte invoerformaat: een rij per kandidaat per instrument per item
+per criterium.
+
+**`selectiescores_voorbeeld.csv`** is het verwachte invoerformaat:
+
+| Kolom | Type | Beschrijving |
+|---|---|---|
+| `kandidaat_id` | integer | Unieke identifier per kandidaat |
+| `persoonsgebonden_nummer` | float | Koppelsleutel naar 1CHO (leeg als niet geselecteerd) |
+| `selectiejaar` | integer | Jaar van de selectieprocedure |
+| `opleiding` | tekst | Naam van de opleiding |
+| `instellingscode` | tekst | Instelling-identifier |
+| `instrument` | tekst | Naam van het selectie-instrument (bijv. interview) |
+| `item` | tekst | Onderdeel binnen het instrument (bijv. vraag_1) |
+| `criterium` | tekst | Beoordelingscriterium voor dit item (bijv. inhoud) |
+| `score` | float | Score op dit criterium (schaal 1-10) |
+| `selectie_uitkomst` | tekst | geselecteerd / reserve / niet geselecteerd |
+
+Voorbeeld:
+
+```
+kandidaat_id;persoonsgebonden_nummer;selectiejaar;opleiding;instellingscode;instrument;item;criterium;score;selectie_uitkomst
+10001;10001.0;2021;B Gezondheidswetenschappen;DEMO;interview;vraag_1;inhoud;7.2;geselecteerd
+10001;10001.0;2021;B Gezondheidswetenschappen;DEMO;interview;vraag_1;presentatie;6.8;geselecteerd
+10001;10001.0;2021;B Gezondheidswetenschappen;DEMO;motivatiebrief;motivatie;kwaliteit;7.0;geselecteerd
+10002;;2021;B Gezondheidswetenschappen;DEMO;interview;vraag_1;inhoud;4.9;niet geselecteerd
+```
+
+De instrumenten in de synthetische data:
+
+| Instrument | Items | Criteria per item |
+|---|---|---|
+| interview | vraag_1, vraag_2, vraag_3 | inhoud, presentatie |
+| motivatiebrief | motivatie, aansluiting | kwaliteit |
+| cv | opleiding, ervaring | relevantie |
+
+**`selectiedata_voorbeeld.csv`** is een intern afgeleid bestand met geaggregeerde
+scores per instrument (gemiddelde over items en criteria) en wordt gebruikt in de
+koppelstap. Gebruikers hoeven dit bestand niet zelf aan te leveren.
 
 ### 1CHO-data
 
@@ -69,4 +109,4 @@ een beveiligd proces verlopen.
 
 Vervang de bestanden in `data/synthetic/` door echte data en pas het koppelproces
 aan. De 1CHO-data (`EV_*.csv`) komt rechtstreeks uit de output van 1cijferho.
-Zorg dat `gekoppeld.parquet` dezelfde kolomstructuur heeft als de synthetische versie.
+Zorg dat `analysedata.csv` dezelfde kolomstructuur heeft als de synthetische versie.

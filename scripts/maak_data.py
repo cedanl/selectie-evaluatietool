@@ -19,18 +19,59 @@ RNG = np.random.default_rng(2024)
 DATA_DIR = Path("data/synthetic")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-# Parameters — aantal kandidaten en geselecteerden verschilt per cohort,
-# zoals in de praktijk (meer of minder aanmeldingen per jaar, vaste capaciteit).
 JAREN = [2021, 2022, 2023]
-N_KANDIDATEN_PER_JAAR  = [342, 418, 391]   # aanmeldingen variëren per cohort
-N_GESELECTEERD_PER_JAAR = [95, 110, 100]   # capaciteit varieert licht
+N_KANDIDATEN_PER_JAAR   = [342, 418, 391]
+N_GESELECTEERD_PER_JAAR = [95, 110, 100]
 OPLEIDING = "B Gezondheidswetenschappen"
 INSTELLINGSCODE = "DEMO"
 PGN_START = 10000
 
+# Selectie-instrumenten met items, criteria, latente lading, ruis en wegingsfactor.
+# De totaalscore is het gewogen gemiddelde van de instrument-scores.
+INSTRUMENT_DEFINITIE = {
+    "interview": {
+        "lading":  1.3,
+        "ruis":    0.8,
+        "gewicht": 0.50,
+        "items": {
+            "vraag_1": ["inhoud", "presentatie"],
+            "vraag_2": ["inhoud", "presentatie"],
+            "vraag_3": ["inhoud", "presentatie"],
+        },
+    },
+    "motivatiebrief": {
+        "lading":  1.2,
+        "ruis":    0.9,
+        "gewicht": 0.30,
+        "items": {
+            "motivatie":   ["kwaliteit"],
+            "aansluiting": ["kwaliteit"],
+        },
+    },
+    "cv": {
+        "lading":  1.0,
+        "ruis":    1.0,
+        "gewicht": 0.20,
+        "items": {
+            "opleiding": ["relevantie"],
+            "ervaring":  ["relevantie"],
+        },
+    },
+}
 
-def maak_selectiedata() -> pd.DataFrame:
+
+def maak_selectiedata() -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Genereert selectiedata op twee niveaus:
+      - breed formaat (een rij per kandidaat) met geaggregeerde scores
+      - lang formaat (een rij per kandidaat x instrument x item x criterium)
+
+    Returns:
+        selectiedata: DataFrame met een rij per kandidaat
+        selectiescores: DataFrame met scores per instrument, item en criterium
+    """
     cohorten = []
+    scores_lang = []
 
     for i, jaar in enumerate(JAREN):
         pgn_offset = PGN_START + sum(N_KANDIDATEN_PER_JAAR[:i])
@@ -58,7 +99,6 @@ def maak_selectiedata() -> pd.DataFrame:
         )
         leeftijd = np.clip(RNG.normal(19.2, 1.4, n).round().astype(int), 17, 26)
 
-        # VO-cijfer correleert licht met vooropleiding
         gem_vo_base = np.where(vooropl == "vwo profiel natuur & gezondheid", 7.2,
                      np.where(vooropl == "vwo profiel natuur & techniek", 7.1,
                      np.where(vooropl == "vwo profiel cultuur & maatschappij", 6.9,
@@ -66,12 +106,41 @@ def maak_selectiedata() -> pd.DataFrame:
                      np.where(vooropl == "hbo-propedeuse", 6.5, 6.4)))))
         gem_vo = np.clip(RNG.normal(gem_vo_base, 0.6), 4, 10).round(1)
 
-        # Selectiescores correleren via latente kwaliteit
+        kandidaat_id = pgn_offset + np.arange(1, n + 1)
         latent = RNG.normal(0, 1, n)
-        motivatiescore  = np.clip((5 + 1.2 * latent + RNG.normal(0, 0.8, n)).round(1), 1, 10)
-        cv_score        = np.clip((5 + 1.0 * latent + RNG.normal(0, 0.9, n)).round(1), 1, 10)
-        interview_score = np.clip((5 + 1.3 * latent + RNG.normal(0, 0.7, n)).round(1), 1, 10)
-        totaalscore     = (0.30 * motivatiescore + 0.20 * cv_score + 0.50 * interview_score).round(2)
+
+        # Genereer scores per instrument, item en criterium via gedeelde latente kwaliteit.
+        # Instrument-score = gemiddelde over alle bijbehorende item/criterium-scores.
+        instrument_scores = {}
+        scores_lang_cohort = []
+        for instrument, definitie in INSTRUMENT_DEFINITIE.items():
+            item_arrays = []
+            for item, criteria in definitie["items"].items():
+                for criterium in criteria:
+                    score = np.clip(
+                        (5 + definitie["lading"] * latent
+                         + RNG.normal(0, definitie["ruis"], n)).round(1),
+                        1, 10,
+                    )
+                    item_arrays.append(score)
+                    scores_lang_cohort.append(pd.DataFrame({
+                        "kandidaat_id": kandidaat_id,
+                        "selectiejaar":  jaar,
+                        "instrument":    instrument,
+                        "item":          item,
+                        "criterium":     criterium,
+                        "score":         score,
+                    }))
+            instrument_scores[instrument] = np.mean(item_arrays, axis=0).round(2)
+
+        interview_score = instrument_scores["interview"]
+        motivatiescore  = instrument_scores["motivatiebrief"]
+        cv_score        = instrument_scores["cv"]
+        totaalscore     = (
+            INSTRUMENT_DEFINITIE["interview"]["gewicht"]      * interview_score
+            + INSTRUMENT_DEFINITIE["motivatiebrief"]["gewicht"] * motivatiescore
+            + INSTRUMENT_DEFINITIE["cv"]["gewicht"]             * cv_score
+        ).round(2)
 
         rangorde = pd.Series(totaalscore).rank(ascending=False, method="first").astype(int).values
 
@@ -80,12 +149,27 @@ def maak_selectiedata() -> pd.DataFrame:
             np.where(rangorde <= n_geselecteerd + 20, "reserve", "niet geselecteerd")
         )
 
-        kandidaat_id = pgn_offset + np.arange(1, n + 1)
         pgn = np.where(
             np.isin(selectie_uitkomst, ["geselecteerd", "reserve"]),
             kandidaat_id.astype(float),
             np.nan,
         )
+
+        # Voeg kandidaatmetadata toe aan de score-rijen zodat het bestand
+        # als zelfstandig invoerformaat bruikbaar is.
+        meta = pd.DataFrame({
+            "kandidaat_id":            kandidaat_id,
+            "persoonsgebonden_nummer": pgn,
+            "opleiding":               OPLEIDING,
+            "instellingscode":         INSTELLINGSCODE,
+            "selectie_uitkomst":       selectie_uitkomst,
+        })
+        cohort_scores = pd.concat(scores_lang_cohort, ignore_index=True).merge(
+            meta, on="kandidaat_id"
+        )[["kandidaat_id", "persoonsgebonden_nummer", "selectiejaar", "opleiding",
+           "instellingscode", "instrument", "item", "criterium", "score",
+           "selectie_uitkomst"]]
+        scores_lang.append(cohort_scores)
 
         cohorten.append(pd.DataFrame({
             "kandidaat_id":              kandidaat_id,
@@ -106,11 +190,12 @@ def maak_selectiedata() -> pd.DataFrame:
             "selectie_uitkomst":         selectie_uitkomst,
         }))
 
-    return pd.concat(cohorten, ignore_index=True)
+    selectiedata   = pd.concat(cohorten, ignore_index=True)
+    selectiescores = pd.concat(scores_lang, ignore_index=True)
+    return selectiedata, selectiescores
 
 
 # Coderingen die overeenkomen met het raw EV_* formaat van 1cijferho
-# Bron: EV299XX24_DEMO.csv + Dec_* bestanden
 GESLACHT_CODES = {"vrouw": "V", "man": "M", "anders": "O"}
 
 VOOROPLEIDING_CODES = {
@@ -122,7 +207,6 @@ VOOROPLEIDING_CODES = {
     "anders":                              402,
 }
 
-# herkomst_indikking_volgens_cbs_definitie (1CHO/CBS codering)
 HERKOMST_CODES = {
     "Nederland":            1,
     "westerse achtergrond": 2,
@@ -132,21 +216,14 @@ HERKOMST_CODES = {
     "overig niet-westers":  7,
 }
 
-# Omgekeerde mappings voor decodering in de koppelstap
-GESLACHT_DECODE    = {v: k for k, v in GESLACHT_CODES.items()}
-HERKOMST_DECODE    = {v: k for k, v in HERKOMST_CODES.items()}
+GESLACHT_DECODE      = {v: k for k, v in GESLACHT_CODES.items()}
+HERKOMST_DECODE      = {v: k for k, v in HERKOMST_CODES.items()}
 VOOROPLEIDING_DECODE = {v: k for k, v in VOOROPLEIDING_CODES.items()}
 
 
 def maak_1cho_data(selectiedata: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Genereert 1CHO-inschrijvingsrijen in het raw EV_* formaat van 1cijferho.
-
-    Kolommen gebruiken de numerieke en letter-codes zoals in de echte data:
-      geslacht V/M, opleidingsvorm 1/2, hoogste_vooropleiding numeriek, etc.
-
-    De groepsindeling wordt ook teruggegeven: tijdens generatie weten we al
-    wie doorstroomt, dus een tweede lookup achteraf is niet nodig.
 
     Returns:
         cho_data: inschrijvingsrijen (raw EV-formaat)
@@ -229,25 +306,21 @@ def decodeer_cho(cho_data: pd.DataFrame) -> pd.DataFrame:
 
 if __name__ == "__main__":
     print("Selectiedata genereren...")
-    selectiedata = maak_selectiedata()
+    selectiedata, selectiescores = maak_selectiedata()
     selectiedata.to_csv(DATA_DIR / "selectiedata_voorbeeld.csv", index=False, sep=";")
+    selectiescores.to_csv(DATA_DIR / "selectiescores_voorbeeld.csv", index=False, sep=";")
     print(f"  {len(selectiedata)} kandidaten, {selectiedata['selectie_uitkomst'].value_counts().to_dict()}")
+    print(f"  {len(selectiescores)} score-rijen ({selectiescores['instrument'].value_counts().to_dict()})")
 
     print("1CHO-data genereren + groepen bepalen...")
     cho_data, groep_per_pgn = maak_1cho_data(selectiedata)
-    # Sla raw format op — zelfde structuur als echte EV_*.csv van 1cijferho
     cho_data.to_csv(DATA_DIR / "EV_DEMO_selectieopleiding.csv", index=False, sep=";")
     jaar1 = (cho_data["verblijfsjaar_hoger_onderwijs"] == 1).sum()
     jaar2 = (cho_data["verblijfsjaar_hoger_onderwijs"] == 2).sum()
-    print(f"  {len(cho_data)} rijen — jaar 1: {jaar1}, jaar 2: {jaar2}, uitval: {jaar1 - jaar2}")
+    print(f"  {len(cho_data)} rijen - jaar 1: {jaar1}, jaar 2: {jaar2}, uitval: {jaar1 - jaar2}")
 
-    # Decodeer CHO voor gebruik in het dashboard.
-    # In een echte pipeline: lees de Dec_* bestanden van 1cijferho voor de mapping.
     cho_decoded = decodeer_cho(cho_data[cho_data["verblijfsjaar_hoger_onderwijs"] == 1])
 
-    # Architectuurkeuze: alle achtergrondkenmerken komen uit 1CHO.
-    # Selectiedata levert alleen scores en identifiers.
-    # Groep "Niet gestart" heeft daardoor NaN op demografische kolommen.
     sel_cols = [
         "kandidaat_id", "persoonsgebonden_nummer", "selectiejaar",
         "opleiding", "instellingscode",
@@ -294,6 +367,6 @@ if __name__ == "__main__":
             "diplomajaar_van_de_hoogste_vooropl_voor_het_ho",
         ])
     )
-    gekoppeld.to_parquet(DATA_DIR / "gekoppeld.parquet", index=False)
+    gekoppeld.to_csv(DATA_DIR / "analysedata.csv", index=False, sep=";")
     print(gekoppeld.groupby(["selectiejaar", "groep"]).size().unstack(fill_value=0).to_string())
-    print("\nKlaar. Draai nu: uv run streamlit run app.py")
+    print("\nKlaar. Draai nu: uv run python app.py")
