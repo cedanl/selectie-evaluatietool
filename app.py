@@ -17,7 +17,7 @@ import dash
 from dash import dcc, html, dash_table, Input, Output
 import dash_bootstrap_components as dbc
 
-DATA_PATH = Path("data/synthetic/gekoppeld.parquet")
+DATA_PATH = Path("data/synthetic/analysedata.csv")
 
 GROEP_VOLGORDE = [
     "Niet gestart",
@@ -47,7 +47,7 @@ SCORE_OPTIES = [
     {"label": "Totaalscore", "value": "totaalscore"},
 ]
 
-df_global = pd.read_parquet(DATA_PATH)
+df_global = pd.read_csv(DATA_PATH, sep=";")
 df_global["groep"] = pd.Categorical(
     df_global["groep"], categories=GROEP_VOLGORDE, ordered=True
 )
