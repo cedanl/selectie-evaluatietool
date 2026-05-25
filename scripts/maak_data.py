@@ -112,6 +112,7 @@ def maak_selectiedata() -> tuple[pd.DataFrame, pd.DataFrame]:
         # Genereer scores per instrument, item en criterium via gedeelde latente kwaliteit.
         # Instrument-score = gemiddelde over alle bijbehorende item/criterium-scores.
         instrument_scores = {}
+        scores_lang_cohort = []
         for instrument, definitie in INSTRUMENT_DEFINITIE.items():
             item_arrays = []
             for item, criteria in definitie["items"].items():
@@ -122,7 +123,7 @@ def maak_selectiedata() -> tuple[pd.DataFrame, pd.DataFrame]:
                         1, 10,
                     )
                     item_arrays.append(score)
-                    scores_lang.append(pd.DataFrame({
+                    scores_lang_cohort.append(pd.DataFrame({
                         "kandidaat_id": kandidaat_id,
                         "selectiejaar":  jaar,
                         "instrument":    instrument,
@@ -153,6 +154,22 @@ def maak_selectiedata() -> tuple[pd.DataFrame, pd.DataFrame]:
             kandidaat_id.astype(float),
             np.nan,
         )
+
+        # Voeg kandidaatmetadata toe aan de score-rijen zodat het bestand
+        # als zelfstandig invoerformaat bruikbaar is.
+        meta = pd.DataFrame({
+            "kandidaat_id":            kandidaat_id,
+            "persoonsgebonden_nummer": pgn,
+            "opleiding":               OPLEIDING,
+            "instellingscode":         INSTELLINGSCODE,
+            "selectie_uitkomst":       selectie_uitkomst,
+        })
+        cohort_scores = pd.concat(scores_lang_cohort, ignore_index=True).merge(
+            meta, on="kandidaat_id"
+        )[["kandidaat_id", "persoonsgebonden_nummer", "selectiejaar", "opleiding",
+           "instellingscode", "instrument", "item", "criterium", "score",
+           "selectie_uitkomst"]]
+        scores_lang.append(cohort_scores)
 
         cohorten.append(pd.DataFrame({
             "kandidaat_id":              kandidaat_id,

@@ -46,57 +46,33 @@ De app draait standaard op http://localhost:8050.
 
 ### Selectiedata
 
-De synthetische selectiedata bestaat uit twee bestanden die samen het verwachte
-format voor echte data illustreren.
+Een opleiding levert selectiedata aan op instrument-, item- en criterium-niveau.
+Dat is het verwachte invoerformaat: een rij per kandidaat per instrument per item
+per criterium.
 
-**`selectiedata_voorbeeld.csv`** heeft een rij per kandidaat met geaggregeerde
-scores per instrument en een gewogen totaalscore:
+**`selectiescores_voorbeeld.csv`** is het verwachte invoerformaat:
 
 | Kolom | Type | Beschrijving |
 |---|---|---|
 | `kandidaat_id` | integer | Unieke identifier per kandidaat |
-| `persoonsgebonden_nummer` | float | Koppelsleutel naar 1CHO (leeg als niet gestart) |
+| `persoonsgebonden_nummer` | float | Koppelsleutel naar 1CHO (leeg als niet geselecteerd) |
 | `selectiejaar` | integer | Jaar van de selectieprocedure |
 | `opleiding` | tekst | Naam van de opleiding |
 | `instellingscode` | tekst | Instelling-identifier |
-| `interview_score` | float | Gemiddelde score over alle interview-items en criteria |
-| `motivatiescore` | float | Gemiddelde score over alle motivatiebrief-items en criteria |
-| `cv_score` | float | Gemiddelde score over alle cv-items en criteria |
-| `totaalscore` | float | Gewogen totaal (interview 50%, motivatiebrief 30%, cv 20%) |
-| `rangorde` | integer | Rangorde op basis van totaalscore (1 = hoogste) |
+| `instrument` | tekst | Naam van het selectie-instrument (bijv. interview) |
+| `item` | tekst | Onderdeel binnen het instrument (bijv. vraag_1) |
+| `criterium` | tekst | Beoordelingscriterium voor dit item (bijv. inhoud) |
+| `score` | float | Score op dit criterium (schaal 1-10) |
 | `selectie_uitkomst` | tekst | geselecteerd / reserve / niet geselecteerd |
 
 Voorbeeld:
 
 ```
-kandidaat_id;persoonsgebonden_nummer;selectiejaar;opleiding;instellingscode;motivatiescore;cv_score;interview_score;totaalscore;rangorde;selectie_uitkomst
-10001;10001.0;2021;B Gezondheidswetenschappen;DEMO;6.85;6.40;7.12;6.96;12;geselecteerd
-10002;10002.0;2021;B Gezondheidswetenschappen;DEMO;5.20;5.75;4.98;5.23;87;niet geselecteerd
-10003;;2021;B Gezondheidswetenschappen;DEMO;4.90;5.10;5.30;5.13;102;niet geselecteerd
-```
-
-**`selectiescores_voorbeeld.csv`** heeft een rij per kandidaat per instrument per
-item per criterium en is de granulaire bron waaruit de bovenstaande scores zijn
-afgeleid:
-
-| Kolom | Type | Beschrijving |
-|---|---|---|
-| `kandidaat_id` | integer | Unieke identifier per kandidaat |
-| `selectiejaar` | integer | Jaar van de selectieprocedure |
-| `instrument` | tekst | interview / motivatiebrief / cv |
-| `item` | tekst | Onderdeel binnen het instrument (bijv. vraag_1, motivatie) |
-| `criterium` | tekst | Beoordelingscriterium voor dit item (bijv. inhoud, kwaliteit) |
-| `score` | float | Score op dit criterium (schaal 1-10) |
-
-Voorbeeld van de granulaire structuur:
-
-```
-kandidaat_id;selectiejaar;instrument;item;criterium;score
-10001;2021;interview;vraag_1;inhoud;7.2
-10001;2021;interview;vraag_1;presentatie;6.8
-10001;2021;interview;vraag_2;inhoud;8.1
-10001;2021;motivatiebrief;motivatie;kwaliteit;7.0
-10001;2021;cv;opleiding;relevantie;6.5
+kandidaat_id;persoonsgebonden_nummer;selectiejaar;opleiding;instellingscode;instrument;item;criterium;score;selectie_uitkomst
+10001;10001.0;2021;B Gezondheidswetenschappen;DEMO;interview;vraag_1;inhoud;7.2;geselecteerd
+10001;10001.0;2021;B Gezondheidswetenschappen;DEMO;interview;vraag_1;presentatie;6.8;geselecteerd
+10001;10001.0;2021;B Gezondheidswetenschappen;DEMO;motivatiebrief;motivatie;kwaliteit;7.0;geselecteerd
+10002;;2021;B Gezondheidswetenschappen;DEMO;interview;vraag_1;inhoud;4.9;niet geselecteerd
 ```
 
 De instrumenten in de synthetische data:
@@ -106,6 +82,10 @@ De instrumenten in de synthetische data:
 | interview | vraag_1, vraag_2, vraag_3 | inhoud, presentatie |
 | motivatiebrief | motivatie, aansluiting | kwaliteit |
 | cv | opleiding, ervaring | relevantie |
+
+**`selectiedata_voorbeeld.csv`** is een intern afgeleid bestand met geaggregeerde
+scores per instrument (gemiddelde over items en criteria) en wordt gebruikt in de
+koppelstap. Gebruikers hoeven dit bestand niet zelf aan te leveren.
 
 ### 1CHO-data
 
