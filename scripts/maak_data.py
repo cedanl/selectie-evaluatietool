@@ -324,8 +324,6 @@ if __name__ == "__main__":
     sel_cols = [
         "kandidaat_id", "persoonsgebonden_nummer", "selectiejaar",
         "opleiding", "instellingscode",
-        "motivatiescore", "cv_score", "interview_score",
-        "totaalscore", "rangorde", "selectie_uitkomst",
     ]
     cho_cols = [
         "persoonsgebonden_nummer",
@@ -367,6 +365,11 @@ if __name__ == "__main__":
             "diplomajaar_van_de_hoogste_vooropl_voor_het_ho",
         ])
     )
-    gekoppeld.to_csv(DATA_DIR / "analysedata.csv", index=False, sep=";")
+    studiesucces_cols = [
+        "kandidaat_id", "selectiejaar", "opleiding", "instellingscode",
+        "groep", "geslacht", "herkomst", "hoogste_vooropleiding",
+        "gem_eindcijfer_vo", "instroom_type",
+    ]
+    gekoppeld[studiesucces_cols].to_csv(DATA_DIR / "studiesucces_data.csv", index=False, sep=";")
     print(gekoppeld.groupby(["selectiejaar", "groep"]).size().unstack(fill_value=0).to_string())
     print("\nKlaar. Draai nu: uv run python app.py")

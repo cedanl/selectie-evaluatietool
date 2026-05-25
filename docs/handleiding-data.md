@@ -1,11 +1,11 @@
 # Handleiding: data klaarmaken voor de evaluatietool
 
-De evaluatietool werkt met twee bestanden die je als instelling zelf aanlevert:
+De evaluatietool werkt met twee bestanden die je samen in het dashboard uploadt:
 
-- `selectiescores_voorbeeld.csv` - scores op instrument-, item- en criterium-niveau
-- `EV_*.csv` - raw 1CHO-uitvoer voor je opleiding
+- `selectiescores.csv` - scores per kandidaat op instrument-, item- en criterium-niveau
+- `studiesucces_data.csv` - studieuitkomsten en achtergrondkenmerken per kandidaat uit 1CHO
 
-Uit deze twee bestanden wordt `analysedata.csv` gegenereerd, het bestand dat je in het dashboard uploadt.
+De bestanden worden in het dashboard gekoppeld op `kandidaat_id`. Zorg dat dit veld in beide bestanden overeenkomt.
 
 ---
 
@@ -44,9 +44,44 @@ kandidaat_id;persoonsgebonden_nummer;selectiejaar;opleiding;instellingscode;inst
 
 Kandidaat 10002 heeft geen `persoonsgebonden_nummer` omdat die niet geselecteerd is en dus niet in 1CHO voorkomt.
 
-### 1CHO-data
+### Studiesuccesdata
 
-Het raw EV-bestand van 1cijferho voor je opleiding. Dat bestand heeft een naam als `EV_DEMO_selectieopleiding.csv` en bevat een rij per student per inschrijvingsjaar. De koppelsleutel is `persoonsgebonden_nummer`.
+Een rij per kandidaat. Bevat de studieuitkomst en demografische achtergrondkenmerken uit 1CHO. Dit bestand wordt gegenereerd door het koppelscript van je instelling.
+
+Verplichte kolommen:
+
+| Kolom | Type | Beschrijving |
+|---|---|---|
+| `kandidaat_id` | integer | Koppelsleutel met selectiescores |
+| `selectiejaar` | integer | Jaar van de selectieprocedure |
+| `groep` | tekst | `Niet gestart` / `Gestart, niet naar jaar 2` / `Doorgestroomd naar jaar 2` |
+
+Aanbevolen kolommen (voor demografische analyses):
+
+| Kolom | Type | Beschrijving |
+|---|---|---|
+| `opleiding` | tekst | Naam van de opleiding |
+| `instellingscode` | tekst | Instelling-identifier |
+| `geslacht` | tekst | Geslacht van de kandidaat |
+| `herkomst` | tekst | Herkomst volgens CBS-definitie |
+| `hoogste_vooropleiding` | tekst | Hoogste vooropleiding voor het HO |
+| `gem_eindcijfer_vo` | getal | Gemiddeld eindexamencijfer VO |
+| `instroom_type` | tekst | `direct` / `tussenjaar` / `switcher` |
+
+Scheidingsteken: puntkomma (`;`). Bestandsformaat: CSV.
+
+Voorbeeld:
+
+```
+kandidaat_id;selectiejaar;opleiding;instellingscode;groep;geslacht;herkomst;hoogste_vooropleiding;gem_eindcijfer_vo;instroom_type
+10001;2024;B Gezondheidswetenschappen;UNI01;Niet gestart;;;;; 
+10003;2024;B Gezondheidswetenschappen;UNI01;Doorgestroomd naar jaar 2;vrouw;Nederland;vwo profiel natuur & gezondheid;7.4;direct
+10005;2024;B Gezondheidswetenschappen;UNI01;Gestart, niet naar jaar 2;man;Nederland;vwo profiel cultuur & maatschappij;6.8;direct
+```
+
+Kandidaten die niet gestart zijn hebben geen 1CHO-gegevens; die kolommen blijven leeg.
+
+De `kandidaat_id` in dit bestand moet overeenkomen met de `kandidaat_id` in het selectiescoresbestand. Het dashboard koppelt de twee bestanden op dit veld.
 
 ---
 
@@ -82,19 +117,20 @@ Zorg dat elk van de tien verplichte kolommen aanwezig is. Vul `persoonsgebonden_
 
 Gebruik puntkomma als scheidingsteken. In Excel: "Opslaan als" en kies "CSV (gescheiden door lijstscheidingsteken)". Controleer het scheidingsteken in de regionale instellingen van je computer als je komma's krijgt in plaats van puntkomma's.
 
-### Stap 4 - Koppel aan 1CHO
+### Stap 4 - Maak studiesucces_data.csv
 
-Voer de koppelstap uit om `analysedata.csv` te genereren. Daarvoor gebruik je het koppelscript dat bij je instelling beschikbaar is. Het koppelscript:
+Voer het koppelscript van je instelling uit. Het script:
 
-1. Leest je selectiescores en berekent gemiddelden per instrument
-2. Leest het EV-bestand van 1CHO
-3. Koppelt op `persoonsgebonden_nummer`
-4. Bepaalt de uitkomstgroep (niet gestart / gestart niet naar jaar 2 / doorgestroomd)
-5. Schrijft `analysedata.csv`
+1. Leest het EV-bestand van 1CHO voor je opleiding
+2. Bepaalt per kandidaat de uitkomstgroep op basis van jaar-1 en jaar-2 inschrijvingen
+3. Decodeert de numerieke 1CHO-codes naar leesbare waarden
+4. Koppelt op `persoonsgebonden_nummer` en schrijft `studiesucces_data.csv`
 
-### Stap 5 - Upload in het dashboard
+Het resultaat heeft een rij per kandidaat, met `kandidaat_id` als koppelsleutel naar je selectiescores.
 
-Open de evaluatietool, klik op "blader" of sleep `analysedata.csv` naar het uploadvak. Bij een fout zie je welke kolommen ontbreken.
+### Stap 5 - Upload beide bestanden in het dashboard
+
+Open de evaluatietool. Upload eerst `selectiescores.csv`, dan `studiesucces_data.csv` (of andersom). Het dashboard koppelt de bestanden zodra beide geladen zijn. Bij een fout zie je welke kolommen ontbreken.
 
 ---
 
@@ -106,7 +142,7 @@ Open de evaluatietool, klik op "blader" of sleep `analysedata.csv` naar het uplo
 
 **Breed formaat in plaats van lang formaat.** Een kolom per instrument in plaats van een rij per instrument per item per criterium. Zie stap 1 hierboven voor hoe je dit omzet.
 
-**Persoonsgebonden nummer als integer opgeslagen.** Sommige exporttools ronden het getal af of verwijderen de decimaal, waardoor koppeling mislukt. Zorg dat het nummer overeenkomt met het formaat in het EV-bestand van 1CHO (float, met of zonder decimaal).
+**Kandidaat_id stemt niet overeen tussen de twee bestanden.** De koppeling mislukt als `kandidaat_id` in selectiescores.csv andere waarden heeft dan in studiesucces_data.csv. Controleer dat beide bestanden uit hetzelfde systeem komen en dezelfde nummering gebruiken.
 
 **Meerdere selectiejaren door elkaar.** Als je data van meerdere jaren combineert, zorg dan dat `selectiejaar` voor elke rij correct is ingevuld. Het dashboard groepeert op dit veld.
 
