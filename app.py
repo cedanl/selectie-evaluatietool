@@ -20,6 +20,7 @@ from dash import dcc, html, dash_table, Input, Output, State, ctx
 import dash_bootstrap_components as dbc
 
 DATA_PATH = Path("data/synthetic/analysedata.csv")
+SCORES_PATH = Path("data/synthetic/selectiescores_voorbeeld.csv")
 
 GROEP_VOLGORDE = [
     "Niet gestart",
@@ -59,6 +60,8 @@ df_demo["groep"] = pd.Categorical(
     df_demo["groep"], categories=GROEP_VOLGORDE, ordered=True
 )
 JAREN_DEMO = sorted(df_demo["selectiejaar"].unique().tolist())
+
+df_scores_demo = pd.read_csv(SCORES_PATH, sep=";") if SCORES_PATH.exists() else None
 
 
 def df_from_store(store_data: str | None) -> pd.DataFrame:
@@ -203,6 +206,31 @@ UPLOAD_OVERLAY = html.Div(
                     ),
                     className="mb-3 text-start",
                 ),
+                dbc.Card(
+                    dbc.CardBody(
+                        [
+                            html.H6("Selectiescores uploaden (optioneel)", className="mb-1"),
+                            html.P(
+                                "Upload selectiescores_voorbeeld.csv voor analyse op item- en criterium-niveau.",
+                                className="text-muted small mb-3",
+                            ),
+                            dcc.Upload(
+                                id="upload-scores",
+                                children=html.Div(
+                                    [
+                                        "Sleep een bestand hierheen of ",
+                                        html.A("blader", style={"cursor": "pointer"}),
+                                    ]
+                                ),
+                                className="upload-zone",
+                                accept=".csv",
+                                max_size=50 * 1024 * 1024,
+                            ),
+                            html.Div(id="upload-scores-status", className="mt-2"),
+                        ]
+                    ),
+                    className="mb-3 text-start",
+                ),
                 html.Hr(className="my-3"),
                 html.P("Nog geen eigen data?", className="text-muted small mb-2"),
                 dbc.Button(
@@ -280,6 +308,7 @@ app = dash.Dash(
 app.layout = html.Div(
     [
         dcc.Store(id="data-store", storage_type="memory"),
+        dcc.Store(id="scores-store", storage_type="memory"),
         UPLOAD_OVERLAY,
         html.Div(
             [
@@ -307,31 +336,54 @@ app.layout = html.Div(
                                                     "onderscheidt heeft weinig voorspellende waarde.",
                                                     className="text-muted small",
                                                 ),
+                                                html.Div(
+                                                    [
+                                                        dbc.Label("Analyseniveau", className="me-2 mb-0 align-self-center", style={"fontSize": "13px"}),
+                                                        dbc.RadioItems(
+                                                            id="scores-niveau",
+                                                            options=[
+                                                                {"label": "Instrument", "value": "instrument"},
+                                                                {"label": "Item", "value": "item", "disabled": True},
+                                                                {"label": "Criterium", "value": "criterium", "disabled": True},
+                                                            ],
+                                                            value="instrument",
+                                                            inline=True,
+                                                        ),
+                                                        html.Span(
+                                                            id="niveau-hint",
+                                                            className="text-muted ms-3 align-self-center",
+                                                            style={"fontSize": "12px"},
+                                                        ),
+                                                    ],
+                                                    className="d-flex align-items-center mb-3",
+                                                ),
                                                 dcc.Loading(
                                                     dcc.Graph(id="fig-totaal"), type="dot"
                                                 ),
-                                                html.Hr(),
-                                                dbc.Row(
-                                                    [
-                                                        dbc.Col(
-                                                            dcc.Loading(
-                                                                dcc.Graph(id="fig-interview"),
-                                                                type="dot",
-                                                            )
-                                                        ),
-                                                        dbc.Col(
-                                                            dcc.Loading(
-                                                                dcc.Graph(id="fig-motivatie"),
-                                                                type="dot",
-                                                            )
-                                                        ),
-                                                        dbc.Col(
-                                                            dcc.Loading(
-                                                                dcc.Graph(id="fig-cv"),
-                                                                type="dot",
-                                                            )
-                                                        ),
-                                                    ]
+                                                html.Div(
+                                                    dbc.Row(
+                                                        [
+                                                            dbc.Col(
+                                                                dcc.Loading(
+                                                                    dcc.Graph(id="fig-interview"),
+                                                                    type="dot",
+                                                                )
+                                                            ),
+                                                            dbc.Col(
+                                                                dcc.Loading(
+                                                                    dcc.Graph(id="fig-motivatie"),
+                                                                    type="dot",
+                                                                )
+                                                            ),
+                                                            dbc.Col(
+                                                                dcc.Loading(
+                                                                    dcc.Graph(id="fig-cv"),
+                                                                    type="dot",
+                                                                )
+                                                            ),
+                                                        ]
+                                                    ),
+                                                    id="instrument-subplots",
                                                 ),
                                                 html.Hr(),
                                                 html.H6("Gemiddelden per groep"),
@@ -355,7 +407,7 @@ app.layout = html.Div(
                                                     id="tabel-mannwhitney",
                                                     style_table={
                                                         "overflowX": "auto",
-                                                        "maxWidth": "420px",
+                                                        "maxWidth": "560px",
                                                     },
                                                     **TABLE_STYLE,
                                                 ),
@@ -564,45 +616,67 @@ def toggle_overlay(store_data):
     return {"display": "none"}
 
 
-@app.callback(
-    Output("data-store", "data"),
-    Output("upload-status", "children"),
-    Input("upload-data", "contents"),
-    Input("btn-demodata", "n_clicks"),
-    Input("btn-reset", "n_clicks"),
-    State("upload-data", "filename"),
-    prevent_initial_call=True,
-)
-def verwerk_upload(contents, _demo_clicks, _reset_clicks, filename):
-    trigger = ctx.triggered_id
-
-    if trigger == "btn-reset":
-        return None, ""
-
-    if trigger == "btn-demodata":
-        return df_demo.to_json(orient="split", date_format="iso"), ""
-
-    if contents is None:
-        return dash.no_update, dash.no_update
-
+def _parse_csv(contents):
     content_type, content_string = contents.split(",")
     decoded = base64.b64decode(content_string).decode("utf-8")
     sep = ";" if decoded[:500].count(";") > decoded[:500].count(",") else ","
-    try:
-        df = pd.read_csv(io.StringIO(decoded), sep=sep)
-    except Exception as e:
-        return dash.no_update, dbc.Alert(f"Kan bestand niet lezen: {e}", color="danger", className="small py-2")
+    return pd.read_csv(io.StringIO(decoded), sep=sep)
 
-    missing = [c for c in VERPLICHTE_KOLOMMEN if c not in df.columns]
-    if missing:
-        return dash.no_update, dbc.Alert(
-            f"Ontbrekende kolommen: {', '.join(missing)}",
-            color="danger",
-            className="small py-2",
-        )
 
-    df["groep"] = df["groep"].fillna("Niet gestart")
-    return df.to_json(orient="split", date_format="iso"), ""
+@app.callback(
+    Output("data-store", "data"),
+    Output("scores-store", "data"),
+    Output("upload-status", "children"),
+    Output("upload-scores-status", "children"),
+    Input("upload-data", "contents"),
+    Input("upload-scores", "contents"),
+    Input("btn-demodata", "n_clicks"),
+    Input("btn-reset", "n_clicks"),
+    State("upload-data", "filename"),
+    State("upload-scores", "filename"),
+    prevent_initial_call=True,
+)
+def verwerk_upload(data_contents, scores_contents, _demo, _reset, data_filename, scores_filename):
+    trigger = ctx.triggered_id
+
+    if trigger == "btn-reset":
+        return None, None, "", ""
+
+    if trigger == "btn-demodata":
+        scores_json = df_scores_demo.to_json(orient="split", date_format="iso") if df_scores_demo is not None else None
+        return df_demo.to_json(orient="split", date_format="iso"), scores_json, "", ""
+
+    if trigger == "upload-data":
+        if data_contents is None:
+            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        try:
+            df = _parse_csv(data_contents)
+        except Exception as e:
+            return dash.no_update, dash.no_update, dbc.Alert(f"Kan bestand niet lezen: {e}", color="danger", className="small py-2"), dash.no_update
+        missing = [c for c in VERPLICHTE_KOLOMMEN if c not in df.columns]
+        if missing:
+            return dash.no_update, dash.no_update, dbc.Alert(
+                f"Ontbrekende kolommen: {', '.join(missing)}", color="danger", className="small py-2",
+            ), dash.no_update
+        df["groep"] = df["groep"].fillna("Niet gestart")
+        return df.to_json(orient="split", date_format="iso"), dash.no_update, "", dash.no_update
+
+    if trigger == "upload-scores":
+        if scores_contents is None:
+            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        try:
+            df = _parse_csv(scores_contents)
+        except Exception as e:
+            return dash.no_update, dash.no_update, dash.no_update, dbc.Alert(f"Kan bestand niet lezen: {e}", color="danger", className="small py-2")
+        verplicht = ["kandidaat_id", "instrument", "item", "criterium", "score"]
+        missing = [c for c in verplicht if c not in df.columns]
+        if missing:
+            return dash.no_update, dash.no_update, dash.no_update, dbc.Alert(
+                f"Ontbrekende kolommen: {', '.join(missing)}", color="danger", className="small py-2",
+            )
+        return dash.no_update, df.to_json(orient="split", date_format="iso"), dash.no_update, dbc.Alert(f"{scores_filename} geladen.", color="success", className="small py-2")
+
+    return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
 
 # ── Sidebar callbacks ──────────────────────────────────────────────────────────
@@ -667,6 +741,33 @@ def update_cohort_stats(geslacht, vooropleiding, store_data):
 
 
 @app.callback(
+    Output("scores-niveau", "options"),
+    Output("scores-niveau", "value"),
+    Output("niveau-hint", "children"),
+    Input("scores-store", "data"),
+    State("scores-niveau", "value"),
+)
+def update_niveau_opties(scores_store, huidig_niveau):
+    heeft_scores = scores_store is not None
+    opties = [
+        {"label": "Instrument", "value": "instrument"},
+        {"label": "Item", "value": "item", "disabled": not heeft_scores},
+        {"label": "Criterium", "value": "criterium", "disabled": not heeft_scores},
+    ]
+    hint = "" if heeft_scores else "Laad selectiescores voor item- en criterium-detail"
+    nieuw_niveau = huidig_niveau if heeft_scores else "instrument"
+    return opties, nieuw_niveau, hint
+
+
+@app.callback(
+    Output("instrument-subplots", "style"),
+    Input("scores-niveau", "value"),
+)
+def toggle_subplots(niveau):
+    return {"display": "block"} if niveau == "instrument" else {"display": "none"}
+
+
+@app.callback(
     Output("fig-totaal", "figure"),
     Output("fig-interview", "figure"),
     Output("fig-motivatie", "figure"),
@@ -678,10 +779,83 @@ def update_cohort_stats(geslacht, vooropleiding, store_data):
     Input("cohort-dropdown", "value"),
     Input("geslacht-dropdown", "value"),
     Input("vooropleiding-dropdown", "value"),
+    Input("scores-niveau", "value"),
     State("data-store", "data"),
+    State("scores-store", "data"),
 )
-def update_scores_tab(cohort, geslacht, vooropleiding, store_data):
+def update_scores_tab(cohort, geslacht, vooropleiding, niveau, store_data, scores_store):
     df = filter_data(df_from_store(store_data), cohort, geslacht, vooropleiding)
+    leeg = go.Figure().update_layout(**CHART_BASE, margin=dict(t=10, b=10))
+
+    if niveau in ("item", "criterium") and scores_store is not None:
+        scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+
+        if niveau == "item":
+            pivot = (
+                scores_df.groupby(["kandidaat_id", "instrument", "item"])["score"]
+                .mean()
+                .reset_index()
+            )
+            pivot["score_naam"] = pivot["instrument"] + " / " + pivot["item"]
+        else:
+            pivot = (
+                scores_df.groupby(["kandidaat_id", "instrument", "item", "criterium"])["score"]
+                .mean()
+                .reset_index()
+            )
+            pivot["score_naam"] = pivot["instrument"] + " / " + pivot["item"] + " / " + pivot["criterium"]
+
+        df_groep = df[["kandidaat_id", "groep"]].drop_duplicates()
+        pivot = pivot.merge(df_groep, on="kandidaat_id", how="inner")
+        pivot["groep"] = pd.Categorical(pivot["groep"], categories=GROEP_VOLGORDE, ordered=True)
+
+        namen_gesorteerd = sorted(pivot["score_naam"].unique())
+        fig_totaal = px.violin(
+            pivot,
+            x="score_naam",
+            y="score",
+            color="groep",
+            color_discrete_map=GROEP_KLEUREN,
+            category_orders={"groep": GROEP_VOLGORDE, "score_naam": namen_gesorteerd},
+            box=True,
+            points=False,
+            height=560,
+            labels={"score_naam": "", "score": "Score (1-10)", "groep": ""},
+        )
+        fig_totaal.update_layout(
+            violingap=0.15,
+            legend=dict(orientation="h", y=-0.2),
+            xaxis_tickangle=-25,
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+            margin=dict(t=20, b=10),
+        )
+
+        tabel_pivot = (
+            pivot.groupby(["groep", "score_naam"], observed=True)["score"]
+            .agg(["mean", "std"])
+            .round(2)
+            .reset_index()
+            .rename(columns={"score_naam": "Score", "mean": "Gem.", "std": "SD", "groep": "Groep"})
+        )
+        gem_data = tabel_pivot.to_dict("records")
+        gem_cols = [{"name": c, "id": c} for c in tabel_pivot.columns]
+
+        a_ids = df[df["groep"] == "Gestart, niet naar jaar 2"]["kandidaat_id"]
+        b_ids = df[df["groep"] == "Doorgestroomd naar jaar 2"]["kandidaat_id"]
+        mw_rijen = []
+        for naam in namen_gesorteerd:
+            sub = pivot[pivot["score_naam"] == naam]
+            a = sub[sub["kandidaat_id"].isin(a_ids)]["score"].dropna()
+            b = sub[sub["kandidaat_id"].isin(b_ids)]["score"].dropna()
+            if len(a) >= 2 and len(b) >= 2:
+                _, p = stats.mannwhitneyu(a, b, alternative="two-sided")
+                mw_rijen.append({"Score": naam, "p-waarde": fmt_p(float(p)), "Sig.": sig_sym(float(p))})
+            else:
+                mw_rijen.append({"Score": naam, "p-waarde": "n.v.t.", "Sig.": ""})
+        mw_cols = [{"name": c, "id": c} for c in ["Score", "p-waarde", "Sig."]]
+
+        return fig_totaal, leeg, leeg, leeg, gem_data, gem_cols, mw_rijen, mw_cols
 
     fig_totaal = maak_violin(
         df, "totaalscore",
@@ -712,8 +886,7 @@ def update_scores_tab(cohort, geslacht, vooropleiding, store_data):
         b = b_groep[var].dropna()
         if len(a) >= 2 and len(b) >= 2:
             _, p = stats.mannwhitneyu(a, b, alternative="two-sided")
-            p = float(p)
-            mw_rijen.append({"Score": label, "p-waarde": fmt_p(p), "Sig.": sig_sym(p)})
+            mw_rijen.append({"Score": label, "p-waarde": fmt_p(float(p)), "Sig.": sig_sym(float(p))})
         else:
             mw_rijen.append({"Score": label, "p-waarde": "n.v.t.", "Sig.": ""})
     mw_cols = [{"name": c, "id": c} for c in ["Score", "p-waarde", "Sig."]]
