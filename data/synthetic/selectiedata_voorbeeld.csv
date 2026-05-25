@@ -1,4 +1,4 @@
-kandidaat_id;persoonsgebonden_nummer;selectiejaar;opleiding;instellingscode;geslacht;leeftijd;herkomst;hoogste_vooropleiding;gem_eindcijfer_vo;motivatiescore;cv_score;interview_score;totaalscore;rangorde;selectie_uitkomst
+studentnummer;persoonsgebonden_nummer;selectiejaar;opleiding;instellingscode;geslacht;leeftijd;herkomst;hoogste_vooropleiding;gem_eindcijfer_vo;motivatiescore;cv_score;interview_score;totaalscore;rangorde;selectie_uitkomst
 10001;;2021;B Gezondheidswetenschappen;DEMO;man;18;Nederland;vwo profiel natuur & gezondheid;7.3;4.9;4.45;4.63;4.68;189;niet geselecteerd
 10002;;2021;B Gezondheidswetenschappen;DEMO;vrouw;18;Nederland;vwo profiel natuur & gezondheid;6.8;5.15;5.15;4.48;4.82;172;niet geselecteerd
 10003;;2021;B Gezondheidswetenschappen;DEMO;vrouw;17;Nederland;vwo profiel natuur & techniek;6.9;1.5;1.8;1.0;1.31;342;niet geselecteerd

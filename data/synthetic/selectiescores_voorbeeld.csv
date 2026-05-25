@@ -1,4 +1,4 @@
-kandidaat_id;persoonsgebonden_nummer;selectiejaar;opleiding;instellingscode;instrument;item;criterium;score;selectie_uitkomst
+studentnummer;persoonsgebonden_nummer;selectiejaar;opleiding;instellingscode;instrument;item;criterium;score;selectie_uitkomst
 10001;;2021;B Gezondheidswetenschappen;DEMO;interview;vraag_1;inhoud;5.8;niet geselecteerd
 10002;;2021;B Gezondheidswetenschappen;DEMO;interview;vraag_1;inhoud;4.2;niet geselecteerd
 10003;;2021;B Gezondheidswetenschappen;DEMO;interview;vraag_1;inhoud;1.0;niet geselecteerd
