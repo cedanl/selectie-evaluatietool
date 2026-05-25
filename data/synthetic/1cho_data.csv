@@ -1,4 +1,4 @@
-kandidaat_id;selectiejaar;opleiding;instellingscode;groep;geslacht;herkomst;hoogste_vooropleiding;gem_eindcijfer_vo;instroom_type
+studentnummer;selectiejaar;opleiding;instellingscode;groep;geslacht;herkomst;hoogste_vooropleiding;gem_eindcijfer_vo;instroom_type
 10001;2021;B Gezondheidswetenschappen;DEMO;Niet gestart;;;;;
 10002;2021;B Gezondheidswetenschappen;DEMO;Niet gestart;;;;;
 10003;2021;B Gezondheidswetenschappen;DEMO;Niet gestart;;;;;

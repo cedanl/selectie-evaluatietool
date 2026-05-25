@@ -19,7 +19,7 @@ import dash
 from dash import dcc, html, dash_table, Input, Output, State, ctx
 import dash_bootstrap_components as dbc
 
-CHO_PATH    = Path("data/synthetic/studiesucces_data.csv")
+CHO_PATH    = Path("data/synthetic/1cho_data.csv")
 SCORES_PATH = Path("data/synthetic/selectiescores_voorbeeld.csv")
 
 GROEP_VOLGORDE = [
@@ -38,8 +38,8 @@ GROEP_XTICKLABELS = [
     "Doorgestroomd<br>naar jaar 2",
 ]
 
-VERPLICHTE_CHO_KOLOMMEN    = ["kandidaat_id", "selectiejaar", "groep"]
-VERPLICHTE_SCORES_KOLOMMEN = ["kandidaat_id", "instrument", "item", "criterium", "score"]
+VERPLICHTE_CHO_KOLOMMEN    = ["studentnummer", "selectiejaar", "groep"]
+VERPLICHTE_SCORES_KOLOMMEN = ["studentnummer", "instrument", "item", "criterium", "score"]
 
 
 def get_score_cols(df: pd.DataFrame) -> list[str]:
@@ -60,21 +60,21 @@ def score_opties_uit_df(df: pd.DataFrame) -> list[dict]:
 
 def koppel_data(cho_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.DataFrame:
     instrument_gem = (
-        scores_df.groupby(["kandidaat_id", "instrument"])["score"]
+        scores_df.groupby(["studentnummer", "instrument"])["score"]
         .mean()
         .reset_index()
     )
-    pivot = instrument_gem.pivot(index="kandidaat_id", columns="instrument", values="score")
+    pivot = instrument_gem.pivot(index="studentnummer", columns="instrument", values="score")
     score_cols = [f"{c}_score" for c in pivot.columns]
     pivot.columns = score_cols
     pivot["totaalscore"] = pivot[score_cols].mean(axis=1).round(2)
     pivot = pivot.reset_index()
 
-    meta = scores_df.groupby("kandidaat_id").first()[["selectie_uitkomst"]].reset_index() \
-        if "selectie_uitkomst" in scores_df.columns else pd.DataFrame({"kandidaat_id": pivot["kandidaat_id"]})
-    pivot = pivot.merge(meta, on="kandidaat_id", how="left")
+    meta = scores_df.groupby("studentnummer").first()[["selectie_uitkomst"]].reset_index() \
+        if "selectie_uitkomst" in scores_df.columns else pd.DataFrame({"studentnummer": pivot["studentnummer"]})
+    pivot = pivot.merge(meta, on="studentnummer", how="left")
 
-    df = pivot.merge(cho_df, on="kandidaat_id", how="outer")
+    df = pivot.merge(cho_df, on="studentnummer", how="inner")
     df["groep"] = pd.Categorical(
         df["groep"].fillna("Niet gestart"), categories=GROEP_VOLGORDE, ordered=True
     )
@@ -753,14 +753,14 @@ def update_scores_tab(cohort, geslacht, vooropleiding, niveau, store_data, score
     if niveau in ("item", "criterium") and scores_store is not None:
         scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
         if niveau == "item":
-            pivot = scores_df.groupby(["kandidaat_id", "instrument", "item"])["score"].mean().reset_index()
+            pivot = scores_df.groupby(["studentnummer", "instrument", "item"])["score"].mean().reset_index()
             pivot["score_naam"] = pivot["instrument"] + " / " + pivot["item"]
         else:
-            pivot = scores_df.groupby(["kandidaat_id", "instrument", "item", "criterium"])["score"].mean().reset_index()
+            pivot = scores_df.groupby(["studentnummer", "instrument", "item", "criterium"])["score"].mean().reset_index()
             pivot["score_naam"] = pivot["instrument"] + " / " + pivot["item"] + " / " + pivot["criterium"]
 
-        df_groep = df[["kandidaat_id", "groep"]].drop_duplicates()
-        pivot = pivot.merge(df_groep, on="kandidaat_id", how="inner")
+        df_groep = df[["studentnummer", "groep"]].drop_duplicates()
+        pivot = pivot.merge(df_groep, on="studentnummer", how="inner")
         pivot["groep"] = pd.Categorical(pivot["groep"], categories=GROEP_VOLGORDE, ordered=True)
         namen = sorted(pivot["score_naam"].unique())
 
@@ -784,13 +784,13 @@ def update_scores_tab(cohort, geslacht, vooropleiding, niveau, store_data, score
         gem_data = tabel_pivot.to_dict("records")
         gem_cols = [{"name": c, "id": c} for c in tabel_pivot.columns]
 
-        a_ids = df[df["groep"] == "Gestart, niet naar jaar 2"]["kandidaat_id"]
-        b_ids = df[df["groep"] == "Doorgestroomd naar jaar 2"]["kandidaat_id"]
+        a_ids = df[df["groep"] == "Gestart, niet naar jaar 2"]["studentnummer"]
+        b_ids = df[df["groep"] == "Doorgestroomd naar jaar 2"]["studentnummer"]
         mw_rijen = []
         for naam in namen:
             sub = pivot[pivot["score_naam"] == naam]
-            a = sub[sub["kandidaat_id"].isin(a_ids)]["score"].dropna()
-            b = sub[sub["kandidaat_id"].isin(b_ids)]["score"].dropna()
+            a = sub[sub["studentnummer"].isin(a_ids)]["score"].dropna()
+            b = sub[sub["studentnummer"].isin(b_ids)]["score"].dropna()
             if len(a) >= 2 and len(b) >= 2:
                 _, p = stats.mannwhitneyu(a, b, alternative="two-sided")
                 mw_rijen.append({"Score": naam, "p-waarde": fmt_p(float(p)), "Sig.": sig_sym(float(p))})
@@ -807,8 +807,8 @@ def update_scores_tab(cohort, geslacht, vooropleiding, niveau, store_data, score
     if not valid_cols:
         return leeg, [], [], [], []
 
-    df_long = df[["kandidaat_id", "groep"] + valid_cols].melt(
-        id_vars=["kandidaat_id", "groep"],
+    df_long = df[["studentnummer", "groep"] + valid_cols].melt(
+        id_vars=["studentnummer", "groep"],
         value_vars=valid_cols,
         var_name="col",
         value_name="score",

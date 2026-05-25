@@ -106,7 +106,7 @@ def maak_selectiedata() -> tuple[pd.DataFrame, pd.DataFrame]:
                      np.where(vooropl == "hbo-propedeuse", 6.5, 6.4)))))
         gem_vo = np.clip(RNG.normal(gem_vo_base, 0.6), 4, 10).round(1)
 
-        kandidaat_id = pgn_offset + np.arange(1, n + 1)
+        studentnummer = pgn_offset + np.arange(1, n + 1)
         latent = RNG.normal(0, 1, n)
 
         # Genereer scores per instrument, item en criterium via gedeelde latente kwaliteit.
@@ -124,7 +124,7 @@ def maak_selectiedata() -> tuple[pd.DataFrame, pd.DataFrame]:
                     )
                     item_arrays.append(score)
                     scores_lang_cohort.append(pd.DataFrame({
-                        "kandidaat_id": kandidaat_id,
+                        "studentnummer": studentnummer,
                         "selectiejaar":  jaar,
                         "instrument":    instrument,
                         "item":          item,
@@ -151,28 +151,28 @@ def maak_selectiedata() -> tuple[pd.DataFrame, pd.DataFrame]:
 
         pgn = np.where(
             np.isin(selectie_uitkomst, ["geselecteerd", "reserve"]),
-            kandidaat_id.astype(float),
+            studentnummer.astype(float),
             np.nan,
         )
 
         # Voeg kandidaatmetadata toe aan de score-rijen zodat het bestand
         # als zelfstandig invoerformaat bruikbaar is.
         meta = pd.DataFrame({
-            "kandidaat_id":            kandidaat_id,
+            "studentnummer":            studentnummer,
             "persoonsgebonden_nummer": pgn,
             "opleiding":               OPLEIDING,
             "instellingscode":         INSTELLINGSCODE,
             "selectie_uitkomst":       selectie_uitkomst,
         })
         cohort_scores = pd.concat(scores_lang_cohort, ignore_index=True).merge(
-            meta, on="kandidaat_id"
-        )[["kandidaat_id", "persoonsgebonden_nummer", "selectiejaar", "opleiding",
+            meta, on="studentnummer"
+        )[["studentnummer", "persoonsgebonden_nummer", "selectiejaar", "opleiding",
            "instellingscode", "instrument", "item", "criterium", "score",
            "selectie_uitkomst"]]
         scores_lang.append(cohort_scores)
 
         cohorten.append(pd.DataFrame({
-            "kandidaat_id":              kandidaat_id,
+            "studentnummer":              studentnummer,
             "persoonsgebonden_nummer":   pgn,
             "selectiejaar":              jaar,
             "opleiding":                 OPLEIDING,
@@ -322,7 +322,7 @@ if __name__ == "__main__":
     cho_decoded = decodeer_cho(cho_data[cho_data["verblijfsjaar_hoger_onderwijs"] == 1])
 
     sel_cols = [
-        "kandidaat_id", "persoonsgebonden_nummer", "selectiejaar",
+        "studentnummer", "persoonsgebonden_nummer", "selectiejaar",
         "opleiding", "instellingscode",
     ]
     cho_cols = [
@@ -365,11 +365,11 @@ if __name__ == "__main__":
             "diplomajaar_van_de_hoogste_vooropl_voor_het_ho",
         ])
     )
-    studiesucces_cols = [
-        "kandidaat_id", "selectiejaar", "opleiding", "instellingscode",
+    cho_cols_out = [
+        "studentnummer", "selectiejaar", "opleiding", "instellingscode",
         "groep", "geslacht", "herkomst", "hoogste_vooropleiding",
         "gem_eindcijfer_vo", "instroom_type",
     ]
-    gekoppeld[studiesucces_cols].to_csv(DATA_DIR / "studiesucces_data.csv", index=False, sep=";")
+    gekoppeld[cho_cols_out].to_csv(DATA_DIR / "1cho_data.csv", index=False, sep=";")
     print(gekoppeld.groupby(["selectiejaar", "groep"]).size().unstack(fill_value=0).to_string())
     print("\nKlaar. Draai nu: uv run python app.py")
