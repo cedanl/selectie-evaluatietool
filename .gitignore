@@ -3,9 +3,16 @@ __pycache__/
 *.pyc
 .ruff_cache/
 
-# Data nooit in git
+# Selectiedata en bronbestanden: bevatten persoonsgegevens
 data/real/
 data/raw/
+data/*.xls
+data/*.xlsx
+data/demo/*/selectiedata.xlsx
+data/demo/EV_DEMO_farmacie.csv
+
+# Brondata in root (duplicaten van data/)
+dummy data selectie*.xlsx
 
 # Binaire bestanden
 *.pdf
