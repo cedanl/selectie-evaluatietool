@@ -222,33 +222,6 @@ UPLOAD_OVERLAY = html.Div(
                     "Upload drie bestanden om het dashboard te openen.",
                     className="text-muted mb-4",
                 ),
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            [
-                                dbc.Label("Opleiding", className="small"),
-                                dbc.Input(
-                                    id="input-opleiding",
-                                    placeholder="bijv. Farmacie",
-                                    size="sm",
-                                ),
-                            ]
-                        ),
-                        dbc.Col(
-                            [
-                                dbc.Label("Selectiejaar", className="small"),
-                                dbc.Input(
-                                    id="input-selectiejaar",
-                                    placeholder="bijv. 2026",
-                                    size="sm",
-                                    type="number",
-                                ),
-                            ],
-                            width=4,
-                        ),
-                    ],
-                    className="mb-3 text-start",
-                ),
                 _upload_card(
                     "Selectiedata",
                     "Het Excel-bestand met de selectieresultaten.",
@@ -710,6 +683,18 @@ def valideer_uploads(
                 config = json.loads(wiz_config)
             checks = valideer_config(config, sel)
             badges = []
+            opl = config.get("opleiding", "")
+            jaar = config.get("jaar", "")
+            inst = config.get("instellingscode", "")
+            if opl or jaar:
+                label_parts = [p for p in [opl, inst, jaar] if p]
+                badges.append(
+                    dbc.Alert(
+                        f"Opleiding: {' | '.join(label_parts)}",
+                        color="info",
+                        className="small py-1 mb-1",
+                    )
+                )
             for c in checks:
                 color = "success" if c["ok"] else "danger"
                 badges.append(
@@ -785,8 +770,6 @@ def valideer_uploads(
     State("upload-config", "contents"),
     State("upload-1cho", "contents"),
     State("upload-1cho", "filename"),
-    State("input-opleiding", "value"),
-    State("input-selectiejaar", "value"),
     State("demo-dataset-picker", "value"),
     State("wiz-config-store", "data"),
     prevent_initial_call=True,
@@ -799,8 +782,6 @@ def laad_dashboard(
     cfg_contents,
     cho_contents,
     cho_fn,
-    input_opleiding,
-    input_selectiejaar,
     demo_dataset,
     wiz_config,
 ):
@@ -818,10 +799,6 @@ def laad_dashboard(
             config = lees_config(cfg_contents)
         else:
             config = json.loads(wiz_config)
-        if input_opleiding:
-            config["opleiding"] = input_opleiding
-        if input_selectiejaar:
-            config["jaar"] = str(int(input_selectiejaar))
         scores_df = transformeer_naar_lang(
             parse_selectiedata(sel_contents, config), config
         )
