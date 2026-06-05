@@ -79,28 +79,11 @@ def detecteer_totaalscore(headers: list[str]) -> str | None:
     return None
 
 
-_BEKENDE_INSTELLINGEN = [
-    "LUMC", "AUMC", "UMC Utrecht", "Erasmus MC", "Radboudumc",
-    "Universiteit Leiden", "Universiteit Utrecht", "UvA", "VU",
-    "EUR", "RUG", "TU Delft", "TU Eindhoven", "Radboud",
-    "Maastricht", "Twente", "Tilburg", "Groningen", "Wageningen",
-    "Leiden", "Amsterdam", "Rotterdam", "Nijmegen",
-]
-
-_BEKENDE_OPLEIDINGEN = [
-    "Farmacie", "Psychologie", "Geneeskunde", "Biomedische Wetenschappen",
-    "Tandheelkunde", "Diergeneeskunde", "Fysiotherapie", "Logopedie",
-    "BioMed", "Rechten", "Fiscaal Recht", "Notarieel Recht",
-    "International Business", "Econometrie", "Kunstmatige Intelligentie",
-]
-
-_OPLEIDING_AFKORTINGEN = {
-    "far": "Farmacie",
-    "psy": "Psychologie",
-    "gnk": "Geneeskunde",
-    "thk": "Tandheelkunde",
-    "dgk": "Diergeneeskunde",
-    "biomed": "Biomedische Wetenschappen",
+_SKIP_WOORDEN = {
+    "data", "selectie", "selectiedata", "dummy", "totaalscores", "scores",
+    "score", "ranking", "met", "formules", "en", "van", "de", "het",
+    "beoordelingen", "master", "bachelor", "sheet", "blad", "resultaten",
+    "overzicht", "export", "rapport", "tabel", "lijst", "bestand",
 }
 
 
@@ -111,25 +94,20 @@ def detecteer_metadata(bestandsnaam: str, bladnamen: list[str]) -> dict:
     jaren = re.findall(r"20\d{2}", tekst)
     jaar = jaren[0] if jaren else ""
 
-    instelling = ""
-    for inst in _BEKENDE_INSTELLINGEN:
-        if inst.lower() in tekst.lower():
-            instelling = inst
-            break
+    naam_zonder_ext = re.sub(r"\.\w+$", "", bestandsnaam)
+    woorden = re.findall(r"[A-Za-zÀ-ɏ]+", naam_zonder_ext)
+    inhoudelijk = [
+        w for w in woorden
+        if w.lower() not in _SKIP_WOORDEN
+        and not re.fullmatch(r"20\d{2}", w)
+        and len(w) >= 2
+    ]
 
-    opleiding = ""
-    for opl in _BEKENDE_OPLEIDINGEN:
-        if opl.lower() in tekst.lower():
-            opleiding = opl
-            break
-    if not opleiding:
-        woorden = re.findall(r"[a-zA-Z]+", tekst.lower())
-        for woord in woorden:
-            if woord in _OPLEIDING_AFKORTINGEN:
-                opleiding = _OPLEIDING_AFKORTINGEN[woord]
-                break
-
-    return {"opleiding": opleiding, "instelling": instelling, "jaar": jaar}
+    return {
+        "opleiding": " ".join(inhoudelijk) if inhoudelijk else "",
+        "instelling": "",
+        "jaar": jaar,
+    }
 
 
 _EXCLUDEER_PATRONEN = [
