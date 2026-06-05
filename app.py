@@ -597,12 +597,15 @@ app.layout = html.Div(
                                                                     [
                                                                         html.Li(
                                                                             "Coefficient: de richting en sterkte van het effect. "
-                                                                            "Positief = hogere score op dit item hangt samen met hogere kans op doorstroom. "
-                                                                            "Negatief = hogere score hangt samen met lagere kans."
+                                                                            "Positief = hogere score hangt samen met hogere kans op doorstroom. "
+                                                                            "Negatief = hogere score hangt samen met lagere kans. "
+                                                                            "Scores zijn genormaliseerd (z-scores), dus de coefficienten zijn "
+                                                                            "vergelijkbaar tussen items met verschillende schalen."
                                                                         ),
                                                                         html.Li(
-                                                                            "Odds ratio: hoeveel keer groter de kans op doorstroom wordt per punt stijging. "
-                                                                            "OR = 1.5 betekent 50% hogere kans per extra punt. OR < 1 betekent lagere kans."
+                                                                            "Odds ratio: hoeveel keer groter de kans op doorstroom wordt per "
+                                                                            "standaarddeviatie stijging. OR = 1.5 betekent 50% hogere kans als "
+                                                                            "de score 1 SD stijgt. OR < 1 betekent lagere kans."
                                                                         ),
                                                                         html.Li(
                                                                             "p-waarde: hoe waarschijnlijk is dit resultaat als het item in werkelijkheid "
@@ -1931,10 +1934,33 @@ def update_samenhang_tab(
         X = X.drop(columns=[X.columns[col_idx]])
     bruikbare_cols = list(X.columns)
 
+    # Beperk predictoren als er te weinig events per variabele zijn
+    n_events = min(int(y.sum()), int(len(y) - y.sum()))
+    max_predictoren = max(2, n_events // 5)
+    verwijderd_epv = []
+    if len(bruikbare_cols) > max_predictoren:
+        import statsmodels.api as sm
+        univariate_p = {}
+        for col in bruikbare_cols:
+            x_col = X[[col]].astype(float)
+            x_col = (x_col - x_col.mean()) / x_col.std().replace(0, 1)
+            try:
+                m = sm.Logit(y.astype(float), sm.add_constant(x_col)).fit(disp=0, maxiter=50)
+                univariate_p[col] = m.pvalues.iloc[-1]
+            except Exception:
+                univariate_p[col] = 1.0
+        gesorteerd = sorted(bruikbare_cols, key=lambda c: univariate_p[c])
+        verwijderd_epv = gesorteerd[max_predictoren:]
+        bruikbare_cols = gesorteerd[:max_predictoren]
+        X = X[bruikbare_cols]
+
     try:
         import statsmodels.api as sm
 
-        X_const = sm.add_constant(X.astype(float))
+        X_z = X.astype(float).apply(
+            lambda s: (s - s.mean()) / s.std() if s.std() > 0 else 0
+        )
+        X_const = sm.add_constant(X_z)
         model = sm.Logit(y.astype(float), X_const).fit(disp=0, maxiter=100)
 
         n_doorgestroomd = int(y.sum())
@@ -1957,6 +1983,13 @@ def update_samenhang_tab(
             msg_parts.append(html.Br())
             msg_parts.append(html.Span(
                 f"Items niet meegenomen (overlap met andere items): {', '.join(verwijderd_collinear)}",
+                className="small text-muted",
+            ))
+        if verwijderd_epv:
+            msg_parts.append(html.Br())
+            msg_parts.append(html.Span(
+                f"Items niet meegenomen (te weinig studenten voor {len(bruikbare_cols) + len(verwijderd_epv)} "
+                f"predictoren, beperkt tot {len(bruikbare_cols)} sterkste): {', '.join(verwijderd_epv)}",
                 className="small text-muted",
             ))
         regressie_msg = html.Div(msg_parts)

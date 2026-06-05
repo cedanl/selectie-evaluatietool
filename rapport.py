@@ -527,10 +527,32 @@ def _run_regression(
         X = X.drop(columns=[X.columns[col_idx]])
     bruikbare_cols = list(X.columns)
 
+    n_events = min(int(y.sum()), int(len(y) - y.sum()))
+    max_predictoren = max(2, n_events // 5)
+    verwijderd_epv = []
+    if len(bruikbare_cols) > max_predictoren:
+        import statsmodels.api as sm
+        univariate_p = {}
+        for col in bruikbare_cols:
+            x_col = X[[col]].astype(float)
+            x_col = (x_col - x_col.mean()) / x_col.std().replace(0, 1)
+            try:
+                m = sm.Logit(y.astype(float), sm.add_constant(x_col)).fit(disp=0, maxiter=50)
+                univariate_p[col] = m.pvalues.iloc[-1]
+            except Exception:
+                univariate_p[col] = 1.0
+        gesorteerd = sorted(bruikbare_cols, key=lambda c: univariate_p[c])
+        verwijderd_epv = gesorteerd[max_predictoren:]
+        bruikbare_cols = gesorteerd[:max_predictoren]
+        X = X[bruikbare_cols]
+
     try:
         import statsmodels.api as sm
 
-        X_const = sm.add_constant(X.astype(float))
+        X_z = X.astype(float).apply(
+            lambda s: (s - s.mean()) / s.std() if s.std() > 0 else 0
+        )
+        X_const = sm.add_constant(X_z)
         model = sm.Logit(y.astype(float), X_const).fit(disp=0, maxiter=100)
         pseudo_r2 = round(float(model.prsquared), 3)
 
@@ -548,6 +570,13 @@ def _run_regression(
             reg_text += (
                 f" Items niet meegenomen (overlap met andere items): "
                 f"{', '.join(verwijderd_collinear)}."
+            )
+        if verwijderd_epv:
+            reg_text += (
+                f" Items niet meegenomen (te weinig studenten voor "
+                f"{len(bruikbare_cols) + len(verwijderd_epv)} predictoren, "
+                f"beperkt tot {len(bruikbare_cols)} sterkste): "
+                f"{', '.join(verwijderd_epv)}."
             )
 
         for item_naam in bruikbare_cols:
