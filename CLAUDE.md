@@ -170,11 +170,25 @@ Multiple Claude Code sessions work on this project in parallel. Rules:
 - Always check `git status` before committing. Another session may have staged or committed while you were working.
 - Never commit data files, PDFs, or docx. The gitignore handles this, but double-check.
 
+## Recent changes (2026-06-05, session A)
+
+This session did the bulk of the multi-programme work:
+
+- **Multi-programme support**: pipeline tested and working for FAR Leiden 2025/2026, Psychologie 2022/2026, plus two fictive datasets.
+- **Config wizard**: auto-detects opleiding/instelling/jaar from filename. Opleiding/instelling/jaar fields live in the wizard (not separate inputs). score_type removed from config format entirely (4 columns: kolom_naam, instrument, item, criterium).
+- **Upload flow**: split into validate + explicit "Open dashboard" button. Validates studentnummer overlap between selectiedata and 1CHO. Shows opleiding/instelling/jaar from config in validation feedback.
+- **Cascading filters on scores tab**: instrument/criterium/item dropdowns are linked. Selecting an instrument narrows criterium and item options. Impossible combinations auto-reset.
+- **Single-item boxplot**: when one item is selected (via filter or because only one item matches), shows group-level boxplot with correct y-axis scale.
+- **Samenhang tab filters**: own instrument/criterium dropdowns. Filters only affect the correlation matrix, not the regression.
+- **Regression robustness**: items with >30% missing data excluded, multicollinear items auto-removed (matrix rank check). Both dashboard and PDF report show which items were dropped and why.
+- **Toelichtingen**: all explanatory text rewritten for a broad audience. Collapsible interpretation guides for correlation (Cohen 1988), regression table, and VO-cijfer. Demographic tab explains 1CHO data origin and how doorstroom is determined.
+- **Fictive demo data**: BioMed AUMC 2026 (master, 120 candidates, 90 columns) and Bewegingswetenschappen VU 2026 (bachelor, 80 candidates, 37 columns, header_rij=3). Demo picker shows only fictive data.
+- **Pitch created**: [#14](https://github.com/cedanl/evaluatietool-voorbeeld/issues/14) Diploma as alternative outcome measure for 1-year masters.
+
 ## Uncommitted work
 
 <!-- Update this section when you commit or start new work. Other sessions will append here. -->
 
 As of 2026-06-05:
 
-- **rapport.py**: uncommitted rewrite by another session. Added inleiding section, Cohen 1988 correlation interpretation, herkomst demographics, PNG logo on cover, sequential chart rendering, logging, type hints.
-- **assets/nko-logo.png**: new, untracked. Converted from SVG for PDF rendering.
+- **assets/nko-logo.png**: untracked. Converted from SVG for PDF rendering. Needs to be committed.
