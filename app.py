@@ -308,14 +308,20 @@ SIDEBAR = html.Div(
         html.P("Kandidaten per cohort", className="sidebar-label"),
         html.Div(id="cohort-stats"),
         html.Hr(className="mt-3 mb-2"),
-        dbc.Button(
-            "Download rapport (PDF)",
-            id="btn-download-rapport",
-            color="primary",
-            size="sm",
-            className="w-100 mb-2",
+        dcc.Loading(
+            [
+                dbc.Button(
+                    "Download rapport (PDF)",
+                    id="btn-download-rapport",
+                    color="primary",
+                    size="sm",
+                    className="w-100 mb-2",
+                ),
+                dcc.Download(id="download-rapport"),
+            ],
+            type="circle",
+            color="#2c3e50",
         ),
-        dcc.Download(id="download-rapport"),
         dbc.Button(
             "Nieuw bestand laden",
             id="btn-reset",
@@ -410,6 +416,27 @@ app.layout = html.Div(
                                                                     ],
                                                                     value="Alle",
                                                                     clearable=False,
+                                                                ),
+                                                            ],
+                                                            width=4,
+                                                        ),
+                                                        dbc.Col(
+                                                            [
+                                                                dbc.Label(
+                                                                    "Schaal",
+                                                                    className="small",
+                                                                ),
+                                                                dbc.RadioItems(
+                                                                    id="score-schaal",
+                                                                    options=[
+                                                                        {"label": "Ruwe scores", "value": "ruw"},
+                                                                        {"label": "Z-scores", "value": "z"},
+                                                                    ],
+                                                                    value="ruw",
+                                                                    inline=True,
+                                                                    className="mt-1",
+                                                                    inputStyle={"marginRight": "4px"},
+                                                                    labelStyle={"marginRight": "12px", "fontSize": "13px"},
                                                                 ),
                                                             ],
                                                             width=4,
@@ -1013,6 +1040,7 @@ GROEP_TABEL_KLEUREN = {
     Input("vooropleiding-dropdown", "value"),
     Input("instrument-filter", "value"),
     Input("criterium-filter", "value"),
+    Input("score-schaal", "value"),
     State("data-store", "data"),
     State("scores-store", "data"),
 )
@@ -1022,6 +1050,7 @@ def update_scores_tab(
     vooropleiding,
     instrument_filter,
     criterium_filter,
+    score_schaal,
     store_data,
     scores_store,
 ):
@@ -1048,18 +1077,28 @@ def update_scores_tab(
         return leeg, [], [], []
 
     scores["item_kort"] = scores["item"].apply(shorten_item)
+
+    if score_schaal == "z":
+        scores["plot_score"] = scores.groupby("item")["score"].transform(
+            lambda s: (s - s.mean()) / s.std() if s.std() > 0 else 0
+        )
+        y_label = "Z-score"
+    else:
+        scores["plot_score"] = scores["score"]
+        y_label = "Score"
+
     items_kort = sorted(scores["item_kort"].unique())
 
     fig = px.box(
         scores,
         x="item_kort",
-        y="score",
+        y="plot_score",
         color="groep",
         color_discrete_map=GROEP_KLEUREN,
         category_orders={"groep": GROEP_VOLGORDE, "item_kort": items_kort},
         points="all" if len(df_groep) <= 30 else False,
         height=520,
-        labels={"item_kort": "", "score": "Score", "groep": ""},
+        labels={"item_kort": "", "plot_score": y_label, "groep": ""},
     )
     fig.update_layout(
         boxgap=0.15,
@@ -1070,7 +1109,7 @@ def update_scores_tab(
     )
 
     tabel_pivot = (
-        scores.groupby(["groep", "item_kort"], observed=True)["score"]
+        scores.groupby(["groep", "item_kort"], observed=True)["plot_score"]
         .agg(["mean", "std"])
         .round(2)
         .reset_index()
