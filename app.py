@@ -1855,6 +1855,17 @@ def update_samenhang_tab(
     reg_cols = []
     reg_style = []
 
+    # Regressie draait altijd op alle items, niet op de gefilterde subset
+    all_scores = scores_df[scores_df["studentnummer"].isin(student_ids)]
+    all_item_pivot = all_scores.pivot_table(
+        index="studentnummer", columns="item", values="score", aggfunc="mean"
+    )
+    all_item_pivot.columns = [shorten_item(c) for c in all_item_pivot.columns]
+    all_score_cols = list(all_item_pivot.columns)
+
+    # Items in de huidige filterselectie (voor markering in de tabel)
+    gefilterde_items = set(shorten_item(i) for i in scores["item"].unique())
+
     ingeschreven = df_filtered[
         df_filtered["groep"].isin(
             ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]
@@ -1874,8 +1885,8 @@ def update_samenhang_tab(
         ingeschreven["groep"] == "Doorgestroomd naar jaar 2"
     ).astype(int)
 
-    item_pivot_inschr = item_pivot.loc[
-        item_pivot.index.isin(ingeschreven["studentnummer"])
+    item_pivot_inschr = all_item_pivot.loc[
+        all_item_pivot.index.isin(ingeschreven["studentnummer"])
     ].dropna()
 
     if len(item_pivot_inschr) < 10:
@@ -1889,7 +1900,7 @@ def update_samenhang_tab(
     y = ingeschreven.set_index("studentnummer").loc[
         item_pivot_inschr.index, "doorgestroomd"
     ]
-    X = item_pivot_inschr[score_cols]
+    X = item_pivot_inschr[all_score_cols]
 
     try:
         import statsmodels.api as sm
@@ -1910,7 +1921,7 @@ def update_samenhang_tab(
             ]
         )
 
-        for item_naam in score_cols:
+        for item_naam in all_score_cols:
             if item_naam not in model.params.index:
                 continue
             coef = round(float(model.params[item_naam]), 3)
@@ -1941,6 +1952,13 @@ def update_samenhang_tab(
                         "backgroundColor": "#bbf7d0",
                         "color": "#166534",
                         "fontWeight": "600",
+                    }
+                )
+            if row["Item"] not in gefilterde_items:
+                reg_style.append(
+                    {
+                        "if": {"row_index": i},
+                        "opacity": "0.4",
                     }
                 )
 
