@@ -899,6 +899,7 @@ def valideer_uploads(
     validatie = no
     cho_status = no
     btn_disabled = True
+    config = None
 
     if trigger == "upload-selectiedata" and sel:
         sel_status = dbc.Alert(
@@ -916,11 +917,11 @@ def valideer_uploads(
             )
         except Exception as e:
             cfg_status = dbc.Alert(f"Fout: {e}", color="danger", className="small py-1")
-            return sel_status, cfg_status, "", cho_status, True
+            return sel_status, cfg_status, no, cho_status, True
 
     if trigger == "wiz-config-store" and wiz_config:
-        wiz_cfg = json.loads(wiz_config)
-        n_kol = len(wiz_cfg.get("kolommen", []))
+        config = json.loads(wiz_config)
+        n_kol = len(config.get("kolommen", []))
         cfg_status = dbc.Alert(
             f"Config gegenereerd ({n_kol} kolommen).",
             color="success",
@@ -936,10 +937,8 @@ def valideer_uploads(
 
     if sel and has_config:
         try:
-            if cfg:
-                config = lees_config(cfg)
-            else:
-                config = json.loads(wiz_config)
+            if config is None:
+                config = lees_config(cfg) if cfg else json.loads(wiz_config)
             checks = valideer_config(config, sel)
             badges = []
             opl = config.get("opleiding", "")
@@ -1158,7 +1157,6 @@ def update_filters_on_data_change(store_data, scores_store):
 
     instrument_opties = [{"label": "Alle instrumenten", "value": "Alle"}]
     criterium_opties = [{"label": "Alle criteria", "value": "Alle"}]
-    item_opties = [{"label": "Alle items", "value": "Alle"}]
     vo_opties = [{"label": "Totaalscore", "value": "totaalscore"}]
     if scores_store:
         scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
@@ -1169,7 +1167,6 @@ def update_filters_on_data_change(store_data, scores_store):
         for crit in criteria:
             criterium_opties.append({"label": crit, "value": crit})
         for item in sorted(scores_df["item"].unique()):
-            item_opties.append({"label": shorten_item(item), "value": item})
             vo_opties.append({"label": shorten_item(item), "value": item})
 
     return (
