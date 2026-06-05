@@ -1,0 +1,8 @@
+studentnummer;selectiejaar;opleiding;instellingscode;groep;geslacht;herkomst;hoogste_vooropleiding;gem_eindcijfer_vo
+7777888;2022;Psychologie;Universiteit Leiden;Doorgestroomd naar jaar 2;man;Nederland;VWO;5.6
+7777788;2022;Psychologie;Universiteit Leiden;Gestart, niet naar jaar 2;vrouw;overig niet-westers;VWO;5.7
+7777777;2022;Psychologie;Universiteit Leiden;Gestart, niet naar jaar 2;vrouw;westerse achtergrond;VWO;6.0
+8888888;2022;Psychologie;Universiteit Leiden;Gestart, niet naar jaar 2;vrouw;Nederland;VWO;6.9
+7777778;2022;Psychologie;Universiteit Leiden;Doorgestroomd naar jaar 2;man;Nederland;VWO;8.0
+8888889;2022;Psychologie;Universiteit Leiden;Gestart, niet naar jaar 2;vrouw;Nederland;HAVO + propedeuse;6.6
+7778888;2022;Psychologie;Universiteit Leiden;Gestart, niet naar jaar 2;vrouw;Suriname/Antillen;HAVO + propedeuse;7.0

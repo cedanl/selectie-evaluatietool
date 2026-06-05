@@ -1,0 +1,5 @@
+studentnummer;selectiejaar;opleiding;instellingscode;groep;geslacht;herkomst;hoogste_vooropleiding;gem_eindcijfer_vo
+123456;2026;Farmacie;LUMC;Doorgestroomd naar jaar 2;vrouw;Nederland;Farmacie bachelor;7.1
+234567;2026;Farmacie;LUMC;Doorgestroomd naar jaar 2;man;Nederland;Scheikunde;7.1
+345678;2026;Farmacie;LUMC;Gestart, niet naar jaar 2;vrouw;overig niet-westers;Biologie;7.2
+135790;2026;Farmacie;LUMC;Doorgestroomd naar jaar 2;vrouw;Suriname/Antillen;Farmacie bachelor;6.8
