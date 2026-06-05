@@ -6,14 +6,18 @@ __pycache__/
 # Selectiedata en bronbestanden: bevatten persoonsgegevens
 data/real/
 data/raw/
+data/fictief/
+data/configs/
 data/*.xls
 data/*.xlsx
 data/demo/selectiedata.xlsx
 data/demo/*/selectiedata.xlsx
 data/demo/EV_DEMO_farmacie.csv
 
-# Brondata in root (duplicaten van data/)
+# Brondata en configs in root (duplicaten van data/)
 dummy data selectie*.xlsx
+config_*.xlsx
+!config_template.xlsx
 
 # Binaire bestanden
 *.pdf
