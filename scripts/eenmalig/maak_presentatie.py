@@ -598,7 +598,64 @@ add_slide(
 
 
 # ============================================================
-# SLIDE 12: Dashboard tab 3 - Demografisch
+# SLIDE 12: Uitdagingen bij de regressie
+# ============================================================
+add_slide(
+    "Uitdagingen bij de logistische regressie",
+    [
+        "Selectiedata is lastig voor regressie. Vier problemen komen steeds terug:",
+        "",
+        "**Verschillende schalen**",
+        "Het ene item is een schaalscore van 0-100, het andere een beoordeling van 1-3. "
+        "In een rauwe regressie domineren items op grotere schalen het model, puur door hun bereik.",
+        "",
+        "**Weinig studenten, veel items**",
+        "Een selectie heeft vaak 50-150 ingeschreven studenten en 10+ items. "
+        "De vuistregel is 5 studenten in de kleinste groep per predictor. Met 15 uitvallers "
+        "kun je maar 3 items tegelijk meenemen. Meer predictoren geeft instabiele resultaten.",
+        "",
+        "**Overlap tussen items**",
+        "Selectie-instrumenten meten vaak vergelijkbare dingen. Twee subschalen van dezelfde "
+        "competentietest correleren al snel r = 0.7. In een gezamenlijk model wordt dan geen "
+        "van beide significant, terwijl ze individueel wel voorspellend zijn.",
+        "",
+        "**Ontbrekende data**",
+        "Niet elke kandidaat maakt elk onderdeel. Keuzevakken, optionele toetsen en afgebroken "
+        "testen zorgen voor gaten in de data.",
+    ],
+)
+
+
+# ============================================================
+# SLIDE 13: Hoe de tool hiermee omgaat
+# ============================================================
+add_slide(
+    "Hoe de tool hiermee omgaat",
+    [
+        "**Schaalverschillen: z-score normalisatie**",
+        "Alle scores worden omgerekend naar z-scores (gemiddelde = 0, SD = 1) voor de regressie. "
+        "Daardoor drukken de coefficienten en odds ratios het effect uit per standaarddeviatie, "
+        "niet per ruwe punt. Dat maakt items op verschillende schalen vergelijkbaar.",
+        "",
+        "**Te weinig studenten: automatische selectie**",
+        "De tool berekent hoeveel predictoren het model aankan (kleinste groep / 5). "
+        "Als er meer items zijn, worden ze eerst individueel getoetst. Alleen de sterkste "
+        "items gaan het gezamenlijke model in. De rest wordt gerapporteerd als 'niet meegenomen'.",
+        "",
+        "**Overlap: multicollineariteitscheck**",
+        "Voor het fitten controleert de tool of de predictormatrix vol rang is. "
+        "Items die lineair afhankelijk zijn van andere items worden verwijderd. "
+        "De correlatiematrix op hetzelfde tabblad helpt de gebruiker overlap te herkennen.",
+        "",
+        "**Ontbrekende data: drempel + imputatie**",
+        "Items met meer dan 30% ontbrekende waarden worden uitgesloten. "
+        "Bij de rest worden missende waarden opgevuld met het kolomgemiddelde.",
+    ],
+)
+
+
+# ============================================================
+# SLIDE 14: Dashboard tab 3 - Demografisch
 # ============================================================
 add_slide(
     "Dashboard: Demografisch profiel",
