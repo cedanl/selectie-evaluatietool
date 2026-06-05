@@ -3,16 +3,18 @@ __pycache__/
 *.pyc
 .ruff_cache/
 
-# Data en binaire bestanden nooit in git
+# Data nooit in git
 data/real/
 data/raw/
-*.csv
-*.xls
-*.xlsx
+
+# Binaire bestanden
 *.pdf
 *.docx
 *.pptx
 *.doc
+*.parquet
+archive/
+doc/
 
 # Office lock files
 ~$*
