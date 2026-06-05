@@ -149,6 +149,44 @@ data/
 
 The `scripts/eenmalig/` scripts were used during project setup. They still work but are not needed for running or using the tool. `maak_data.py` requires source files that are gitignored (real/dummy selectiedata), so it only works on the developer's machine.
 
+## Logistic regression: limitations and how we handle them
+
+The samenhang tab runs a logistic regression predicting doorstroom (year 2) from all selection items. This is the most fragile part of the tool because selection datasets are small and the items have wildly different scales.
+
+### Problem 1: Different scales
+
+Selection items range from 1-3 ordinal ratings to 0-100 percentages to raw schaalscores. In a raw logistic regression, items on larger scales dominate the model simply because a 1-unit change means something different for each scale.
+
+**How we handle it:** All items are z-score standardized before entering the model (`(x - mean) / sd`). This means coefficients and odds ratios express the effect of a 1-SD increase, which is comparable across scales. The dashboard explains this to the user in the collapsible "Uitleg regressietabel" section.
+
+**What it does NOT solve:** Z-scores make coefficients comparable, but they don't fix non-linear relationships or heavily skewed distributions. An item where 90% of candidates score the same value has almost no variance after standardization and contributes little to the model regardless.
+
+### Problem 2: Too few observations for the number of predictors
+
+The "events per variable" (EPV) rule says you need at least 5-10 events (students in the smallest outcome group) per predictor. A dataset with 30 enrolled students and 15 who dropped out can support at most 3 predictors at EPV=5. With 12 selection items, you get unstable estimates and inflated odds ratios.
+
+**How we handle it:** The code computes `max_predictoren = max(2, n_events // 5)`. If there are more items than that, it runs univariate logistic regressions for each item, ranks them by p-value, and keeps only the top `max_predictoren`. Dropped items are listed above the regression table so the user knows what was excluded and why.
+
+**What it does NOT solve:** Even with selection, the model may be overfitted. With small samples, a single outlier can flip a coefficient from significant to not. We don't bootstrap or cross-validate. The results should be read as "suggestive patterns", not definitive evidence.
+
+### Problem 3: Multicollinearity
+
+Selection instruments often overlap. A "competentietest reflecteren" and a "competentietest stressbestendigheid" may correlate at r=0.8. In a joint model, neither appears significant because each explains variance the other already covers.
+
+**How we handle it:** Before fitting, the code checks the matrix rank of the predictor matrix. If rank < number of columns, it iteratively removes the column with the highest pairwise correlation until the matrix is full rank. Removed items are reported as "Items niet meegenomen (overlap met andere items)".
+
+**What it does NOT solve:** This only catches near-perfect collinearity (rank deficiency). High but not perfect correlations (r=0.7-0.8) still inflate standard errors and make individual p-values unreliable. The correlation heatmap on the same tab helps the user spot this.
+
+### Problem 4: Missing data
+
+Some items have missing values for a subset of candidates (optional modules, keuzevakken). Listwise deletion would throw away too many cases.
+
+**How we handle it:** Items with >30% missing values are excluded entirely. For the remaining items, missing values are imputed with the column mean. This is conservative and slightly biases coefficients toward zero.
+
+### Summary for developers
+
+The regression output is useful for spotting patterns but should not be overinterpreted given typical sample sizes (50-150 enrolled students). The dashboard communicates this through the toelichting text and the pseudo R-squared. When changing the regression code, test with both demo datasets: biomed has 10 items and ~84 enrolled students (comfortable EPV), bewegingswetenschappen has fewer items but header_rij=3 and more missing data.
+
 ## Known gotchas
 
 - **No .claudeignore**: the `data/` and `.venv/` directories are large. Don't glob or grep into them.
@@ -185,10 +223,48 @@ This session did the bulk of the multi-programme work:
 - **Fictive demo data**: BioMed AUMC 2026 (master, 120 candidates, 90 columns) and Bewegingswetenschappen VU 2026 (bachelor, 80 candidates, 37 columns, header_rij=3). Demo picker shows only fictive data.
 - **Pitch created**: [#14](https://github.com/cedanl/evaluatietool-voorbeeld/issues/14) Diploma as alternative outcome measure for 1-year masters.
 
-## Uncommitted work
+## Recent changes (2026-06-05, audit session)
 
-<!-- Update this section when you commit or start new work. Other sessions will append here. -->
+This session audited the full codebase for bugs, dead code, and data safety. All fixes are committed.
+
+### Bugs fixed
+- **Z-score crash in koppel_data()**: `lambda s: ... if s.std() > 0 else 0` returned scalar 0, which broke `mean(axis=1)`. Fixed to return `pd.Series(0, index=s.index)`.
+- **int("") crash in transformatie.py**: `int(config.get("header_rij", 1))` crashes when header_rij is empty string `""`. Fixed to `int(config.get("header_rij") or 1)`.
+- **split without maxsplit**: `contents.split(",")` in `_decode_upload()` could split base64 data containing commas. Fixed to `split(",", 1)`.
+- **Early return wiped validation state**: `valideer_uploads` returned `""` for store components instead of `dash.no_update`, wiping previously loaded data on partial re-uploads. Fixed.
+- **Double lees_config call**: config was parsed twice in the upload callback. Refactored to parse once with a `config = None` guard.
+
+### Dead code removed
+- `get_score_cols()`, `col_to_label()`, `score_opties_uit_df()` in app.py (unused after filter refactor)
+- `detecteer_bladen()` in config_wizard.py (never called)
+- `item_opties` variable in app.py (superseded by cascading filters)
+
+### Cleanup
+- `python-pptx` removed from runtime dependencies (only used by scripts/eenmalig/)
+- Extracted `bereken_pct()` helper in app.py to replace 4 inline groupby-percentage calculations
+- `kandidaat_id_kolom` renamed to `koppel_id_kolom` in maak_template.py to match what transformatie.py expects
+
+### Data safety audit
+- Verified gitignore blocks all PII-containing files (selectiedata with names/emails/student numbers)
+- Confirmed data/demo/ only contains fictive data generated by scripts/eenmalig/maak_fictief_*.py
+- Fixed over-broad gitignore that was blocking config.xlsx and demo data from being committed
+- Added path-specific gitignore rules instead of global `*.csv` / `*.xlsx` blocks
+
+## Known issues (not yet fixed)
+
+These were identified during the audit but left unfixed. Pick them up when relevant.
+
+### Code quality
+- **rapport.py duplicates analysis logic**: regression, Pearson-r, and demographic aggregations are reimplemented separately from app.py. Extracting shared analysis functions would prevent drift between dashboard and PDF.
+- **Silent except blocks in config_wizard.py**: callbacks at lines ~596 and ~641 swallow all exceptions with bare `except Exception`. Should at minimum log the error.
+- **detecteer_totaalscore second loop too broad**: matches any column containing "totaal" in the name, which can pick up unrelated columns.
+- **Hardcoded group strings**: `"Niet gestart"`, `"Gestart, niet naar jaar 2"`, `"Doorgestroomd naar jaar 2"` appear as raw strings throughout app.py instead of referencing `GROEP_VOLGORDE` from shared.py.
+- **Large callbacks**: `update_samenhang_tab` (158 lines) and `update_vo_tab` (140 lines) do a lot of work inline. Splitting data prep from layout would improve readability.
+- **No encoding fallback**: `parse_csv_or_excel()` in transformatie.py decodes CSV as utf-8 only. Dutch institutional files sometimes use latin-1 or cp1252.
+
+### Uncommitted work from other sessions
 
 As of 2026-06-05:
 
+- **app.py + rapport.py**: regression z-score standardization (uncommitted, from session A). Note: the `else 0` in `lambda s: (s - s.mean()) / s.std() if s.std() > 0 else 0` returns a scalar. This is the same pattern that caused the koppel_data z-score crash. Should be `pd.Series(0, index=s.index)` for safety.
 - **assets/nko-logo.png**: untracked. Converted from SVG for PDF rendering. Needs to be committed.
