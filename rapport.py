@@ -879,11 +879,26 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
     pdf.body_text(
         "In de tabel hieronder staat per item de coefficient (hoe sterk het "
         "effect is), de odds ratio (hoeveel keer groter de kans op doorstroom "
-        "wordt per punt hoger), de p-waarde (hoe zeker we zijn dat het effect "
-        "echt is) en de significantie. Een p-waarde kleiner dan 0.05 geldt als "
-        "statistisch significant. Drie sterretjes (***) betekent p < 0.001, "
-        "twee sterretjes (**) betekent p < 0.01, een sterretje (*) betekent "
-        "p < 0.05, en 'ns' betekent niet significant."
+        "wordt per standaarddeviatie stijging), de p-waarde (hoe zeker we zijn "
+        "dat het effect echt is) en de significantie. Een p-waarde kleiner dan "
+        "0.05 geldt als statistisch significant. Drie sterretjes (***) betekent "
+        "p < 0.001, twee sterretjes (**) betekent p < 0.01, een sterretje (*) "
+        "betekent p < 0.05, en 'ns' betekent niet significant."
+    )
+    pdf.body_text(
+        "Scores worden genormaliseerd (z-scores) voor de regressie. Daardoor "
+        "zijn de coefficienten en odds ratios vergelijkbaar tussen items met "
+        "verschillende schalen. Een odds ratio van 2.0 betekent: als de score "
+        "op dit item een standaarddeviatie hoger is, verdubbelt de kans op "
+        "doorstroom."
+    )
+    pdf.body_text(
+        "Bij weinig studenten kan het model niet alle items tegelijk betrouwbaar "
+        "schatten. Als vuistregel zijn er minimaal 5 studenten in de kleinste "
+        "groep nodig per item in het model. Bij minder selecteert de tool "
+        "automatisch de items die individueel het sterkst samenhangen met "
+        "doorstroom. De overige items worden niet meegenomen en staan vermeld "
+        "in de samenvatting hieronder."
     )
     if reg_text:
         pdf.body_text(reg_text)

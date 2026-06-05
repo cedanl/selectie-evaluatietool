@@ -630,6 +630,21 @@ app.layout = html.Div(
                                                                     "in het model. Een item dat op zichzelf voorspellend is, kan niet-significant "
                                                                     "zijn als een ander item dezelfde informatie al bevat. Dat is geen fout, "
                                                                     "maar overlap.",
+                                                                    className="small text-muted mb-1",
+                                                                ),
+                                                                html.P(
+                                                                    "Scores worden genormaliseerd (z-scores) voor de regressie. Daardoor zijn "
+                                                                    "de coefficienten en odds ratios vergelijkbaar tussen items met verschillende "
+                                                                    "schalen. Een odds ratio van 2.0 betekent: per standaarddeviatie hoger scoren "
+                                                                    "verdubbelt de kans op doorstroom.",
+                                                                    className="small text-muted mb-1",
+                                                                ),
+                                                                html.P(
+                                                                    "Bij weinig studenten kan het model niet alle items tegelijk meenemen. "
+                                                                    "Als vuistregel heb je minimaal 5 studenten in de kleinste groep per item "
+                                                                    "nodig. Bij minder selecteert de tool automatisch de items die individueel "
+                                                                    "het sterkst samenhangen met doorstroom. De overige items worden niet "
+                                                                    "meegenomen en staan vermeld boven de tabel.",
                                                                     className="small text-muted mb-0",
                                                                 ),
                                                             ],
