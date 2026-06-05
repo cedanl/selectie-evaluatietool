@@ -1,9 +1,10 @@
 """
-Zet demodata klaar voor de evaluatietool.
+Genereer synthetische 1CHO-data voor de echte selectiebestanden.
 
-Kopieert de selectiedata en configs naar data/demo/ subdirectories per
-opleiding-jaar combinatie, en genereert synthetische 1CHO-data voor de
-kandidaten in elk bestand.
+Kopieert selectiedata en configs naar data/test/ subdirectories en
+genereert 1CHO-data zodat je de pipeline lokaal kunt testen. Output
+gaat NIET naar data/demo/ (die bevat alleen fictieve data voor de
+demo-picker).
 
 Draai eenmalig:
     uv run python scripts/maak_data.py
@@ -17,7 +18,7 @@ import pandas as pd
 
 RNG = np.random.default_rng(2026)
 
-DEMO_DIR = Path("data/demo")
+OUT_DIR = Path("data/test")
 
 GESLACHT_LABELS = ["vrouw", "man", "anders"]
 HERKOMST_LABELS = [
@@ -172,7 +173,7 @@ def verwerk_dataset(cfg):
     sel_path = Path(cfg["selectiedata"])
     config_path = Path(cfg["config"])
     naam = cfg["naam"]
-    demo_subdir = DEMO_DIR / naam
+    demo_subdir = OUT_DIR / naam
 
     if not sel_path.exists():
         print(f"  WAARSCHUWING: {sel_path} niet gevonden, overslaan")
@@ -235,7 +236,7 @@ def verwerk_dataset(cfg):
 
 
 if __name__ == "__main__":
-    print("Demo datasets aanmaken...")
+    print("Testdata genereren in data/test/...")
     print()
 
     for cfg in DATASETS:
@@ -243,13 +244,5 @@ if __name__ == "__main__":
         verwerk_dataset(cfg)
         print()
 
-    # Backwards-compatible: kopieer FAR 2026 naar data/demo/ root
-    far2026_dir = DEMO_DIR / "far_leiden_2026"
-    if far2026_dir.exists():
-        for f in ["selectiedata.xlsx", "config.xlsx", "1cho_data.csv"]:
-            src = far2026_dir / f
-            if src.exists():
-                shutil.copy2(src, DEMO_DIR / f)
-        print("Root demo bestanden bijgewerkt (backwards compatible, FAR 2026)")
-
-    print("\nKlaar. Draai nu: uv run python app.py")
+    print("Klaar. Testdata staat in data/test/.")
+    print("Demo-picker gebruikt alleen data/demo/ (fictieve data).")
