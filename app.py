@@ -937,13 +937,19 @@ def update_filters_on_data_change(store_data, scores_store):
     if df.empty:
         empty_opts = [{"label": "Alle", "value": "Alle"}]
         return (
-            empty_opts, "Alle",  # cohort
-            empty_opts, "Alle",  # geslacht
-            empty_opts, "Alle",  # vooropleiding
-            empty_opts, "Alle",  # instrument
-            empty_opts, "Alle",  # criterium
-            [], "totaalscore",   # vo-score
-            "",                  # subtitle
+            empty_opts,
+            "Alle",  # cohort
+            empty_opts,
+            "Alle",  # geslacht
+            empty_opts,
+            "Alle",  # vooropleiding
+            empty_opts,
+            "Alle",  # instrument
+            empty_opts,
+            "Alle",  # criterium
+            [],
+            "totaalscore",  # vo-score
+            "",  # subtitle
         )
 
     jaren = (
