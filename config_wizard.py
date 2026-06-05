@@ -26,11 +26,6 @@ from transformatie import _decode_upload
 # =============================================================================
 
 
-def detecteer_bladen(raw: bytes) -> list[str]:
-    xls = pd.ExcelFile(io.BytesIO(raw))
-    return xls.sheet_names
-
-
 def detecteer_header_rij(xls: pd.ExcelFile, sheet: str | int = 0) -> int:
     """Scan rijen 0-9; return 1-based index van de eerste 'echte' headerrij."""
     df_raw = xls.parse(sheet_name=sheet, header=None, nrows=10)
