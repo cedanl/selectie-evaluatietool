@@ -564,9 +564,10 @@ add_slide(
         "heeft het item voorspellende waarde.",
         "Als de boxen grotendeels overlappen, meet het item niet wat je hoopt te meten.",
         "",
-        "**Belangrijk**",
-        "De scores zijn niet genormaliseerd. Je vergelijkt alleen binnen een item, niet tussen items. "
-        "Een schaalscore van 25 en een punten-score van 3 zijn niet vergelijkbaar.",
+        "**Belangrijk: schalen zijn niet vergelijkbaar**",
+        "De boxplots tonen ruwe scores. Elk item heeft zijn eigen schaal. "
+        "Een schaalscore van 25 en een gespreksbeoordeling van 3 staan naast elkaar in het dashboard, "
+        "maar je kunt ze niet onderling vergelijken. Vergelijk altijd binnen een item, nooit ertussen.",
     ],
 )
 
@@ -820,6 +821,12 @@ add_slide(
         "**Geen fairness-analyse**",
         "De demografische tab toont patronen, maar de tool trekt geen conclusies over eerlijkheid. "
         "Dat vraagt om aanvullende methodiek en zorgvuldige interpretatie.",
+        "",
+        "**Geen kwalitatieve items**",
+        "De tool werkt alleen met numerieke scores. Tekstvelden, categorische beoordelingen "
+        "(zoals 'voldoende/onvoldoende' of 'A/B/C') en open antwoorden kunnen niet worden "
+        "geanalyseerd. De analist moet dit soort kolommen weglaten uit de config, of ze eerst "
+        "omzetten naar een numerieke waarde.",
         "",
         "**Geen multi-user authenticatie**",
         "De tool draait nu lokaal. SurfConext login en rolbeheer zijn post-scope.",
