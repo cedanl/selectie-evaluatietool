@@ -99,7 +99,7 @@ style_header_row(ws_uitleg, 6, 4)
 
 instellingen_uitleg = [
     [
-        "kandidaat_id_kolom",
+        "koppel_id_kolom",
         "De exacte kolomnaam die het studentnummer of aanvraagnummer bevat.",
         "Studentnummer\nA_Nummer_Aanvraag",
         "Kopieer exact, inclusief hoofdletters en spaties.",
@@ -243,7 +243,7 @@ style_header_row(ws_inst, 1, 2)
 
 velden = [
     (
-        "kandidaat_id_kolom",
+        "koppel_id_kolom",
         "",
         "De exacte kolomnaam die het studentnummer of aanvraagnummer bevat.\n\n"
         "Voorbeelden:\n- Studentnummer\n- A_Nummer_Aanvraag\n\n"
