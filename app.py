@@ -1491,9 +1491,7 @@ def update_verdeling_tab(cohort, geslacht, vooropleiding, store_data):
         .size()
         .reset_index(name="n")
     )
-    agg["pct"] = (
-        agg["n"] / agg.groupby("selectiejaar")["n"].transform("sum") * 100
-    ).round(1)
+    agg = bereken_pct(agg, "selectiejaar")
 
     fig = px.bar(
         agg,
