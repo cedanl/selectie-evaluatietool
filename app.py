@@ -381,9 +381,10 @@ app.layout = html.Div(
                                                     "Selectiescores per uitkomstgroep"
                                                 ),
                                                 html.P(
-                                                    "Hogere scores bij doorstromers dan bij uitvallers signaleren predictieve validiteit "
-                                                    "van het selectie-instrument. Let op overlap: een instrument dat groepen niet "
-                                                    "onderscheidt heeft weinig voorspellende waarde.",
+                                                    "Hier vergelijken we de selectiescores van drie groepen studenten. "
+                                                    "Als studenten die doorstromen naar jaar 2 hoger scoren dan studenten die "
+                                                    "uitvallen, dan werkt het selectie-instrument: het selecteert de juiste mensen. "
+                                                    "Als de groepen ongeveer gelijk scoren, voorspelt dat item niet goed wie het gaat redden.",
                                                     className="text-muted small",
                                                 ),
                                                 dbc.Row(
@@ -477,9 +478,10 @@ app.layout = html.Div(
                                                     "Correlatiematrix tussen items"
                                                 ),
                                                 html.P(
-                                                    "Hoe hangen de selectie-items onderling samen? Hoge correlaties "
-                                                    "betekenen dat items grotendeels hetzelfde meten. "
-                                                    "Items die weinig correleren voegen elk unieke informatie toe.",
+                                                    "Meten de verschillende onderdelen van de selectie allemaal iets anders, "
+                                                    "of meten sommige onderdelen eigenlijk hetzelfde? Een hoog getal (dicht bij 1) "
+                                                    "betekent dat twee items sterk samenhangen. Een laag getal (dicht bij 0) betekent "
+                                                    "dat ze iets anders meten en elkaar dus aanvullen.",
                                                     className="text-muted small",
                                                 ),
                                                 html.Details(
@@ -573,9 +575,9 @@ app.layout = html.Div(
                                                     "Regressie-analyse: voorspelling studiesucces"
                                                 ),
                                                 html.P(
-                                                    "Logistische regressie met doorstroom naar jaar 2 als uitkomst "
-                                                    "(ja/nee). Per item: hoe sterk voorspelt het doorstroom, "
-                                                    "rekening houdend met de andere items?",
+                                                    "Welke onderdelen van de selectie voorspellen het beste of een student "
+                                                    "doorstroomt naar jaar 2? Dit model kijkt naar alle items tegelijk en "
+                                                    "bepaalt per item hoeveel het bijdraagt aan de voorspelling.",
                                                     className="text-muted small",
                                                 ),
                                                 html.Details(
@@ -655,6 +657,11 @@ app.layout = html.Div(
                                             [
                                                 html.H5("Verdeling per groep"),
                                                 html.P(
+                                                    "Hoeveel procent van de kandidaten valt in elke groep per selectiejaar? "
+                                                    "Hiermee zie je of het selectieproces van jaar tot jaar verandert.",
+                                                    className="text-muted small",
+                                                ),
+                                                html.P(
                                                     id="verdeling-caption",
                                                     className="text-muted small",
                                                 ),
@@ -665,8 +672,45 @@ app.layout = html.Div(
                                                 html.Hr(),
                                                 html.H5("Demografisch profiel"),
                                                 html.P(
-                                                    "Achtergrondkenmerken komen uit 1CHO en zijn alleen beschikbaar voor ingeschreven studenten.",
+                                                    "Wie zijn de studenten in elke groep? Zijn er verschillen in "
+                                                    "achtergrond tussen studenten die doorstromen en studenten die uitvallen?",
                                                     className="text-muted small",
+                                                ),
+                                                html.Details(
+                                                    [
+                                                        html.Summary(
+                                                            "Waar komen deze gegevens vandaan?",
+                                                            className="small text-muted",
+                                                            style={"cursor": "pointer"},
+                                                        ),
+                                                        html.Div(
+                                                            [
+                                                                html.P(
+                                                                    "De achtergrondkenmerken (geslacht, herkomst, vooropleiding, VO-cijfer) "
+                                                                    "komen uit 1CHO: de landelijke registratie van inschrijvingen in het "
+                                                                    "hoger onderwijs. Elke hogeronderwijsinstelling levert jaarlijks "
+                                                                    "inschrijvingsgegevens aan bij 1CHO.",
+                                                                    className="small text-muted mb-1",
+                                                                ),
+                                                                html.P(
+                                                                    "Deze gegevens zijn alleen beschikbaar voor studenten die daadwerkelijk "
+                                                                    "zijn ingeschreven bij de opleiding. Kandidaten die niet zijn toegelaten "
+                                                                    "of nooit zijn gestart staan niet in 1CHO en hebben dus geen "
+                                                                    "achtergrondkenmerken. Zij vallen in de groep 'Niet gestart'.",
+                                                                    className="small text-muted mb-1",
+                                                                ),
+                                                                html.P(
+                                                                    "Doorstroom naar jaar 2 wordt bepaald door te kijken of een student "
+                                                                    "een tweede inschrijving heeft voor dezelfde opleiding in het jaar na "
+                                                                    "het selectiejaar. Heeft een student alleen een eerstejaars inschrijving "
+                                                                    "en geen tweedejaars, dan is dat uitval.",
+                                                                    className="small text-muted mb-0",
+                                                                ),
+                                                            ],
+                                                            className="mt-1 mb-2",
+                                                        ),
+                                                    ],
+                                                    className="mb-3",
                                                 ),
                                                 dbc.Row(
                                                     [
@@ -707,8 +751,9 @@ app.layout = html.Div(
                                                     "VO-eindcijfer vs selectiescores"
                                                 ),
                                                 html.P(
-                                                    "Het VO-eindcijfer komt uit 1CHO en is onafhankelijk van de selectie. "
-                                                    "Hoe sterk hangt elk selectie-item samen met schoolprestaties?",
+                                                    "Meet de selectie iets anders dan wat je op school al hebt laten zien? "
+                                                    "Hier vergelijken we selectiescores met het gemiddelde eindcijfer van "
+                                                    "de middelbare school (uit 1CHO).",
                                                     className="text-muted small",
                                                 ),
                                                 html.Details(
@@ -781,7 +826,8 @@ app.layout = html.Div(
                                                 ),
                                                 html.Hr(),
                                                 html.P(
-                                                    "Pearson r per item en totaalscore.",
+                                                    "Samenhang (r) per item met het VO-eindcijfer. "
+                                                    "Hoe dichter bij 0, hoe meer het item iets anders meet dan schoolprestaties.",
                                                     className="text-muted small",
                                                 ),
                                                 dash_table.DataTable(
