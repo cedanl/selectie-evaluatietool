@@ -79,6 +79,59 @@ def detecteer_totaalscore(headers: list[str]) -> str | None:
     return None
 
 
+_BEKENDE_INSTELLINGEN = [
+    "LUMC", "AUMC", "UMC Utrecht", "Erasmus MC", "Radboudumc",
+    "Universiteit Leiden", "Universiteit Utrecht", "UvA", "VU",
+    "EUR", "RUG", "TU Delft", "TU Eindhoven", "Radboud",
+    "Maastricht", "Twente", "Tilburg", "Groningen", "Wageningen",
+    "Leiden", "Amsterdam", "Rotterdam", "Nijmegen",
+]
+
+_BEKENDE_OPLEIDINGEN = [
+    "Farmacie", "Psychologie", "Geneeskunde", "Biomedische Wetenschappen",
+    "Tandheelkunde", "Diergeneeskunde", "Fysiotherapie", "Logopedie",
+    "BioMed", "Rechten", "Fiscaal Recht", "Notarieel Recht",
+    "International Business", "Econometrie", "Kunstmatige Intelligentie",
+]
+
+_OPLEIDING_AFKORTINGEN = {
+    "far": "Farmacie",
+    "psy": "Psychologie",
+    "gnk": "Geneeskunde",
+    "thk": "Tandheelkunde",
+    "dgk": "Diergeneeskunde",
+    "biomed": "Biomedische Wetenschappen",
+}
+
+
+def detecteer_metadata(bestandsnaam: str, bladnamen: list[str]) -> dict:
+    """Raad opleiding, instelling en jaar op basis van bestandsnaam en bladnamen."""
+    tekst = bestandsnaam + " " + " ".join(bladnamen)
+
+    jaren = re.findall(r"20\d{2}", tekst)
+    jaar = jaren[0] if jaren else ""
+
+    instelling = ""
+    for inst in _BEKENDE_INSTELLINGEN:
+        if inst.lower() in tekst.lower():
+            instelling = inst
+            break
+
+    opleiding = ""
+    for opl in _BEKENDE_OPLEIDINGEN:
+        if opl.lower() in tekst.lower():
+            opleiding = opl
+            break
+    if not opleiding:
+        woorden = re.findall(r"[a-zA-Z]+", tekst.lower())
+        for woord in woorden:
+            if woord in _OPLEIDING_AFKORTINGEN:
+                opleiding = _OPLEIDING_AFKORTINGEN[woord]
+                break
+
+    return {"opleiding": opleiding, "instelling": instelling, "jaar": jaar}
+
+
 _EXCLUDEER_PATRONEN = [
     re.compile(p, re.IGNORECASE)
     for p in [
@@ -507,13 +560,17 @@ def registreer_callbacks(app: dash.Dash) -> None:
         Output("wiz-sheet-dropdown", "options"),
         Output("wiz-sheet-dropdown", "value"),
         Output("wiz-header-rij", "value"),
+        Output("wiz-opleiding", "value"),
+        Output("wiz-instelling", "value"),
+        Output("wiz-jaar", "value"),
         Input("wiz-raw-store", "data"),
         Input("wiz-collapse", "is_open"),
+        State("upload-selectiedata", "filename"),
         prevent_initial_call=True,
     )
-    def detecteer_blad_en_header(raw_contents, is_open):
+    def detecteer_blad_en_header(raw_contents, is_open, filename):
         if not is_open or not raw_contents:
-            return [], None, 1
+            return [], None, 1, None, None, None
 
         try:
             raw = _decode_upload(raw_contents)
@@ -526,9 +583,18 @@ def registreer_callbacks(app: dash.Dash) -> None:
             if gekozen:
                 header = detecteer_header_rij(xls, gekozen)
 
-            return options, gekozen, header
+            meta = detecteer_metadata(filename or "", bladen)
+
+            return (
+                options,
+                gekozen,
+                header,
+                meta["opleiding"] or None,
+                meta["instelling"] or None,
+                meta["jaar"] or None,
+            )
         except Exception:
-            return [], None, 1
+            return [], None, 1, None, None, None
 
     @app.callback(
         Output("wiz-id-kolom", "options"),
