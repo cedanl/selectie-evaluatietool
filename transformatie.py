@@ -56,7 +56,7 @@ def lees_config(contents: str) -> dict:
     kolommen_df = kolommen_df.dropna(subset=[kolommen_df.columns[0]])
     kolommen_df = kolommen_df[kolommen_df.iloc[:, 0].astype(str).str.strip() != ""]
 
-    veld_namen = ["kolom_naam", "instrument", "item", "criterium", "score_type"]
+    veld_namen = ["kolom_naam", "instrument", "item", "criterium"]
     kolommen = []
     for idx, rij in kolommen_df.iterrows():
         entry = {}
@@ -130,6 +130,47 @@ def valideer_config(config: dict, selectiedata_contents: str) -> list[dict]:
             {
                 "check": f"Alle {len(kolommen)} kolommen gevonden in data",
                 "ok": True,
+            }
+        )
+
+    df_sample = pd.read_excel(xls, sheet_name=blad or 0, header=header_rij)
+    n_rijen = len(df_sample)
+    resultaten.append(
+        {
+            "check": f"{n_rijen} kandidaten in selectiebestand",
+            "ok": n_rijen > 0,
+        }
+    )
+
+    if id_kolom:
+        id_actual = _find_col(headers, id_kolom)
+        if id_actual and id_actual in df_sample.columns:
+            n_leeg = int(df_sample[id_actual].isna().sum())
+            if n_leeg > 0:
+                resultaten.append(
+                    {
+                        "check": f"{n_leeg} rijen zonder ID-waarde in '{id_kolom}'",
+                        "ok": False,
+                    }
+                )
+
+    niet_numeriek = []
+    for kol in kolommen:
+        actual = _find_col(headers, kol["kolom_naam"])
+        if actual and actual in df_sample.columns:
+            col_data = df_sample[actual].dropna()
+            if not col_data.empty:
+                numeric = pd.to_numeric(col_data, errors="coerce")
+                pct_numeriek = numeric.notna().sum() / len(col_data)
+                if pct_numeriek < 0.5:
+                    niet_numeriek.append(kol["kolom_naam"])
+
+    if niet_numeriek:
+        resultaten.append(
+            {
+                "check": f"{len(niet_numeriek)} kolom(men) bevatten geen numerieke data: "
+                f"{', '.join(niet_numeriek[:3])}{'...' if len(niet_numeriek) > 3 else ''}",
+                "ok": False,
             }
         )
 
