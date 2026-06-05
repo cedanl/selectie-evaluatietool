@@ -2,8 +2,8 @@
 Genereer de presentatie voor de Evaluatietool Selectie.
 
 Vertelt het verhaal van het project: het probleem, de aanpak, de technische
-werking, en wat het dashboard laat zien. Getest met vijf selectiebestanden
-van twee opleidingen.
+werking, en wat het dashboard laat zien. Inclusief config wizard en
+PDF-rapportgeneratie.
 
 Draai:
     uv run python scripts/maak_presentatie.py
@@ -190,7 +190,7 @@ tf.word_wrap = True
 p = tf.paragraphs[0]
 p.text = (
     "Selectiedata koppelen aan studiesucces, ongeacht de opleiding. "
-    "Een werkend dashboard, getest met vijf bestanden van twee opleidingen."
+    "Een werkend dashboard met config wizard en PDF-rapport."
 )
 p.font.size = Pt(22)
 p.font.color.rgb = RGBColor(200, 200, 200)
@@ -284,39 +284,91 @@ add_slide(
         "**1. Selectiebestand (Excel)**",
         "Het bestand met de resultaten van de selectieprocedure. Dit verschilt per opleiding.",
         "",
-        "**2. Configuratiebestand (Excel)**",
+        "**2. Configuratiebestand (Excel of via de config wizard)**",
         "Beschrijft welke kolommen uit het selectiebestand worden meegenomen en hoe ze heten. "
-        "Eenmalig aan te maken per bestand.",
+        "Kan automatisch gegenereerd worden met de ingebouwde config wizard.",
         "",
         "**3. 1CHO-data (studiesuccesdata)**",
         "Bevat de groepindeling per student: niet gestart, gestart maar niet doorgestroomd, "
         "of doorgestroomd naar jaar 2.",
         "",
-        "Het dashboard opent zodra alle drie bestanden geladen zijn.",
+        "Het dashboard opent zodra alle drie bestanden geladen zijn. "
+        "Na de analyse kun je een PDF-rapport downloaden.",
     ],
 )
 
 
 # ============================================================
-# SLIDE 5: Het configuratiebestand
+# SLIDE 5: Wat doet de analist?
+# ============================================================
+add_slide(
+    "Wat doet de analist?",
+    [
+        "De analist is verantwoordelijk voor het selectiebestand en de configuratie.",
+        "",
+        "**Selectiebestand klaarzetten**",
+        "De analist krijgt het selectiebestand van de opleiding of het testbureau. "
+        "Het bestand hoeft niet opgeschoond te worden. Laat het zoals het is.",
+        "",
+        "**Configuratie maken**",
+        "Open de tool en upload het selectiebestand. Klik op 'config automatisch genereren'. "
+        "De wizard detecteert welke kolommen scores bevatten. De analist controleert het resultaat: "
+        "kloppen de instrumentnamen? Zijn er kolommen die niet thuishoren? "
+        "Pas aan waar nodig en klik 'Bevestig config'.",
+        "",
+        "**Inhoudelijke keuzes**",
+        "De analist beslist welke kolommen meetellen. Bij meerdere scoreversies "
+        "(bijvoorbeeld schaalscore en normscore): kies er een. Bij meerdere beoordelaars: "
+        "gebruik de samengevoegde score. De wizard neemt alles mee, de analist filtert.",
+    ],
+)
+
+
+# ============================================================
+# SLIDE 6: Wat doet de dataprofessional?
+# ============================================================
+add_slide(
+    "Wat doet de dataprofessional?",
+    [
+        "De dataprofessional is verantwoordelijk voor de 1CHO-data (studiesucces).",
+        "",
+        "**1CHO-data ophalen**",
+        "De dataprofessional haalt de studiesuccesgegevens op uit de 1 Cijfer HO bestanden van DUO. "
+        "Hiervoor kan het 1cijferho-project van CEDA gebruikt worden (github.com/cedanl/1cijferho). "
+        "Dat project heeft een preset voor de selectietool die precies de juiste kolommen selecteert.",
+        "",
+        "**Filteren op opleiding**",
+        "Filter de 1CHO-data op de opleiding die je analyseert. Het resultaat bevat per student: "
+        "studentnummer, selectiejaar, en de groepsindeling (niet gestart, uitval, of doorgestroomd). "
+        "Optioneel ook geslacht, herkomst, vooropleiding en VO-eindcijfer.",
+        "",
+        "**Studentnummer checken**",
+        "Controleer dat het studentnummer in hetzelfde formaat staat als in het selectiebestand. "
+        "Let op voorloopnullen: als het ene bestand 0012345 gebruikt en het andere 12345, "
+        "dan mislukt de koppeling.",
+    ],
+)
+
+
+# ============================================================
+# SLIDE 7: Het configuratiebestand
 # ============================================================
 add_slide(
     "Het configuratiebestand: het scharnierpunt",
     [
-        "Per selectiebestand maakt een analist een configuratiebestand. Dit is een gewone Excel-spreadsheet "
-        "met twee tabbladen.",
+        "Per selectiebestand heb je een configuratiebestand nodig. Er zijn twee manieren om er een te maken:",
         "",
-        "**Tabblad 1: Instellingen**",
-        "Welke kolom is het studentnummer? Op welke rij staan de kolomnamen? Welke kolom is de totaalscore?",
+        "**Config wizard (aanbevolen)**",
+        "De ingebouwde wizard leest het selectiebestand en detecteert automatisch welk blad de data bevat, "
+        "waar de kolomnamen staan, welke kolom het studentnummer is, en welke kolommen scores bevatten. "
+        "De gebruiker controleert het resultaat in een bewerkbare tabel en past namen aan waar nodig.",
         "",
-        "**Tabblad 2: Kolommen**",
-        "Hier koppelt de analist elke kolom aan een instrument, item, criterium en score-type. "
-        "Alleen kolommen die in dit tabblad staan worden meegenomen. De rest wordt genegeerd.",
+        "**Handmatig via het templatebestand**",
+        "Een Excel-spreadsheet met twee tabbladen: Instellingen (studentnummer, headerrij, totaalscore) "
+        "en Kolommen (per scorekolom een instrument, item, criterium en score-type).",
         "",
         "De tool schrijft niks voor. De analist kiest zelf de namen voor instrumenten, items en criteria. "
         "Dat maakt het flexibel genoeg om voor elke opleiding te werken.",
-        "",
-        "Er is een leeg templatebestand met toelichtingen in elke cel.",
     ],
 )
 
@@ -648,22 +700,23 @@ add_table_slide(
 add_slide(
     "Keuzes die de analist maakt in de config",
     [
-        "Elk selectiebestand vraagt om inhoudelijke keuzes. Die zitten in de config, niet in de tool.",
+        "Elk selectiebestand vraagt om inhoudelijke keuzes. De config wizard helpt met detectie, "
+        "maar de analist controleert altijd het resultaat.",
         "",
         "**Bij meerdere scoreversies: kies er een**",
         "Farmacie 2026 heeft per toets een schaalscore, normscore en Z-score. "
-        "We gebruiken de schaalscore. De config bepaalt welke kolom het wordt.",
+        "De wizard neemt alles mee. De analist verwijdert de overbodige rijen uit de tabel.",
         "",
         "**Bij meerdere beoordelaars: gebruik de samengevoegde score**",
         "Farmacie 2025 heeft twee beoordelaars per kandidaat. "
-        "We nemen de C_-kolommen (samengevoegd), niet de individuele B1/B2 scores.",
+        "De analist verwijdert de individuele B1/B2 rijen en houdt de samengevoegde C_-scores over.",
         "",
         "**Bij extra koprijen: stel de header_rij in**",
         "Psychologie 2026-2027 heeft groepskoppen boven de kolomnamen. "
-        "De config stelt header_rij = 3 zodat de tool de juiste rij pakt.",
+        "De wizard probeert de juiste rij te detecteren, maar de analist kan het handmatig aanpassen.",
         "",
-        "**Tekstvelden, datums en persoonsgegevens: niet opnemen**",
-        "Alles wat niet in de config staat wordt genegeerd.",
+        "**Tekstvelden, datums en persoonsgegevens**",
+        "De wizard filtert deze automatisch uit. Alleen numerieke kolommen worden voorgesteld.",
     ],
 )
 
@@ -698,36 +751,7 @@ add_table_slide(
 
 
 # ============================================================
-# SLIDE 17: Technische aanpak
-# ============================================================
-add_slide(
-    "Technische architectuur",
-    [
-        "**Stack**",
-        "Python, Dash (Plotly), pandas, statsmodels. Draait lokaal of op een server.",
-        "",
-        "**Pipeline**",
-        "- Selectiebestand + config inlezen",
-        "- Breed formaat omzetten naar lang formaat (een rij per meting)",
-        "- Koppelen aan 1CHO-data via studentnummer",
-        "- Dashboard renderen met filters en vier analysetabbladen",
-        "",
-        "**Configuratie**",
-        "- Config is een Excel-bestand met twee tabbladen (instellingen + kolommen)",
-        "- Er is een leeg templatebestand met toelichtingen in elke cel",
-        "- Validatie bij upload: de tool checkt of alle kolommen uit de config in de data staan",
-        "",
-        "**Getest met**",
-        "- Farmacie LUMC 2025 (60 kolommen, twee beoordelaars, gesprekken + diploma)",
-        "- Farmacie LUMC 2026 (97 kolommen, digitale toetsen, proctoring)",
-        "- Psychologie 2022-2023 (9 kolommen, geaggregeerde scores)",
-        "- Psychologie 2026-2027 (46 kolommen, vakscores, keuzevakken, extra koprijen)",
-    ],
-)
-
-
-# ============================================================
-# SLIDE 18: Wat we niet doen
+# SLIDE 17: Wat we niet doen
 # ============================================================
 add_slide(
     "Wat de tool niet doet (en waarom)",
@@ -740,16 +764,15 @@ add_slide(
         "De demografische tab toont patronen, maar de tool trekt geen conclusies over eerlijkheid. "
         "Dat vraagt om aanvullende methodiek en zorgvuldige interpretatie.",
         "",
-        "**Geen automatische kolomherkenning**",
-        "De analist maakt handmatig een config per bestand. Dat kost eenmalig tijd, maar voorkomt fouten "
-        "die je bij automatische detectie onvermijdelijk krijgt.",
-        "",
-        "**Geen downloadbaar rapport**",
-        "De tool toont een interactief dashboard. Een automatisch gegenereerd Word/PDF-rapport "
-        "met tekstuele duiding is een volgende stap.",
-        "",
         "**Geen multi-user authenticatie**",
         "De tool draait nu lokaal. SurfConext login en rolbeheer zijn post-scope.",
+        "",
+        "**Geen multi-bestandsupload per selectie**",
+        "Sommige opleidingen hebben meerdere bestanden per selectieprocedure. "
+        "De tool ondersteunt nu een selectiebestand per keer.",
+        "",
+        "**Geen cohortanalyse over meerdere jaren**",
+        "Je analyseert per selectiejaar. Vergelijking tussen jaargangen is een volgende stap.",
     ],
 )
 
@@ -797,9 +820,14 @@ add_table_slide(
             "Pearson r en scatterplots",
         ],
         [
-            "Automatisch evaluatierapport",
-            "Niet gedaan",
-            "Dashboard toont alles interactief",
+            "Config wizard (auto-detectie kolommen)",
+            "Gedaan",
+            "Detecteert blad, header, ID, scores automatisch",
+        ],
+        [
+            "PDF-evaluatierapport",
+            "Gedaan",
+            "Downloadbaar rapport met grafieken en tabellen",
         ],
         [
             "Fairness-analyse",
@@ -826,19 +854,18 @@ add_slide(
         "**Korte termijn**",
         "- Meer opleidingen testen met hun eigen data",
         "- Feedback verwerken op dashboard-layout en analyses",
-        "- Config-template verder verbeteren met meer voorbeelden",
+        "- Tekstuele duiding toevoegen aan het PDF-rapport",
         "",
         "**Middellange termijn**",
         "- Cohortanalyse: meerdere jaargangen vergelijken binnen een opleiding",
-        "- Automatisch gegenereerd evaluatierapport (Word/PDF) met tekstuele duiding",
         "- Effectgroottes (Cohen's d) naast p-waarden in de regressie",
         "- Interrater-analyse voor bestanden met meerdere beoordelaars",
+        "- Meerdere selectiebestanden per opleiding ondersteunen",
         "",
         "**Langere termijn**",
         "- Fairness-analyse met gevalideerde methodiek",
-        "- Config-tool: een interface om het configuratiebestand aan te maken",
         "- Deployment als webapplicatie met SurfConext authenticatie",
-        "- Ondersteuning voor meerdere bestanden per selectieprocedure",
+        "- Integratie met 1cijferho-tool voor directe data-import",
     ],
 )
 
@@ -864,11 +891,13 @@ tf = body.text_frame
 tf.word_wrap = True
 
 lines = [
-    "Elk selectiebestand is anders. De tool lost dat op met een configuratiebestand.",
+    "Elk selectiebestand is anders. De tool lost dat op met een configuratiebestand "
+    "dat je handmatig maakt of automatisch laat genereren via de config wizard.",
     "",
     "Getest met vier bestanden van twee opleidingen: Farmacie (master, LUMC) en Psychologie (bachelor, Leiden).",
     "",
-    "Het dashboard toont selectiescores per groep, correlaties, regressie, demografie en VO-eindcijfer.",
+    "Het dashboard toont selectiescores per groep, correlaties, regressie, demografie en VO-eindcijfer. "
+    "Na de analyse kun je een PDF-rapport downloaden.",
     "",
     "De volgende stap: meer opleidingen laten testen met hun eigen data.",
 ]

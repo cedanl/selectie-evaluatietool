@@ -967,12 +967,6 @@ def _laad_demodata(dataset_name=None):
     Output("geslacht-dropdown", "value"),
     Output("vooropleiding-dropdown", "options"),
     Output("vooropleiding-dropdown", "value"),
-    Output("instrument-filter", "options"),
-    Output("instrument-filter", "value"),
-    Output("criterium-filter", "options"),
-    Output("criterium-filter", "value"),
-    Output("item-filter", "options"),
-    Output("item-filter", "value"),
     Output("samenhang-instrument", "options"),
     Output("samenhang-instrument", "value"),
     Output("samenhang-criterium", "options"),
@@ -988,25 +982,13 @@ def update_filters_on_data_change(store_data, scores_store):
     if df.empty:
         empty_opts = [{"label": "Alle", "value": "Alle"}]
         return (
-            empty_opts,
-            "Alle",  # cohort
-            empty_opts,
-            "Alle",  # geslacht
-            empty_opts,
-            "Alle",  # vooropleiding
-            empty_opts,
-            "Alle",  # instrument
-            empty_opts,
-            "Alle",  # criterium
-            empty_opts,
-            "Alle",  # item
-            empty_opts,
-            "Alle",  # samenhang-instrument
-            empty_opts,
-            "Alle",  # samenhang-criterium
-            [],
-            "totaalscore",  # vo-score
-            "",  # subtitle
+            empty_opts, "Alle",  # cohort
+            empty_opts, "Alle",  # geslacht
+            empty_opts, "Alle",  # vooropleiding
+            empty_opts, "Alle",  # samenhang-instrument
+            empty_opts, "Alle",  # samenhang-criterium
+            [], "totaalscore",   # vo-score
+            "",                  # subtitle
         )
 
     jaren = (
@@ -1056,16 +1038,87 @@ def update_filters_on_data_change(store_data, scores_store):
         "Alle",
         criterium_opties,
         "Alle",
-        item_opties,
-        "Alle",
-        instrument_opties,
-        "Alle",
-        criterium_opties,
-        "Alle",
         vo_opties,
         "totaalscore",
         subtitle,
     )
+
+
+@app.callback(
+    Output("instrument-filter", "options"),
+    Output("instrument-filter", "value"),
+    Output("criterium-filter", "options"),
+    Output("criterium-filter", "value"),
+    Output("item-filter", "options"),
+    Output("item-filter", "value"),
+    Input("instrument-filter", "value"),
+    Input("criterium-filter", "value"),
+    Input("item-filter", "value"),
+    Input("scores-store", "data"),
+)
+def update_score_filters(instrument_val, criterium_val, item_val, scores_store):
+    alle_inst = [{"label": "Alle instrumenten", "value": "Alle"}]
+    alle_crit = [{"label": "Alle criteria", "value": "Alle"}]
+    alle_item = [{"label": "Alle items", "value": "Alle"}]
+
+    if not scores_store:
+        return alle_inst, "Alle", alle_crit, "Alle", alle_item, "Alle"
+
+    scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+    meta = scores_df[["instrument", "item", "criterium"]].drop_duplicates()
+
+    filtered = meta.copy()
+    if instrument_val and instrument_val != "Alle":
+        filtered = filtered[filtered["instrument"] == instrument_val]
+    if criterium_val and criterium_val != "Alle":
+        filtered = filtered[filtered["criterium"] == criterium_val]
+    if item_val and item_val != "Alle":
+        filtered = filtered[filtered["item"] == item_val]
+
+    if filtered.empty:
+        filtered = meta.copy()
+        instrument_val = "Alle"
+        criterium_val = "Alle"
+        item_val = "Alle"
+
+    beschikbare_items = set(filtered["item"])
+    beschikbare_criteria = set(filtered["criterium"].dropna()) - {""}
+    beschikbare_instrumenten = set(filtered["instrument"])
+
+    if instrument_val and instrument_val != "Alle":
+        subset = meta[meta["instrument"] == instrument_val]
+        beschikbare_items = set(subset["item"])
+        beschikbare_criteria = set(subset["criterium"].dropna()) - {""}
+    if criterium_val and criterium_val != "Alle":
+        subset = meta[meta["criterium"] == criterium_val]
+        beschikbare_items = beschikbare_items & set(subset["item"])
+        beschikbare_instrumenten = set(subset["instrument"])
+    if item_val and item_val != "Alle":
+        subset = meta[meta["item"] == item_val]
+        beschikbare_instrumenten = set(subset["instrument"])
+        beschikbare_criteria = set(subset["criterium"].dropna()) - {""}
+
+    inst_opts = alle_inst + [
+        {"label": i, "value": i}
+        for i in sorted(meta["instrument"].unique())
+        if i in beschikbare_instrumenten
+    ]
+    crit_opts = alle_crit + [
+        {"label": c, "value": c}
+        for c in sorted(meta["criterium"].dropna().unique())
+        if c.strip() and c in beschikbare_criteria
+    ]
+    item_opts = alle_item + [
+        {"label": shorten_item(it), "value": it}
+        for it in sorted(meta["item"].unique())
+        if it in beschikbare_items
+    ]
+
+    inst_valid = instrument_val if any(o["value"] == instrument_val for o in inst_opts) else "Alle"
+    crit_valid = criterium_val if any(o["value"] == criterium_val for o in crit_opts) else "Alle"
+    item_valid = item_val if any(o["value"] == item_val for o in item_opts) else "Alle"
+
+    return inst_opts, inst_valid, crit_opts, crit_valid, item_opts, item_valid
 
 
 @app.callback(
