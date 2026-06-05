@@ -166,37 +166,6 @@ def _maak_item_naam(kolom: str) -> str:
     return naam
 
 
-def _raad_score_type(kolom: str, series: pd.Series) -> str:
-    if "schaalscore" in kolom.lower():
-        return "schaalscore"
-
-    clean = series.dropna()
-    if clean.empty:
-        return "punten"
-
-    vmin, vmax = clean.min(), clean.max()
-
-    if "score" in kolom.lower():
-        if vmax <= 5:
-            return "punten (0-5)"
-        if vmax <= 10:
-            return "punten (0-10)"
-        if vmax <= 100 and vmin >= 0:
-            return "percentage"
-        return "punten"
-
-    if vmin >= 1 and vmax <= 3 and clean.nunique() <= 3:
-        return "schaal 1-3"
-    if vmin >= 1 and vmax <= 5 and clean.nunique() <= 5:
-        return "schaal 1-5"
-    if vmin >= 1 and vmax <= 10:
-        return "cijfer (1-10)"
-    if vmin >= 0 and vmax <= 100:
-        return "percentage"
-
-    return "punten"
-
-
 def detecteer_score_kolommen(
     df: pd.DataFrame,
     id_kolom: str | None,
@@ -221,7 +190,6 @@ def detecteer_score_kolommen(
                 "instrument": _raad_instrument(col_str, alle_kolommen),
                 "item": _maak_item_naam(col_str),
                 "criterium": "",
-                "score_type": _raad_score_type(col_str, df[col]),
             }
         )
 
@@ -269,7 +237,7 @@ def exporteer_config_excel(config: dict) -> bytes:
         ws_inst.cell(row=r, column=2, value=val)
 
     ws_kol = wb.create_sheet("kolommen")
-    kol_headers = ["kolom_naam", "instrument", "item", "criterium", "score_type"]
+    kol_headers = ["kolom_naam", "instrument", "item", "criterium"]
     for c, h in enumerate(kol_headers, start=1):
         ws_kol.cell(row=1, column=c, value=h)
     for r, kol in enumerate(config.get("kolommen", []), start=2):
@@ -366,7 +334,9 @@ def maak_wizard_layout() -> html.Div:
                                     ),
                                     dbc.Col(
                                         [
-                                            dbc.Label("Selectiejaar", className="small"),
+                                            dbc.Label(
+                                                "Selectiejaar", className="small"
+                                            ),
                                             dbc.Input(
                                                 id="wiz-jaar",
                                                 placeholder="bijv. 2026",
@@ -440,11 +410,6 @@ def maak_wizard_layout() -> html.Div:
                                             {
                                                 "name": "Criterium",
                                                 "id": "criterium",
-                                                "editable": True,
-                                            },
-                                            {
-                                                "name": "Score type",
-                                                "id": "score_type",
                                                 "editable": True,
                                             },
                                         ],
