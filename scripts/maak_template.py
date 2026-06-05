@@ -193,12 +193,6 @@ kolommen_uitleg = [
         "Reflectievermogen\nVakkennis wiskunde",
         "Meerdere items mogen hetzelfde criterium meten.",
     ],
-    [
-        "score_type",
-        "De schaal of eenheid van de score. Vrij in te vullen.",
-        "schaalscore\npunten (0-5)\nschaal 1-3\npercentage",
-        "Kies iets dat duidelijk maakt wat de getallen betekenen.",
-    ],
 ]
 
 for ri, vals in enumerate(kolommen_uitleg, 18):
@@ -327,7 +321,6 @@ ws_kol.column_dimensions["A"].width = 40
 ws_kol.column_dimensions["B"].width = 25
 ws_kol.column_dimensions["C"].width = 35
 ws_kol.column_dimensions["D"].width = 25
-ws_kol.column_dimensions["E"].width = 20
 
 headers_info = [
     (
@@ -359,12 +352,6 @@ headers_info = [
         "Meerdere items mogen hetzelfde criterium meten.\n\n"
         "Voorbeelden:\n- Reflectievermogen\n- Vakkennis wiskunde\n- Communicatievaardigheid\n- Stressbestendigheid",
     ),
-    (
-        "score_type",
-        "De schaal of eenheid van de score.\n"
-        "Vrij in te vullen. Helpt bij het interpreteren van scores in het dashboard.\n\n"
-        "Voorbeelden:\n- schaalscore\n- punten\n- punten (0-5)\n- schaal 1-3\n- percentage\n- cijfer (1-10)",
-    ),
 ]
 
 for ci, (header, comment_text) in enumerate(headers_info, 1):
@@ -372,10 +359,10 @@ for ci, (header, comment_text) in enumerate(headers_info, 1):
     cell.comment = Comment(comment_text, AUTHOR)
     cell.comment.width = 350
     cell.comment.height = 250
-style_header_row(ws_kol, 1, 5)
+style_header_row(ws_kol, 1, 4)
 
 for ri in range(2, 52):
-    for ci in range(1, 6):
+    for ci in range(1, 5):
         c = ws_kol.cell(row=ri, column=ci)
         c.border = thin_border
         c.font = normal_font
