@@ -575,9 +575,63 @@ app.layout = html.Div(
                                                 html.P(
                                                     "Logistische regressie met doorstroom naar jaar 2 als uitkomst "
                                                     "(ja/nee). Per item: hoe sterk voorspelt het doorstroom, "
-                                                    "rekening houdend met de andere items? Een significant item "
-                                                    "voegt voorspellende waarde toe boven wat de andere items al verklaren.",
+                                                    "rekening houdend met de andere items?",
                                                     className="text-muted small",
+                                                ),
+                                                html.Details(
+                                                    [
+                                                        html.Summary(
+                                                            "Uitleg regressietabel",
+                                                            className="small text-muted",
+                                                            style={"cursor": "pointer"},
+                                                        ),
+                                                        html.Div(
+                                                            [
+                                                                html.P(
+                                                                    "De tabel toont per item vier waarden:",
+                                                                    className="small text-muted mb-1",
+                                                                ),
+                                                                html.Ul(
+                                                                    [
+                                                                        html.Li(
+                                                                            "Coefficient: de richting en sterkte van het effect. "
+                                                                            "Positief = hogere score op dit item hangt samen met hogere kans op doorstroom. "
+                                                                            "Negatief = hogere score hangt samen met lagere kans."
+                                                                        ),
+                                                                        html.Li(
+                                                                            "Odds ratio: hoeveel keer groter de kans op doorstroom wordt per punt stijging. "
+                                                                            "OR = 1.5 betekent 50% hogere kans per extra punt. OR < 1 betekent lagere kans."
+                                                                        ),
+                                                                        html.Li(
+                                                                            "p-waarde: hoe waarschijnlijk is dit resultaat als het item in werkelijkheid "
+                                                                            "geen effect heeft? p < 0.05 geldt als statistisch significant."
+                                                                        ),
+                                                                        html.Li(
+                                                                            "Sig.: samenvatting van de p-waarde. "
+                                                                            "* = p < 0.05, ** = p < 0.01, *** = p < 0.001, ns = niet significant."
+                                                                        ),
+                                                                    ],
+                                                                    className="small text-muted mb-1",
+                                                                ),
+                                                                html.P(
+                                                                    "Pseudo R-kwadraat (boven de tabel) geeft aan hoeveel van de variatie in "
+                                                                    "doorstroom het model als geheel verklaart. Waarden rond 0.10-0.20 zijn "
+                                                                    "gebruikelijk bij selectiedata. Een item kan significant zijn zonder dat "
+                                                                    "het model als geheel sterk voorspelt.",
+                                                                    className="small text-muted mb-1",
+                                                                ),
+                                                                html.P(
+                                                                    "Let op: elk item wordt beoordeeld rekening houdend met alle andere items "
+                                                                    "in het model. Een item dat op zichzelf voorspellend is, kan niet-significant "
+                                                                    "zijn als een ander item dezelfde informatie al bevat. Dat is geen fout, "
+                                                                    "maar overlap.",
+                                                                    className="small text-muted mb-0",
+                                                                ),
+                                                            ],
+                                                            className="mt-1 mb-2",
+                                                        ),
+                                                    ],
+                                                    className="mb-3",
                                                 ),
                                                 html.Div(
                                                     id="regressie-samenvatting",
@@ -654,10 +708,55 @@ app.layout = html.Div(
                                                 ),
                                                 html.P(
                                                     "Het VO-eindcijfer komt uit 1CHO en is onafhankelijk van de selectie. "
-                                                    "Een lage samenhang (r dicht bij 0) betekent dat het item iets wezenlijk "
-                                                    "anders meet dan cognitieve schoolprestaties. Een hoge samenhang "
-                                                    "suggereert dat de selectie herhaalt wat het VO-cijfer al zegt.",
+                                                    "Hoe sterk hangt elk selectie-item samen met schoolprestaties?",
                                                     className="text-muted small",
+                                                ),
+                                                html.Details(
+                                                    [
+                                                        html.Summary(
+                                                            "Waarom is dit relevant?",
+                                                            className="small text-muted",
+                                                            style={"cursor": "pointer"},
+                                                        ),
+                                                        html.Div(
+                                                            [
+                                                                html.P(
+                                                                    "Het VO-eindcijfer is een maat voor cognitieve schoolprestaties die "
+                                                                    "niet onderdeel is van de selectie. Door selectiescores hiermee te "
+                                                                    "vergelijken kun je twee dingen beoordelen:",
+                                                                    className="small text-muted mb-1",
+                                                                ),
+                                                                html.Ul(
+                                                                    [
+                                                                        html.Li(
+                                                                            "Lage correlatie (r rond 0): het selectie-item meet iets anders dan "
+                                                                            "schoolprestaties. Dat is vaak wenselijk, want de selectie voegt dan "
+                                                                            "informatie toe die het diploma niet al geeft."
+                                                                        ),
+                                                                        html.Li(
+                                                                            "Hoge correlatie (r > 0.5): het selectie-item overlapt sterk met het "
+                                                                            "VO-cijfer. De selectie herhaalt dan grotendeels wat het schooldiploma "
+                                                                            "al vertelt. Dat kan een bewuste keuze zijn, maar het is goed om te weten."
+                                                                        ),
+                                                                    ],
+                                                                    className="small text-muted mb-1",
+                                                                ),
+                                                                html.P(
+                                                                    "De scatterplot toont alleen ingeschreven studenten (niet de groep "
+                                                                    "'Niet gestart'), omdat het VO-cijfer uit 1CHO komt en alleen beschikbaar "
+                                                                    "is voor studenten die daadwerkelijk zijn ingeschreven.",
+                                                                    className="small text-muted mb-1",
+                                                                ),
+                                                                html.P(
+                                                                    "De tabel onderaan toont Pearson r per item. Vuistregels (Cohen 1988): "
+                                                                    "r < 0.10 verwaarloosbaar, 0.10-0.30 zwak, 0.30-0.50 matig, > 0.50 sterk.",
+                                                                    className="small text-muted mb-0",
+                                                                ),
+                                                            ],
+                                                            className="mt-1 mb-2",
+                                                        ),
+                                                    ],
+                                                    className="mb-3",
                                                 ),
                                                 dbc.Row(
                                                     [
