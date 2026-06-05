@@ -474,6 +474,35 @@ app.layout = html.Div(
                                                     "Items die weinig correleren voegen elk unieke informatie toe.",
                                                     className="text-muted small",
                                                 ),
+                                                dbc.Row(
+                                                    [
+                                                        dbc.Col(
+                                                            [
+                                                                dbc.Label("Instrument", className="small"),
+                                                                dcc.Dropdown(
+                                                                    id="samenhang-instrument",
+                                                                    options=[{"label": "Alle instrumenten", "value": "Alle"}],
+                                                                    value="Alle",
+                                                                    clearable=False,
+                                                                ),
+                                                            ],
+                                                            width=4,
+                                                        ),
+                                                        dbc.Col(
+                                                            [
+                                                                dbc.Label("Criterium", className="small"),
+                                                                dcc.Dropdown(
+                                                                    id="samenhang-criterium",
+                                                                    options=[{"label": "Alle criteria", "value": "Alle"}],
+                                                                    value="Alle",
+                                                                    clearable=False,
+                                                                ),
+                                                            ],
+                                                            width=4,
+                                                        ),
+                                                    ],
+                                                    className="mb-3",
+                                                ),
                                                 dcc.Loading(
                                                     dcc.Graph(id="fig-correlatie"),
                                                     type="dot",
@@ -883,6 +912,10 @@ def _laad_demodata(dataset_name=None):
     Output("criterium-filter", "value"),
     Output("item-filter", "options"),
     Output("item-filter", "value"),
+    Output("samenhang-instrument", "options"),
+    Output("samenhang-instrument", "value"),
+    Output("samenhang-criterium", "options"),
+    Output("samenhang-criterium", "value"),
     Output("vo-score", "options"),
     Output("vo-score", "value"),
     Output("app-subtitle", "children"),
@@ -900,6 +933,8 @@ def update_filters_on_data_change(store_data, scores_store):
             empty_opts, "Alle",  # instrument
             empty_opts, "Alle",  # criterium
             empty_opts, "Alle",  # item
+            empty_opts, "Alle",  # samenhang-instrument
+            empty_opts, "Alle",  # samenhang-criterium
             [], "totaalscore",   # vo-score
             "",                  # subtitle
         )
@@ -952,6 +987,10 @@ def update_filters_on_data_change(store_data, scores_store):
         criterium_opties,
         "Alle",
         item_opties,
+        "Alle",
+        instrument_opties,
+        "Alle",
+        criterium_opties,
         "Alle",
         vo_opties,
         "totaalscore",
@@ -1468,10 +1507,14 @@ def update_vo_tab(
     Input("cohort-dropdown", "value"),
     Input("geslacht-dropdown", "value"),
     Input("vooropleiding-dropdown", "value"),
+    Input("samenhang-instrument", "value"),
+    Input("samenhang-criterium", "value"),
     State("data-store", "data"),
     State("scores-store", "data"),
 )
-def update_samenhang_tab(cohort, geslacht, vooropleiding, store_data, scores_store):
+def update_samenhang_tab(
+    cohort, geslacht, vooropleiding, sh_instrument, sh_criterium, store_data, scores_store
+):
     leeg = go.Figure().update_layout(**CHART_BASE)
     df = df_from_store(store_data)
     if df.empty or not scores_store:
@@ -1482,6 +1525,12 @@ def update_samenhang_tab(cohort, geslacht, vooropleiding, store_data, scores_sto
     student_ids = df_filtered["studentnummer"].unique()
 
     scores = scores_df[scores_df["studentnummer"].isin(student_ids)]
+
+    if sh_instrument and sh_instrument != "Alle":
+        scores = scores[scores["instrument"] == sh_instrument]
+    if sh_criterium and sh_criterium != "Alle":
+        scores = scores[scores["criterium"] == sh_criterium]
+
     if scores.empty:
         return leeg, "", [], [], []
 
