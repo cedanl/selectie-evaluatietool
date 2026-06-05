@@ -8,6 +8,7 @@ data/real/
 data/raw/
 data/*.xls
 data/*.xlsx
+data/demo/selectiedata.xlsx
 data/demo/*/selectiedata.xlsx
 data/demo/EV_DEMO_farmacie.csv
 
