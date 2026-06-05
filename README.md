@@ -58,8 +58,27 @@ Vier tabbladen:
 
 ## Configuratiebestand
 
-Per selectiebestand maakt een analist een configuratiebestand (Excel) met twee
-tabbladen:
+Het configuratiebestand beschrijft welke kolommen uit het selectiebestand
+meegenomen worden in de analyse. Er zijn twee manieren om er een te maken:
+
+### Config wizard (aanbevolen)
+
+Klik in het uploadscherm op "Of: config automatisch genereren". De wizard
+leest het selectiebestand en detecteert automatisch:
+
+- Welk blad en welke headerrij gebruikt moet worden
+- De ID-kolom (studentnummer) en totaalscorekolom
+- Welke kolommen scorekolommen zijn (filtert admin-, datum- en tekstkolommen)
+- Instrument-groepering op basis van kolomnaam-prefixen
+- Score-type op basis van kolomnaam en waardebereik
+
+Controleer het resultaat in de bewerkbare tabel, pas instrumentnamen, items
+en criteria aan waar nodig, en klik "Bevestig config". De config kan daarna
+als Excel gedownload worden om later opnieuw te uploaden.
+
+### Handmatig
+
+Een configuratie-Excel heeft twee tabbladen:
 
 **Instellingen**: welke kolom is het studentnummer, op welke rij staan de
 kolomnamen, welke kolom is de totaalscore.
@@ -69,20 +88,13 @@ kolomnaam, een instrumentnaam, een itemnaam, een criterium (optioneel), en
 een score-type.
 
 Er is een leeg templatebestand (`config_template.xlsx`) met toelichtingen in
-elke cel. De bestaande configs staan in de root:
-
-| Config | Opleiding | Kolommen in config |
-|---|---|---|
-| `config_FAR_Leiden_2025.xlsx` | Farmacie LUMC 2025 | 11 van 60 |
-| `config_FAR_Leiden_2026.xlsx` | Farmacie LUMC 2026 | 12 van 97 |
-| `config_Psychologie_2022_2023.xlsx` | Psychologie 2022-2023 | 6 van 9 |
-| `config_Psychologie_2026_2027.xlsx` | Psychologie 2026-2027 | 19 van 46 |
+elke cel.
 
 
 ## Een nieuwe opleiding toevoegen
 
-1. Open `config_template.xlsx` en vul de twee tabbladen in voor het nieuwe
-   selectiebestand.
+1. Upload het selectiebestand en gebruik de config wizard om een config te
+   genereren, of maak er handmatig een op basis van `config_template.xlsx`.
 2. Maak 1CHO-data aan met kolommen: `studentnummer`, `selectiejaar`, `groep`
    (en optioneel `geslacht`, `herkomst`, `hoogste_vooropleiding`,
    `gem_eindcijfer_vo`).
@@ -94,16 +106,13 @@ elke cel. De bestaande configs staan in de root:
 ```
 evaluatietool-voorbeeld/
   app.py                          Dash dashboard
+  config_wizard.py                Config wizard: autodetectie en UI
   transformatie.py                Config inlezen, valideren, breed->lang omzetten
   assets/                         Statische bestanden (CSS, logo)
-  config_template.xlsx            Leeg configuratiebestand met uitleg
-  config_*.xlsx                   Configuratiebestanden per opleiding
   data/
     demo/                         Demodata per opleiding (selectiedata + config + 1cho)
-    real/                         Echte selectiebestanden (niet in git)
   scripts/
     maak_data.py                  Genereert demodata voor alle opleidingen
-    maak_presentatie.py           Genereert de presentatie (pptx)
     maak_template.py              Genereert config_template.xlsx
     update_configs.py             Genereert config-bestanden per opleiding
 ```
