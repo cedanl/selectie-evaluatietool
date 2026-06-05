@@ -80,10 +80,32 @@ def detecteer_totaalscore(headers: list[str]) -> str | None:
 
 
 _SKIP_WOORDEN = {
-    "data", "selectie", "selectiedata", "dummy", "totaalscores", "scores",
-    "score", "ranking", "met", "formules", "en", "van", "de", "het",
-    "beoordelingen", "master", "bachelor", "sheet", "blad", "resultaten",
-    "overzicht", "export", "rapport", "tabel", "lijst", "bestand",
+    "data",
+    "selectie",
+    "selectiedata",
+    "dummy",
+    "totaalscores",
+    "scores",
+    "score",
+    "ranking",
+    "met",
+    "formules",
+    "en",
+    "van",
+    "de",
+    "het",
+    "beoordelingen",
+    "master",
+    "bachelor",
+    "sheet",
+    "blad",
+    "resultaten",
+    "overzicht",
+    "export",
+    "rapport",
+    "tabel",
+    "lijst",
+    "bestand",
 }
 
 
@@ -97,7 +119,8 @@ def detecteer_metadata(bestandsnaam: str, bladnamen: list[str]) -> dict:
     naam_zonder_ext = re.sub(r"\.\w+$", "", bestandsnaam)
     woorden = re.findall(r"[A-Za-zÀ-ɏ]+", naam_zonder_ext)
     inhoudelijk = [
-        w for w in woorden
+        w
+        for w in woorden
         if w.lower() not in _SKIP_WOORDEN
         and not re.fullmatch(r"20\d{2}", w)
         and len(w) >= 2

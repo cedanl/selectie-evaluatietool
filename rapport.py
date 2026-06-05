@@ -16,16 +16,14 @@ import plotly.graph_objects as go
 
 from fpdf import FPDF
 
-GROEP_VOLGORDE = [
-    "Niet gestart",
-    "Gestart, niet naar jaar 2",
-    "Doorgestroomd naar jaar 2",
-]
-GROEP_KLEUREN = {
-    "Niet gestart": "#94a3b8",
-    "Gestart, niet naar jaar 2": "#f97316",
-    "Doorgestroomd naar jaar 2": "#22c55e",
-}
+from shared import (
+    GROEP_VOLGORDE,
+    GROEP_KLEUREN,
+    CHART_BASE,
+    shorten_item,
+    sig_sym,
+    fmt_p,
+)
 
 BLUE = (44, 62, 80)
 DARK = (51, 51, 51)
@@ -34,29 +32,12 @@ LIGHT_BG = (245, 245, 245)
 WHITE = (255, 255, 255)
 ACCENT = (41, 128, 185)
 
-CHART_BASE = dict(plot_bgcolor="white", paper_bgcolor="white")
-
-
-def shorten_item(name: str) -> str:
-    for suffix in [" schaalscore", " Schaalscore", " (1-2-3)"]:
-        name = name.replace(suffix, "")
-    return name
-
 
 def _fig_to_bytes(fig, width=900, height=500) -> bytes:
-    return fig.to_image(format="png", width=width, height=height, scale=2)
-
-
-def _sig_sym(p):
-    return "***" if p < 0.001 else "**" if p < 0.01 else "*" if p < 0.05 else "ns"
-
-
-def _fmt_p(p):
-    return "< 0.001" if p < 0.001 else f"{p:.3f}"
+    return fig.to_image(format="png", width=width, height=height)
 
 
 class RapportPDF(FPDF):
-
     def __init__(self, opleiding: str, jaar: str):
         super().__init__(orientation="P", unit="mm", format="A4")
         self.opleiding = opleiding
@@ -74,7 +55,9 @@ class RapportPDF(FPDF):
             f"Evaluatierapport {self.opleiding} {self.jaar}",
             align="L",
         )
-        self.cell(0, 8, f"Pagina {self.page_no()}", align="R", new_x="LMARGIN", new_y="NEXT")
+        self.cell(
+            0, 8, f"Pagina {self.page_no()}", align="R", new_x="LMARGIN", new_y="NEXT"
+        )
         self.line(10, self.get_y(), 200, self.get_y())
         self.ln(4)
 
@@ -103,27 +86,45 @@ class RapportPDF(FPDF):
         self.set_font("Helvetica", "", 14)
         self.set_text_color(*GRAY)
         self.cell(
-            0, 8,
+            0,
+            8,
             f"Selectiejaar {self.jaar}",
-            align="C", new_x="LMARGIN", new_y="NEXT",
+            align="C",
+            new_x="LMARGIN",
+            new_y="NEXT",
         )
         self.cell(
-            0, 8,
+            0,
+            8,
             f"Rapport gegenereerd op {date.today().strftime('%d-%m-%Y')}",
-            align="C", new_x="LMARGIN", new_y="NEXT",
+            align="C",
+            new_x="LMARGIN",
+            new_y="NEXT",
         )
 
         self.ln(20)
         self.set_font("Helvetica", "", 11)
         self.set_text_color(*DARK)
         total = sum(n_per_groep.values())
-        self.cell(0, 7, f"Totaal kandidaten: {total}", align="C", new_x="LMARGIN", new_y="NEXT")
+        self.cell(
+            0,
+            7,
+            f"Totaal kandidaten: {total}",
+            align="C",
+            new_x="LMARGIN",
+            new_y="NEXT",
+        )
         for groep in GROEP_VOLGORDE:
             n = n_per_groep.get(groep, 0)
             self.cell(
-                0, 7,
-                f"{groep}: {n} ({n / total * 100:.0f}%)" if total > 0 else f"{groep}: 0",
-                align="C", new_x="LMARGIN", new_y="NEXT",
+                0,
+                7,
+                f"{groep}: {n} ({n / total * 100:.0f}%)"
+                if total > 0
+                else f"{groep}: 0",
+                align="C",
+                new_x="LMARGIN",
+                new_y="NEXT",
             )
 
     def section_title(self, title: str):
@@ -153,51 +154,43 @@ class RapportPDF(FPDF):
     def add_image_from_bytes(self, img_bytes: bytes, w=180):
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
             f.write(img_bytes)
-            f.flush()
-            space_left = 297 - self.get_y() - 20
-            if space_left < 80:
+            tmp_path = Path(f.name)
+        try:
+            if 297 - self.get_y() - 20 < 80:
                 self.add_page()
-            self.image(f.name, x=15, w=w)
+            self.image(str(tmp_path), x=15, w=w)
             self.ln(4)
-            Path(f.name).unlink(missing_ok=True)
+        finally:
+            tmp_path.unlink(missing_ok=True)
 
-    def add_data_table(self, headers: list[str], rows: list[list[str]], col_widths=None):
-        if self.get_y() > 240:
-            self.add_page()
-        n_cols = len(headers)
-        if col_widths is None:
-            col_widths = [190 / n_cols] * n_cols
-
+    def _render_table_header(self, headers: list[str], col_widths: list[float]):
         self.set_font("Helvetica", "B", 9)
         self.set_fill_color(*BLUE)
         self.set_text_color(*WHITE)
         for i, h in enumerate(headers):
             self.cell(col_widths[i], 7, h, border=1, fill=True, align="C")
         self.ln()
-
         self.set_font("Helvetica", "", 9)
         self.set_text_color(*DARK)
+
+    def add_data_table(
+        self, headers: list[str], rows: list[list[str]], col_widths=None
+    ):
+        if self.get_y() > 240:
+            self.add_page()
+        if col_widths is None:
+            col_widths = [190 / len(headers)] * len(headers)
+
+        self._render_table_header(headers, col_widths)
+
         for ri, row in enumerate(rows):
             if self.get_y() > 270:
                 self.add_page()
-                self.set_font("Helvetica", "B", 9)
-                self.set_fill_color(*BLUE)
-                self.set_text_color(*WHITE)
-                for i, h in enumerate(headers):
-                    self.cell(col_widths[i], 7, h, border=1, fill=True, align="C")
-                self.ln()
-                self.set_font("Helvetica", "", 9)
-                self.set_text_color(*DARK)
+                self._render_table_header(headers, col_widths)
 
-            if ri % 2 == 1:
-                self.set_fill_color(*LIGHT_BG)
-                fill = True
-            else:
-                self.set_fill_color(*WHITE)
-                fill = True
-
+            self.set_fill_color(*(LIGHT_BG if ri % 2 == 1 else WHITE))
             for i, val in enumerate(row):
-                self.cell(col_widths[i], 6, str(val), border=1, fill=fill, align="C")
+                self.cell(col_widths[i], 6, str(val), border=1, fill=True, align="C")
             self.ln()
         self.ln(3)
 
@@ -214,9 +207,8 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
 
     pdf = RapportPDF(opleiding=opleiding, jaar=jaar)
 
-    n_per_groep = {}
-    for groep in GROEP_VOLGORDE:
-        n_per_groep[groep] = int((df["groep"] == groep).sum())
+    counts = df["groep"].value_counts()
+    n_per_groep = {groep: int(counts.get(groep, 0)) for groep in GROEP_VOLGORDE}
 
     # -- Cover --
     pdf.cover_page(n_per_groep)
@@ -238,7 +230,13 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
     inst_rows = []
     for inst in instrumenten:
         inst_items = scores_df[scores_df["instrument"] == inst]["item"].unique()
-        inst_rows.append([inst, str(len(inst_items)), ", ".join(shorten_item(i) for i in sorted(inst_items))])
+        inst_rows.append(
+            [
+                inst,
+                str(len(inst_items)),
+                ", ".join(shorten_item(i) for i in sorted(inst_items)),
+            ]
+        )
     pdf.add_data_table(
         ["Instrument", "Items", "Itemnamen"],
         inst_rows,
@@ -306,13 +304,15 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
     )
     gem_rows = []
     for _, r in gem_tabel.iterrows():
-        gem_rows.append([
-            str(r["groep"]),
-            str(r["item_kort"]),
-            str(r["mean"]),
-            str(r["std"]) if pd.notna(r["std"]) else "-",
-            str(int(r["count"])),
-        ])
+        gem_rows.append(
+            [
+                str(r["groep"]),
+                str(r["item_kort"]),
+                str(r["mean"]),
+                str(r["std"]) if pd.notna(r["std"]) else "-",
+                str(int(r["count"])),
+            ]
+        )
     pdf.add_data_table(
         ["Groep", "Item", "Gem.", "SD", "n"],
         gem_rows,
@@ -335,15 +335,17 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
     )
 
     try:
-        corr_matrix = item_pivot[score_cols].corr().round(3)
+        corr_matrix = item_pivot[score_cols].corr().round(2)
         fig_corr = go.Figure(
             data=go.Heatmap(
                 z=corr_matrix.values,
                 x=corr_matrix.columns.tolist(),
                 y=corr_matrix.index.tolist(),
                 colorscale="RdBu_r",
-                zmid=0, zmin=-1, zmax=1,
-                text=corr_matrix.values.round(2),
+                zmid=0,
+                zmin=-1,
+                zmax=1,
+                text=corr_matrix.values,
                 texttemplate="%{text}",
                 textfont={"size": 10},
             )
@@ -388,6 +390,7 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
 
             try:
                 import statsmodels.api as sm
+
                 X_const = sm.add_constant(X.astype(float))
                 model = sm.Logit(y.astype(float), X_const).fit(disp=0, maxiter=100)
                 pseudo_r2 = round(float(model.prsquared), 3)
@@ -405,13 +408,15 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
                     coef = round(float(model.params[item_naam]), 3)
                     odds = round(float(np.exp(model.params[item_naam])), 2)
                     p = float(model.pvalues[item_naam])
-                    reg_rows.append([
-                        item_naam,
-                        str(coef),
-                        str(odds),
-                        _fmt_p(p),
-                        _sig_sym(p),
-                    ])
+                    reg_rows.append(
+                        [
+                            item_naam,
+                            str(coef),
+                            str(odds),
+                            fmt_p(p),
+                            sig_sym(p),
+                        ]
+                    )
             except Exception as e:
                 pdf.body_text(f"Regressie kon niet worden uitgevoerd: {e}")
     else:
@@ -479,14 +484,19 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
         ).round(1)
         ges_rows = []
         for _, r in ges_agg.iterrows():
-            ges_rows.append([str(r["groep"]), str(r["geslacht"]), str(r["n"]), f"{r['pct']}%"])
+            ges_rows.append(
+                [str(r["groep"]), str(r["geslacht"]), str(r["n"]), f"{r['pct']}%"]
+            )
         pdf.add_data_table(
             ["Groep", "Geslacht", "n", "%"],
             ges_rows,
             col_widths=[70, 40, 30, 30],
         )
 
-    if "hoogste_vooropleiding" in df.columns and df["hoogste_vooropleiding"].notna().any():
+    if (
+        "hoogste_vooropleiding" in df.columns
+        and df["hoogste_vooropleiding"].notna().any()
+    ):
         pdf.subsection_title("Vooropleiding per groep")
         vo_agg = (
             df.groupby(["groep", "hoogste_vooropleiding"], observed=True)
@@ -498,10 +508,14 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
         ).round(1)
         vo_rows = []
         for _, r in vo_agg.iterrows():
-            vo_rows.append([
-                str(r["groep"]), str(r["hoogste_vooropleiding"]),
-                str(r["n"]), f"{r['pct']}%",
-            ])
+            vo_rows.append(
+                [
+                    str(r["groep"]),
+                    str(r["hoogste_vooropleiding"]),
+                    str(r["n"]),
+                    f"{r['pct']}%",
+                ]
+            )
         pdf.add_data_table(
             ["Groep", "Vooropleiding", "n", "%"],
             vo_rows,
@@ -525,16 +539,26 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
 
         if "totaalscore" in df_vo.columns:
             sub = df_vo[["gem_eindcijfer_vo", "totaalscore"]].dropna()
-            r_val = float(sub["gem_eindcijfer_vo"].corr(sub["totaalscore"])) if len(sub) >= 2 else None
+            r_val = (
+                float(sub["gem_eindcijfer_vo"].corr(sub["totaalscore"]))
+                if len(sub) >= 2
+                else None
+            )
             if r_val is not None and not np.isnan(r_val):
                 cor_rows.append(["Totaalscore", f"{r_val:.3f}"])
 
         for item_name in all_items:
-            item_scores = scores_df[scores_df["item"] == item_name][["studentnummer", "score"]]
+            item_scores = scores_df[scores_df["item"] == item_name][
+                ["studentnummer", "score"]
+            ]
             merged = df_vo[["studentnummer", "gem_eindcijfer_vo"]].merge(
                 item_scores, on="studentnummer"
             )
-            r_val = float(merged["gem_eindcijfer_vo"].corr(merged["score"])) if len(merged) >= 2 else None
+            r_val = (
+                float(merged["gem_eindcijfer_vo"].corr(merged["score"]))
+                if len(merged) >= 2
+                else None
+            )
             if r_val is not None and not np.isnan(r_val):
                 cor_rows.append([shorten_item(item_name), f"{r_val:.3f}"])
 
@@ -603,9 +627,7 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
                 f"Significante voorspellers van doorstroom: {', '.join(sig_items)}."
             )
         if ns_items:
-            bullets.append(
-                f"Geen significante bijdrage: {', '.join(ns_items)}."
-            )
+            bullets.append(f"Geen significante bijdrage: {', '.join(ns_items)}.")
         if pseudo_r2 is not None:
             if pseudo_r2 < 0.05:
                 kracht = "zeer beperkte"

@@ -28,6 +28,14 @@ from transformatie import (
 )
 from config_wizard import maak_wizard_layout, registreer_callbacks
 from rapport import genereer_rapport
+from shared import (
+    GROEP_VOLGORDE,
+    GROEP_KLEUREN,
+    CHART_BASE,
+    shorten_item,
+    sig_sym,
+    fmt_p,
+)
 
 DEMO_DIR = Path("data/demo")
 
@@ -38,17 +46,6 @@ if DEMO_DIR.exists():
             DEMO_DATASETS.append(
                 {"value": subdir.name, "label": subdir.name.replace("_", " ").title()}
             )
-
-GROEP_VOLGORDE = [
-    "Niet gestart",
-    "Gestart, niet naar jaar 2",
-    "Doorgestroomd naar jaar 2",
-]
-GROEP_KLEUREN = {
-    "Niet gestart": "#94a3b8",
-    "Gestart, niet naar jaar 2": "#f97316",
-    "Doorgestroomd naar jaar 2": "#22c55e",
-}
 GROEP_XTICKLABELS = [
     "Niet<br>gestart",
     "Gestart, niet<br>naar jaar 2",
@@ -61,12 +58,6 @@ VERPLICHTE_CHO_KOLOMMEN = ["studentnummer", "selectiejaar", "groep"]
 # ── Dashboard helpers ─────────────────────────────────────────────────────────
 
 
-def shorten_item(name: str) -> str:
-    for suffix in [" schaalscore", " Schaalscore", " (1-2-3)"]:
-        name = name.replace(suffix, "")
-    return name
-
-
 def koppel_data(cho_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.DataFrame:
     instrument_gem = (
         scores_df.groupby(["studentnummer", "instrument"])["score"].mean().reset_index()
@@ -77,7 +68,9 @@ def koppel_data(cho_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.DataFrame:
     score_cols = [f"{c}_score" for c in pivot.columns]
     pivot.columns = score_cols
     zscores = pivot[score_cols].apply(
-        lambda s: (s - s.mean()) / s.std() if s.std() > 0 else pd.Series(0, index=s.index)
+        lambda s: (
+            (s - s.mean()) / s.std() if s.std() > 0 else pd.Series(0, index=s.index)
+        )
     )
     pivot["totaalscore"] = zscores.mean(axis=1).round(2)
     pivot = pivot.reset_index()
@@ -144,16 +137,6 @@ def fix_xas_labels(fig):
     )
     return fig
 
-
-def sig_sym(p):
-    return "***" if p < 0.001 else "**" if p < 0.01 else "*" if p < 0.05 else "ns"
-
-
-def fmt_p(p):
-    return "< 0.001" if p < 0.001 else f"{p:.3f}"
-
-
-CHART_BASE = dict(plot_bgcolor="white", paper_bgcolor="white")
 
 TABLE_STYLE = dict(
     style_cell={
@@ -639,7 +622,13 @@ def toggle_overlay(store_data):
     prevent_initial_call=True,
 )
 def valideer_uploads(
-    sel, cfg, cho, wiz_config, sel_fn, cfg_fn, cho_fn,
+    sel,
+    cfg,
+    cho,
+    wiz_config,
+    sel_fn,
+    cfg_fn,
+    cho_fn,
 ):
     trigger = ctx.triggered_id
     no = dash.no_update
@@ -998,7 +987,9 @@ def download_rapport(_n, store_data, scores_store):
     opleiding = ""
     if "opleiding" in df.columns and df["opleiding"].notna().any():
         opleiding = str(df["opleiding"].dropna().iloc[0]).replace(" ", "_")
-    filename = f"evaluatierapport_{opleiding}.pdf" if opleiding else "evaluatierapport.pdf"
+    filename = (
+        f"evaluatierapport_{opleiding}.pdf" if opleiding else "evaluatierapport.pdf"
+    )
     return dcc.send_bytes(pdf_bytes, filename)
 
 

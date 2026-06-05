@@ -1,129 +1,131 @@
-# evaluatietool-voorbeeld
+# Evaluatietool Selectie
 
-Evaluatietool die selectiedata van opleidingen koppelt aan 1CHO-data om
-studiesucces in kaart te brengen. Werkt met elk selectiebestand, zolang er
-een configuratiebestand bij zit dat beschrijft welke kolommen meegenomen
-moeten worden.
-
-Getest met vier bestanden van twee opleidingen:
-- Farmacie LUMC 2025 (master, 60 kolommen, gesprekken + diploma)
-- Farmacie LUMC 2026 (master, 97 kolommen, digitale toetsen)
-- Psychologie Leiden 2022-2023 (bachelor, 9 kolommen, geaggregeerde scores)
-- Psychologie Leiden 2026-2027 (bachelor, 46 kolommen, vakscores + matching)
+Een dashboard dat laat zien hoe goed een selectieprocedure werkt. Het
+vergelijkt de scores die studenten bij de selectie haalden met hoe het
+daarna ging in hun studie: zijn ze gestart, zijn ze na jaar 1 gestopt,
+of zijn ze doorgestroomd naar jaar 2?
 
 
-## Gebruik
+## Hoe werkt het?
+
+Je uploadt drie bestanden:
+
+1. **Selectiedata** - het Excel-bestand met de scores van kandidaten
+2. **Configuratiebestand** - beschrijft welke kolommen uit het selectiebestand
+   gebruikt moeten worden (kun je automatisch laten genereren, zie onder)
+3. **1CHO-data** - studiesuccesgegevens: wie is gestart, wie is doorgestroomd
+
+Het dashboard koppelt deze bestanden aan elkaar en toont grafieken en
+tabellen waarmee je kunt beoordelen of de selectie voorspellende waarde had.
+
+Welke data je precies nodig hebt, in welk formaat, en waar je het vandaan
+haalt staat in de [data-handleiding](docs/data-handleiding.md).
+
+
+## Opstarten
+
+Je hebt [Python](https://www.python.org/downloads/) en
+[uv](https://docs.astral.sh/uv/getting-started/installation/) nodig.
+Open een terminal in deze map en voer uit:
 
 ```bash
 uv sync
 uv run python app.py
 ```
 
-De app draait op http://localhost:8050 en toont een uploadscherm. Upload drie
-bestanden: het selectiebestand, het configuratiebestand en de 1CHO-data. Of
-kies een van de demobestanden om het dashboard te verkennen.
+Ga daarna naar http://localhost:8050 in je browser. Je ziet een
+uploadscherm waar je bestanden kunt uploaden of demodata kunt laden.
 
 
-## Drie groepen
+## Demodata uitproberen
 
-**Niet gestart** -- Kandidaat staat niet in 1CHO. Niet toegelaten, of wel
-geselecteerd maar nooit gestart.
-
-**Gestart, niet naar jaar 2** -- Student staat in 1CHO voor jaar 1 maar heeft
-geen jaar-2 rij. Uitval of overstap na het eerste jaar.
-
-**Doorgestroomd naar jaar 2** -- Student heeft zowel een jaar-1 als een jaar-2
-rij in 1CHO.
+Wil je eerst rondkijken zonder eigen data? Kies in het uploadscherm een
+van de demobestanden uit het dropdown-menu en klik "Laden". Er zijn
+voorbeelden van vier opleidingen.
 
 
-## Dashboard
+## Configuratiebestand maken
 
-Vier tabbladen:
+Het configuratiebestand vertelt de tool welke kolommen uit je selectie-Excel
+gebruikt moeten worden en hoe ze heten in het dashboard. Er zijn twee
+manieren om er een te maken:
 
-1. **Selectiescores** -- Boxplots per item met de drie groepen, filters op
-   instrument/criterium/cohort/geslacht/vooropleiding, tabel met gemiddelden
-   en SD per groep.
+### Automatisch (aanbevolen)
 
-2. **Samenhang** -- Correlatiematrix tussen items (heatmap), logistische
-   regressie met doorstroom als uitkomst (coefficient, odds ratio, p-waarde,
-   pseudo R-kwadraat).
+Klik in het uploadscherm op "Of: config automatisch genereren". De tool
+leest dan je selectiebestand en probeert zelf uit te zoeken:
 
-3. **Demografisch** -- Verdeling per cohort (gestapeld staafdiagram), geslacht,
-   herkomst en vooropleiding per groep. Data uit 1CHO.
+- Welk blad de data bevat en op welke rij de kolomnamen staan
+- Welke kolom het studentnummer is
+- Welke kolommen scores bevatten (tekst- en datumkolommen worden overgeslagen)
+- Hoe de scores gegroepeerd moeten worden
 
-4. **VO-cijfer** -- Scatterplot en Pearson r per item vs. het gemiddelde
-   VO-eindcijfer. Lage correlatie = het item meet iets anders dan
-   schoolprestaties.
-
-
-## Configuratiebestand
-
-Het configuratiebestand beschrijft welke kolommen uit het selectiebestand
-meegenomen worden in de analyse. Er zijn twee manieren om er een te maken:
-
-### Config wizard (aanbevolen)
-
-Klik in het uploadscherm op "Of: config automatisch genereren". De wizard
-leest het selectiebestand en detecteert automatisch:
-
-- Welk blad en welke headerrij gebruikt moet worden
-- De ID-kolom (studentnummer) en totaalscorekolom
-- Welke kolommen scorekolommen zijn (filtert admin-, datum- en tekstkolommen)
-- Instrument-groepering op basis van kolomnaam-prefixen
-- Score-type op basis van kolomnaam en waardebereik
-
-Controleer het resultaat in de bewerkbare tabel, pas instrumentnamen, items
-en criteria aan waar nodig, en klik "Bevestig config". De config kan daarna
-als Excel gedownload worden om later opnieuw te uploaden.
+Je krijgt een tabel te zien waar je alles nog kunt aanpassen. Als het
+er goed uitziet klik je "Bevestig config". Je kunt de config ook
+downloaden als Excel, zodat je hem de volgende keer gewoon kunt uploaden.
 
 ### Handmatig
 
-Een configuratie-Excel heeft twee tabbladen:
+Open `config_template.xlsx` en vul de twee tabbladen in:
 
-**Instellingen**: welke kolom is het studentnummer, op welke rij staan de
-kolomnamen, welke kolom is de totaalscore.
+- **Instellingen**: welke kolom het studentnummer is, op welke rij de
+  kolomnamen staan, en welke kolom de totaalscore bevat.
+- **Kolommen**: per scorekolom een rij met de kolomnaam, een instrumentnaam,
+  een itemnaam, eventueel een criterium, en het type score.
 
-**Kolommen**: per kolom die meegenomen moet worden een rij met de originele
-kolomnaam, een instrumentnaam, een itemnaam, een criterium (optioneel), en
-een score-type.
-
-Er is een leeg templatebestand (`config_template.xlsx`) met toelichtingen in
-elke cel.
+Elke cel in het template heeft een toelichting die uitlegt wat je moet invullen.
 
 
-## Een nieuwe opleiding toevoegen
+## Wat zie je in het dashboard?
 
-1. Upload het selectiebestand en gebruik de config wizard om een config te
-   genereren, of maak er handmatig een op basis van `config_template.xlsx`.
-2. Maak 1CHO-data aan met kolommen: `studentnummer`, `selectiejaar`, `groep`
-   (en optioneel `geslacht`, `herkomst`, `hoogste_vooropleiding`,
-   `gem_eindcijfer_vo`).
-3. Upload de drie bestanden in het dashboard.
+Het dashboard heeft vier tabbladen:
 
+**Selectiescores** - Boxplots die laten zien hoe de drie groepen scoren
+op elk onderdeel van de selectie. Als doorstromers structureel hoger
+scoren dan uitvallers, dan heeft dat onderdeel voorspellende waarde.
 
-## Projectstructuur
+**Samenhang** - Laat zien hoe de selectie-onderdelen onderling samenhangen
+(correlatie) en welke onderdelen het sterkst voorspellen of iemand
+doorstroomt (regressie).
 
-```
-evaluatietool-voorbeeld/
-  app.py                          Dash dashboard
-  config_wizard.py                Config wizard: autodetectie en UI
-  transformatie.py                Config inlezen, valideren, breed->lang omzetten
-  assets/                         Statische bestanden (CSS, logo)
-  data/
-    demo/                         Demodata per opleiding (selectiedata + config + 1cho)
-  scripts/
-    maak_data.py                  Genereert demodata voor alle opleidingen
-    maak_template.py              Genereert config_template.xlsx
-    update_configs.py             Genereert config-bestanden per opleiding
-```
+**Demografisch** - Verdeling per cohort, geslacht, herkomst en vooropleiding.
+Hiermee kun je checken of bepaalde groepen over- of ondervertegenwoordigd
+zijn.
+
+**VO-cijfer** - Vergelijkt selectiescores met het gemiddelde eindexamencijfer.
+Een lage samenhang betekent dat het selectie-onderdeel iets anders meet
+dan schoolprestaties.
 
 
-## Demodata genereren
+## De drie groepen
+
+Het dashboard deelt kandidaten in drie groepen in:
+
+- **Niet gestart** - de kandidaat komt niet voor in de studiedata. Niet
+  toegelaten, of wel geselecteerd maar nooit begonnen.
+- **Gestart, niet naar jaar 2** - de student is begonnen maar heeft geen
+  tweede jaar. Gestopt of overgestapt na het eerste jaar.
+- **Doorgestroomd naar jaar 2** - de student heeft zowel jaar 1 als jaar 2
+  afgerond.
+
+
+## Nieuwe opleiding toevoegen
+
+1. Upload je selectiebestand en gebruik de config wizard om een configuratie
+   te genereren (of maak er handmatig een).
+2. Maak een 1CHO-bestand met minstens de kolommen `studentnummer`,
+   `selectiejaar` en `groep`. Optioneel kun je ook `geslacht`, `herkomst`,
+   `hoogste_vooropleiding` en `gem_eindcijfer_vo` toevoegen.
+3. Upload alle drie de bestanden in het dashboard.
+
+
+## Demodata opnieuw genereren
+
+Als je de demodata wilt vernieuwen (bijvoorbeeld na een update):
 
 ```bash
 uv run python scripts/maak_data.py
 ```
 
-Dit kopieert selectiedata en configs naar `data/demo/` subdirectories en
-genereert synthetische 1CHO-data voor elke opleiding. De demodata is
-beschikbaar in het uploadscherm.
+Dit maakt voor elke voorbeeldopleiding synthetische studiedata aan in
+`data/demo/`.
