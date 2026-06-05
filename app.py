@@ -349,6 +349,14 @@ app.layout = html.Div(
     [
         dcc.Store(id="data-store", storage_type="memory"),
         dcc.Store(id="scores-store", storage_type="memory"),
+        dbc.Toast(
+            "Rapport wordt gegenereerd, dit kan even duren...",
+            id="rapport-toast",
+            header="PDF rapport",
+            is_open=False,
+            duration=20000,
+            style={"position": "fixed", "top": 16, "right": 16, "zIndex": 9999},
+        ),
         UPLOAD_OVERLAY,
         html.Div(
             [
@@ -470,18 +478,63 @@ app.layout = html.Div(
                                                 ),
                                                 html.P(
                                                     "Hoe hangen de selectie-items onderling samen? Hoge correlaties "
-                                                    "tussen items betekenen dat ze grotendeels hetzelfde meten. "
+                                                    "betekenen dat items grotendeels hetzelfde meten. "
                                                     "Items die weinig correleren voegen elk unieke informatie toe.",
                                                     className="text-muted small",
+                                                ),
+                                                html.Details(
+                                                    [
+                                                        html.Summary(
+                                                            "Interpretatie correlatiewaarden",
+                                                            className="small text-muted",
+                                                            style={"cursor": "pointer"},
+                                                        ),
+                                                        html.Div(
+                                                            [
+                                                                html.P(
+                                                                    "De correlatiecoefficient (r) loopt van -1 tot +1. "
+                                                                    "Vuistregels op basis van Cohen (1988):",
+                                                                    className="small text-muted mb-1",
+                                                                ),
+                                                                html.Ul(
+                                                                    [
+                                                                        html.Li("r < 0.10: verwaarloosbaar"),
+                                                                        html.Li("r = 0.10 - 0.30: zwak (items meten grotendeels iets anders)"),
+                                                                        html.Li("r = 0.30 - 0.50: matig (gedeelde variantie, maar ook unieke bijdrage)"),
+                                                                        html.Li("r = 0.50 - 0.70: sterk (substantiele overlap, vraag of beide items nodig zijn)"),
+                                                                        html.Li("r > 0.70: zeer sterk (items meten vrijwel hetzelfde construct)"),
+                                                                    ],
+                                                                    className="small text-muted mb-1",
+                                                                ),
+                                                                html.P(
+                                                                    "Negatieve correlaties betekenen dat hogere scores op het ene item samengaan "
+                                                                    "met lagere scores op het andere. Bij selectie-instrumenten is een mix van "
+                                                                    "zwakke tot matige correlaties (r = 0.10 - 0.50) wenselijk: de items vullen "
+                                                                    "elkaar aan zonder te veel te overlappen.",
+                                                                    className="small text-muted mb-0",
+                                                                ),
+                                                            ],
+                                                            className="mt-1 mb-2",
+                                                        ),
+                                                    ],
+                                                    className="mb-3",
                                                 ),
                                                 dbc.Row(
                                                     [
                                                         dbc.Col(
                                                             [
-                                                                dbc.Label("Instrument", className="small"),
+                                                                dbc.Label(
+                                                                    "Instrument",
+                                                                    className="small",
+                                                                ),
                                                                 dcc.Dropdown(
                                                                     id="samenhang-instrument",
-                                                                    options=[{"label": "Alle instrumenten", "value": "Alle"}],
+                                                                    options=[
+                                                                        {
+                                                                            "label": "Alle instrumenten",
+                                                                            "value": "Alle",
+                                                                        }
+                                                                    ],
                                                                     value="Alle",
                                                                     clearable=False,
                                                                 ),
@@ -490,10 +543,18 @@ app.layout = html.Div(
                                                         ),
                                                         dbc.Col(
                                                             [
-                                                                dbc.Label("Criterium", className="small"),
+                                                                dbc.Label(
+                                                                    "Criterium",
+                                                                    className="small",
+                                                                ),
                                                                 dcc.Dropdown(
                                                                     id="samenhang-criterium",
-                                                                    options=[{"label": "Alle criteria", "value": "Alle"}],
+                                                                    options=[
+                                                                        {
+                                                                            "label": "Alle criteria",
+                                                                            "value": "Alle",
+                                                                        }
+                                                                    ],
                                                                     value="Alle",
                                                                     clearable=False,
                                                                 ),
@@ -927,16 +988,25 @@ def update_filters_on_data_change(store_data, scores_store):
     if df.empty:
         empty_opts = [{"label": "Alle", "value": "Alle"}]
         return (
-            empty_opts, "Alle",  # cohort
-            empty_opts, "Alle",  # geslacht
-            empty_opts, "Alle",  # vooropleiding
-            empty_opts, "Alle",  # instrument
-            empty_opts, "Alle",  # criterium
-            empty_opts, "Alle",  # item
-            empty_opts, "Alle",  # samenhang-instrument
-            empty_opts, "Alle",  # samenhang-criterium
-            [], "totaalscore",   # vo-score
-            "",                  # subtitle
+            empty_opts,
+            "Alle",  # cohort
+            empty_opts,
+            "Alle",  # geslacht
+            empty_opts,
+            "Alle",  # vooropleiding
+            empty_opts,
+            "Alle",  # instrument
+            empty_opts,
+            "Alle",  # criterium
+            empty_opts,
+            "Alle",  # item
+            empty_opts,
+            "Alle",  # samenhang-instrument
+            empty_opts,
+            "Alle",  # samenhang-criterium
+            [],
+            "totaalscore",  # vo-score
+            "",  # subtitle
         )
 
     jaren = (
@@ -1037,6 +1107,14 @@ def update_cohort_stats(geslacht, vooropleiding, store_data):
 # ── Rapport download ─────────────────────────────────────────────────────────
 
 
+app.clientside_callback(
+    "function(n) { return n > 0; }",
+    Output("rapport-toast", "is_open"),
+    Input("btn-download-rapport", "n_clicks"),
+    prevent_initial_call=True,
+)
+
+
 @app.callback(
     Output("download-rapport", "data"),
     Input("btn-download-rapport", "n_clicks"),
@@ -1131,7 +1209,7 @@ def update_scores_tab(
             category_orders={"groep": GROEP_VOLGORDE},
             points="all" if len(df_groep) <= 50 else False,
             height=480,
-            labels={"groep": "", "score": items_kort[0], "groep": ""},
+            labels={"groep": "", "score": items_kort[0]},
         )
         fig.update_layout(
             showlegend=False,
@@ -1169,7 +1247,13 @@ def update_scores_tab(
     )
     tabel_pivot["criterium"] = tabel_pivot["item_kort"].map(criterium_map).fillna("")
     tabel_pivot = tabel_pivot.rename(
-        columns={"item_kort": "Item", "mean": "Gem.", "std": "SD", "groep": "Groep", "criterium": "Criterium"}
+        columns={
+            "item_kort": "Item",
+            "mean": "Gem.",
+            "std": "SD",
+            "groep": "Groep",
+            "criterium": "Criterium",
+        }
     )
     tabel_pivot = tabel_pivot[["Groep", "Item", "Criterium", "Gem.", "SD"]]
     gem_data = tabel_pivot.to_dict("records")
@@ -1513,7 +1597,13 @@ def update_vo_tab(
     State("scores-store", "data"),
 )
 def update_samenhang_tab(
-    cohort, geslacht, vooropleiding, sh_instrument, sh_criterium, store_data, scores_store
+    cohort,
+    geslacht,
+    vooropleiding,
+    sh_instrument,
+    sh_criterium,
+    store_data,
+    scores_store,
 ):
     leeg = go.Figure().update_layout(**CHART_BASE)
     df = df_from_store(store_data)
