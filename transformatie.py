@@ -10,7 +10,7 @@ import pandas as pd
 
 
 def _decode_upload(contents: str) -> bytes:
-    _, content_string = contents.split(",")
+    _, content_string = contents.split(",", 1)
     return base64.b64decode(content_string)
 
 
@@ -34,7 +34,7 @@ def parse_csv_or_excel(contents: str, filename: str) -> pd.DataFrame:
 def parse_selectiedata(contents: str, config: dict) -> pd.DataFrame:
     raw = _decode_upload(contents)
     blad = config.get("blad_naam") or 0
-    header_rij = int(config.get("header_rij", 1)) - 1
+    header_rij = int(config.get("header_rij") or 1) - 1
     return pd.read_excel(io.BytesIO(raw), sheet_name=blad, header=header_rij)
 
 
@@ -84,7 +84,7 @@ def valideer_config(config: dict, selectiedata_contents: str) -> list[dict]:
         )
         return resultaten
 
-    header_rij = int(config.get("header_rij", 1)) - 1
+    header_rij = int(config.get("header_rij") or 1) - 1
     df = pd.read_excel(xls, sheet_name=blad or 0, header=header_rij, nrows=0)
     headers = list(df.columns.astype(str))
 
