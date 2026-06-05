@@ -423,20 +423,19 @@ app.layout = html.Div(
                                                         dbc.Col(
                                                             [
                                                                 dbc.Label(
-                                                                    "Schaal",
+                                                                    "Item",
                                                                     className="small",
                                                                 ),
-                                                                dbc.RadioItems(
-                                                                    id="score-schaal",
+                                                                dcc.Dropdown(
+                                                                    id="item-filter",
                                                                     options=[
-                                                                        {"label": "Ruwe scores", "value": "ruw"},
-                                                                        {"label": "Z-scores", "value": "z"},
+                                                                        {
+                                                                            "label": "Alle items",
+                                                                            "value": "Alle",
+                                                                        }
                                                                     ],
-                                                                    value="ruw",
-                                                                    inline=True,
-                                                                    className="mt-1",
-                                                                    inputStyle={"marginRight": "4px"},
-                                                                    labelStyle={"marginRight": "12px", "fontSize": "13px"},
+                                                                    value="Alle",
+                                                                    clearable=False,
                                                                 ),
                                                             ],
                                                             width=4,
@@ -882,6 +881,8 @@ def _laad_demodata(dataset_name=None):
     Output("instrument-filter", "value"),
     Output("criterium-filter", "options"),
     Output("criterium-filter", "value"),
+    Output("item-filter", "options"),
+    Output("item-filter", "value"),
     Output("vo-score", "options"),
     Output("vo-score", "value"),
     Output("app-subtitle", "children"),
@@ -893,19 +894,14 @@ def update_filters_on_data_change(store_data, scores_store):
     if df.empty:
         empty_opts = [{"label": "Alle", "value": "Alle"}]
         return (
-            empty_opts,
-            "Alle",  # cohort
-            empty_opts,
-            "Alle",  # geslacht
-            empty_opts,
-            "Alle",  # vooropleiding
-            empty_opts,
-            "Alle",  # instrument
-            empty_opts,
-            "Alle",  # criterium
-            [],
-            "totaalscore",  # vo-score
-            "",  # subtitle
+            empty_opts, "Alle",  # cohort
+            empty_opts, "Alle",  # geslacht
+            empty_opts, "Alle",  # vooropleiding
+            empty_opts, "Alle",  # instrument
+            empty_opts, "Alle",  # criterium
+            empty_opts, "Alle",  # item
+            [], "totaalscore",   # vo-score
+            "",                  # subtitle
         )
 
     jaren = (
@@ -930,6 +926,7 @@ def update_filters_on_data_change(store_data, scores_store):
 
     instrument_opties = [{"label": "Alle instrumenten", "value": "Alle"}]
     criterium_opties = [{"label": "Alle criteria", "value": "Alle"}]
+    item_opties = [{"label": "Alle items", "value": "Alle"}]
     vo_opties = [{"label": "Totaalscore", "value": "totaalscore"}]
     if scores_store:
         scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
@@ -940,6 +937,7 @@ def update_filters_on_data_change(store_data, scores_store):
         for crit in criteria:
             criterium_opties.append({"label": crit, "value": crit})
         for item in sorted(scores_df["item"].unique()):
+            item_opties.append({"label": shorten_item(item), "value": item})
             vo_opties.append({"label": shorten_item(item), "value": item})
 
     return (
@@ -952,6 +950,8 @@ def update_filters_on_data_change(store_data, scores_store):
         instrument_opties,
         "Alle",
         criterium_opties,
+        "Alle",
+        item_opties,
         "Alle",
         vo_opties,
         "totaalscore",
@@ -1040,7 +1040,7 @@ GROEP_TABEL_KLEUREN = {
     Input("vooropleiding-dropdown", "value"),
     Input("instrument-filter", "value"),
     Input("criterium-filter", "value"),
-    Input("score-schaal", "value"),
+    Input("item-filter", "value"),
     State("data-store", "data"),
     State("scores-store", "data"),
 )
@@ -1050,7 +1050,7 @@ def update_scores_tab(
     vooropleiding,
     instrument_filter,
     criterium_filter,
-    score_schaal,
+    item_filter,
     store_data,
     scores_store,
 ):
@@ -1072,51 +1072,67 @@ def update_scores_tab(
         scores = scores[scores["instrument"] == instrument_filter]
     if criterium_filter and criterium_filter != "Alle":
         scores = scores[scores["criterium"] == criterium_filter]
+    if item_filter and item_filter != "Alle":
+        scores = scores[scores["item"] == item_filter]
 
     if scores.empty:
         return leeg, [], [], []
 
     scores["item_kort"] = scores["item"].apply(shorten_item)
-
-    if score_schaal == "z":
-        scores["plot_score"] = scores.groupby("item")["score"].transform(
-            lambda s: (s - s.mean()) / s.std() if s.std() > 0 else 0
-        )
-        y_label = "Z-score"
-    else:
-        scores["plot_score"] = scores["score"]
-        y_label = "Score"
-
     items_kort = sorted(scores["item_kort"].unique())
+    enkel_item = len(items_kort) == 1
 
-    fig = px.box(
-        scores,
-        x="item_kort",
-        y="plot_score",
-        color="groep",
-        color_discrete_map=GROEP_KLEUREN,
-        category_orders={"groep": GROEP_VOLGORDE, "item_kort": items_kort},
-        points="all" if len(df_groep) <= 30 else False,
-        height=520,
-        labels={"item_kort": "", "plot_score": y_label, "groep": ""},
-    )
-    fig.update_layout(
-        boxgap=0.15,
-        legend=dict(orientation="h", y=1.05, yanchor="bottom"),
-        xaxis_tickangle=-25,
-        **CHART_BASE,
-        margin=dict(t=60, b=10),
-    )
+    if enkel_item:
+        fig = px.box(
+            scores,
+            x="groep",
+            y="score",
+            color="groep",
+            color_discrete_map=GROEP_KLEUREN,
+            category_orders={"groep": GROEP_VOLGORDE},
+            points="all" if len(df_groep) <= 50 else False,
+            height=480,
+            labels={"groep": "", "score": items_kort[0], "groep": ""},
+        )
+        fig.update_layout(
+            showlegend=False,
+            **CHART_BASE,
+            margin=dict(t=30, b=10),
+        )
+    else:
+        fig = px.box(
+            scores,
+            x="item_kort",
+            y="score",
+            color="groep",
+            color_discrete_map=GROEP_KLEUREN,
+            category_orders={"groep": GROEP_VOLGORDE, "item_kort": items_kort},
+            points="all" if len(df_groep) <= 30 else False,
+            height=520,
+            labels={"item_kort": "", "score": "Score", "groep": ""},
+        )
+        fig.update_layout(
+            boxgap=0.15,
+            legend=dict(orientation="h", y=1.05, yanchor="bottom"),
+            xaxis_tickangle=-25,
+            **CHART_BASE,
+            margin=dict(t=60, b=10),
+        )
 
+    criterium_map = dict(
+        scores.drop_duplicates("item_kort")[["item_kort", "criterium"]].values
+    )
     tabel_pivot = (
-        scores.groupby(["groep", "item_kort"], observed=True)["plot_score"]
+        scores.groupby(["groep", "item_kort"], observed=True)["score"]
         .agg(["mean", "std"])
         .round(2)
         .reset_index()
-        .rename(
-            columns={"item_kort": "Item", "mean": "Gem.", "std": "SD", "groep": "Groep"}
-        )
     )
+    tabel_pivot["criterium"] = tabel_pivot["item_kort"].map(criterium_map).fillna("")
+    tabel_pivot = tabel_pivot.rename(
+        columns={"item_kort": "Item", "mean": "Gem.", "std": "SD", "groep": "Groep", "criterium": "Criterium"}
+    )
+    tabel_pivot = tabel_pivot[["Groep", "Item", "Criterium", "Gem.", "SD"]]
     gem_data = tabel_pivot.to_dict("records")
     gem_cols = [{"name": c, "id": c} for c in tabel_pivot.columns]
 
