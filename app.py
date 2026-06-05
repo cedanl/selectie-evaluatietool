@@ -27,6 +27,7 @@ from transformatie import (
     valideer_config,
 )
 from config_wizard import maak_wizard_layout, registreer_callbacks
+from rapport import genereer_rapport
 
 DEMO_DIR = Path("data/demo")
 
@@ -324,6 +325,14 @@ SIDEBAR = html.Div(
         html.P("Kandidaten per cohort", className="sidebar-label"),
         html.Div(id="cohort-stats"),
         html.Hr(className="mt-3 mb-2"),
+        dbc.Button(
+            "Download rapport (PDF)",
+            id="btn-download-rapport",
+            color="primary",
+            size="sm",
+            className="w-100 mb-2",
+        ),
+        dcc.Download(id="download-rapport"),
         dbc.Button(
             "Nieuw bestand laden",
             id="btn-reset",
@@ -968,6 +977,29 @@ def update_cohort_stats(geslacht, vooropleiding, store_data):
         ],
         className="g-1",
     )
+
+
+# ── Rapport download ─────────────────────────────────────────────────────────
+
+
+@app.callback(
+    Output("download-rapport", "data"),
+    Input("btn-download-rapport", "n_clicks"),
+    State("data-store", "data"),
+    State("scores-store", "data"),
+    prevent_initial_call=True,
+)
+def download_rapport(_n, store_data, scores_store):
+    df = df_from_store(store_data)
+    if df.empty or not scores_store:
+        return dash.no_update
+    scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+    pdf_bytes = genereer_rapport(df, scores_df)
+    opleiding = ""
+    if "opleiding" in df.columns and df["opleiding"].notna().any():
+        opleiding = str(df["opleiding"].dropna().iloc[0]).replace(" ", "_")
+    filename = f"evaluatierapport_{opleiding}.pdf" if opleiding else "evaluatierapport.pdf"
+    return dcc.send_bytes(pdf_bytes, filename)
 
 
 # ── Dashboard callbacks ───────────────────────────────────────────────────────
