@@ -372,5 +372,5 @@ ws_inst.freeze_panes = "A2"
 ws_kol.freeze_panes = "A2"
 wb.active = 0
 
-wb.save("config_template.xlsx")
-print("Template opgeslagen als config_template.xlsx")
+wb.save("docs/config_template.xlsx")
+print("Template opgeslagen als docs/config_template.xlsx")

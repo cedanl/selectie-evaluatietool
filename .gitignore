@@ -17,7 +17,6 @@ data/demo/EV_DEMO_farmacie.csv
 # Brondata en configs in root (duplicaten van data/)
 dummy data selectie*.xlsx
 config_*.xlsx
-!config_template.xlsx
 
 # Binaire bestanden
 *.pdf

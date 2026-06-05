@@ -41,7 +41,7 @@ uploadscherm waar je bestanden kunt uploaden of demodata kunt laden.
 
 Wil je eerst rondkijken zonder eigen data? Kies in het uploadscherm een
 van de demobestanden uit het dropdown-menu en klik "Laden". Er zijn
-voorbeelden van vier opleidingen.
+voorbeelden van twee opleidingen.
 
 
 ## Configuratiebestand maken
@@ -66,7 +66,7 @@ downloaden als Excel, zodat je hem de volgende keer gewoon kunt uploaden.
 
 ### Handmatig
 
-Open `config_template.xlsx` en vul de twee tabbladen in:
+Open `docs/config_template.xlsx` en vul de twee tabbladen in:
 
 - **Instellingen**: welke kolom het studentnummer is, op welke rij de
   kolomnamen staan, en welke kolom de totaalscore bevat.
@@ -119,13 +119,9 @@ Het dashboard deelt kandidaten in drie groepen in:
 3. Upload alle drie de bestanden in het dashboard.
 
 
-## Demodata opnieuw genereren
+## Demodata opnieuw genereren (alleen voor ontwikkelaars)
 
-Als je de demodata wilt vernieuwen (bijvoorbeeld na een update):
-
-```bash
-uv run python scripts/maak_data.py
-```
-
-Dit maakt voor elke voorbeeldopleiding synthetische studiedata aan in
-`data/demo/`.
+De demodata in `data/demo/` wordt meegeleverd met de repository. Als
+ontwikkelaar kun je de data opnieuw genereren met de scripts in
+`scripts/eenmalig/`. Dit vereist de originele bronbestanden die niet in
+de repository staan.

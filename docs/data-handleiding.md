@@ -74,7 +74,7 @@ resultaat controleren en aanpassen. Daarna kun je de config downloaden
 als Excel zodat je hem later opnieuw kunt gebruiken.
 
 Je kunt ook handmatig een configuratiebestand maken op basis van
-`config_template.xlsx`. Zie de README voor meer uitleg.
+`docs/config_template.xlsx`. Zie de README voor meer uitleg.
 
 **Formaat:** Excel (.xlsx)
 
