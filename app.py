@@ -1887,7 +1887,26 @@ def update_samenhang_tab(
 
     item_pivot_inschr = all_item_pivot.loc[
         all_item_pivot.index.isin(ingeschreven["studentnummer"])
-    ].dropna()
+    ].copy()
+
+    # Verwijder kolommen waar >30% NaN is (optionele velden zoals keuzevakken)
+    nan_pct = item_pivot_inschr.isna().mean()
+    verwijderd_nan = [c for c in all_score_cols if c in item_pivot_inschr.columns and nan_pct.get(c, 1) > 0.3]
+    bruikbare_cols = [c for c in all_score_cols if c in item_pivot_inschr.columns and nan_pct.get(c, 1) <= 0.3]
+
+    if len(bruikbare_cols) < 2:
+        regressie_msg = dbc.Alert(
+            "Te weinig bruikbare items voor regressie.",
+            color="warning",
+            className="small",
+        )
+        return fig, regressie_msg, reg_data, reg_cols, reg_style
+
+    # Vul resterende NaN's met kolomgemiddelde
+    item_pivot_inschr[bruikbare_cols] = item_pivot_inschr[bruikbare_cols].fillna(
+        item_pivot_inschr[bruikbare_cols].mean()
+    )
+    item_pivot_inschr = item_pivot_inschr.dropna(subset=bruikbare_cols)
 
     if len(item_pivot_inschr) < 10:
         regressie_msg = dbc.Alert(
@@ -1900,7 +1919,22 @@ def update_samenhang_tab(
     y = ingeschreven.set_index("studentnummer").loc[
         item_pivot_inschr.index, "doorgestroomd"
     ]
-    X = item_pivot_inschr[all_score_cols]
+    X = item_pivot_inschr[bruikbare_cols]
+
+    # Verwijder kolommen met (bijna-)perfecte multicollineariteit
+    from numpy.linalg import matrix_rank
+    verwijderd_collinear = []
+    while len(X.columns) > 1:
+        rank = matrix_rank(X.values)
+        if rank >= len(X.columns):
+            break
+        corr_vals = X.corr().abs().to_numpy().copy()
+        np.fill_diagonal(corr_vals, 0)
+        flat_idx = corr_vals.argmax()
+        _, col_idx = divmod(flat_idx, corr_vals.shape[1])
+        verwijderd_collinear.append(X.columns[col_idx])
+        X = X.drop(columns=[X.columns[col_idx]])
+    bruikbare_cols = list(X.columns)
 
     try:
         import statsmodels.api as sm
@@ -1911,17 +1945,28 @@ def update_samenhang_tab(
         n_doorgestroomd = int(y.sum())
         n_niet = int(len(y) - y.sum())
         pseudo_r2 = round(float(model.prsquared), 3)
-        regressie_msg = html.Div(
-            [
-                html.Span(
-                    f"n = {len(y)} (doorgestroomd: {n_doorgestroomd}, niet: {n_niet})",
-                    className="small text-muted me-3",
-                ),
-                html.Span(f"Pseudo R² = {pseudo_r2}", className="small fw-bold"),
-            ]
-        )
+        msg_parts = [
+            html.Span(
+                f"n = {len(y)} (doorgestroomd: {n_doorgestroomd}, niet: {n_niet})",
+                className="small text-muted me-3",
+            ),
+            html.Span(f"Pseudo R² = {pseudo_r2}", className="small fw-bold"),
+        ]
+        if verwijderd_nan:
+            msg_parts.append(html.Br())
+            msg_parts.append(html.Span(
+                f"Items niet meegenomen (>30% ontbrekend): {', '.join(verwijderd_nan)}",
+                className="small text-muted",
+            ))
+        if verwijderd_collinear:
+            msg_parts.append(html.Br())
+            msg_parts.append(html.Span(
+                f"Items niet meegenomen (overlap met andere items): {', '.join(verwijderd_collinear)}",
+                className="small text-muted",
+            ))
+        regressie_msg = html.Div(msg_parts)
 
-        for item_naam in all_score_cols:
+        for item_naam in bruikbare_cols:
             if item_naam not in model.params.index:
                 continue
             coef = round(float(model.params[item_naam]), 3)
