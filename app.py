@@ -60,26 +60,10 @@ VERPLICHTE_CHO_KOLOMMEN = ["studentnummer", "selectiejaar", "groep"]
 # ── Dashboard helpers ─────────────────────────────────────────────────────────
 
 
-def get_score_cols(df: pd.DataFrame) -> list[str]:
-    return sorted(c for c in df.columns if c.endswith("_score") and c != "totaalscore")
-
-
-def col_to_label(col: str) -> str:
-    if col == "totaalscore":
-        return "Totaalscore"
-    name = col.replace("_score", "").replace("_", " ")
-    return name[0].upper() + name[1:] if name else col
-
-
 def shorten_item(name: str) -> str:
     for suffix in [" schaalscore", " Schaalscore", " (1-2-3)"]:
         name = name.replace(suffix, "")
     return name
-
-
-def score_opties_uit_df(df: pd.DataFrame) -> list[dict]:
-    cols = get_score_cols(df) + ["totaalscore"]
-    return [{"label": col_to_label(c), "value": c} for c in cols]
 
 
 def koppel_data(cho_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.DataFrame:
@@ -92,7 +76,7 @@ def koppel_data(cho_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.DataFrame:
     score_cols = [f"{c}_score" for c in pivot.columns]
     pivot.columns = score_cols
     zscores = pivot[score_cols].apply(
-        lambda s: (s - s.mean()) / s.std() if s.std() > 0 else 0
+        lambda s: (s - s.mean()) / s.std() if s.std() > 0 else pd.Series(0, index=s.index)
     )
     pivot["totaalscore"] = zscores.mean(axis=1).round(2)
     pivot = pivot.reset_index()
@@ -670,29 +654,13 @@ def toggle_overlay(store_data):
     State("upload-selectiedata", "filename"),
     State("upload-config", "filename"),
     State("upload-1cho", "filename"),
-    State("upload-selectiedata", "contents"),
-    State("upload-config", "contents"),
-    State("upload-1cho", "contents"),
     prevent_initial_call=True,
 )
 def valideer_uploads(
-    sel_contents,
-    cfg_contents,
-    cho_contents,
-    wiz_config,
-    sel_fn,
-    cfg_fn,
-    cho_fn,
-    sel_state,
-    cfg_state,
-    cho_state,
+    sel, cfg, cho, wiz_config, sel_fn, cfg_fn, cho_fn,
 ):
     trigger = ctx.triggered_id
     no = dash.no_update
-
-    sel = sel_state or sel_contents
-    cfg = cfg_state or cfg_contents
-    cho = cho_state or cho_contents
 
     sel_status = no
     cfg_status = no
@@ -842,8 +810,7 @@ def laad_dashboard(
         return None, None
 
     if trigger == "btn-demodata":
-        result = _laad_demodata(demo_dataset)
-        return result[0], result[1]
+        return _laad_demodata(demo_dataset)
 
     has_config = cfg_contents or wiz_config
     if trigger == "btn-open-dashboard" and sel_contents and has_config and cho_contents:
@@ -881,7 +848,7 @@ def _laad_demodata(dataset_name=None):
     cho_path = demo_subdir / "1cho_data.csv"
 
     if not all(p.exists() for p in [sel_path, cfg_path, cho_path]):
-        return (dash.no_update,) * 6
+        return dash.no_update, dash.no_update
 
     cfg_contents = _file_to_data_uri(cfg_path)
     config = lees_config(cfg_contents)
@@ -893,22 +860,9 @@ def _laad_demodata(dataset_name=None):
 
     joined = koppel_data(cho_df, scores_df)
 
-    opleiding = config.get("opleiding", dataset_name or "")
-    jaar = config.get("jaar", "")
-    n_kandidaten = len(joined)
-    label = f"{opleiding} {jaar}".strip()
-
     return (
         joined.to_json(orient="split", date_format="iso"),
         scores_df.to_json(orient="split", date_format="iso"),
-        "Demodata geladen.",
-        "Demodata geladen.",
-        dbc.Alert(
-            f"Demodata: {label} ({n_kandidaten} kandidaten)",
-            color="info",
-            className="small py-1",
-        ),
-        "Demodata geladen.",
     )
 
 
