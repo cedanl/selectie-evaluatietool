@@ -2,25 +2,41 @@
 Evaluatietool: selectie & studiesucces dashboard
 
 Draai met: uv run python app.py
-Data aanmaken: uv run python scripts/maak_data.py
+Demodata aanmaken: uv run python scripts/maak_data.py
 """
 
 import base64
 import io
+import json
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from scipy import stats
 
 import dash
 from dash import dcc, html, dash_table, Input, Output, State, ctx
 import dash_bootstrap_components as dbc
 
-CHO_PATH    = Path("data/synthetic/1cho_data.csv")
-SCORES_PATH = Path("data/synthetic/selectiescores_voorbeeld.csv")
+from transformatie import (
+    lees_config,
+    parse_csv_or_excel,
+    parse_selectiedata,
+    transformeer_naar_lang,
+    valideer_config,
+)
+from config_wizard import maak_wizard_layout, registreer_callbacks
+
+DEMO_DIR = Path("data/demo")
+
+DEMO_DATASETS = []
+if DEMO_DIR.exists():
+    for subdir in sorted(DEMO_DIR.iterdir()):
+        if subdir.is_dir() and (subdir / "config.xlsx").exists():
+            DEMO_DATASETS.append(
+                {"value": subdir.name, "label": subdir.name.replace("_", " ").title()}
+            )
 
 GROEP_VOLGORDE = [
     "Niet gestart",
@@ -38,8 +54,10 @@ GROEP_XTICKLABELS = [
     "Doorgestroomd<br>naar jaar 2",
 ]
 
-VERPLICHTE_CHO_KOLOMMEN    = ["studentnummer", "selectiejaar", "groep"]
-VERPLICHTE_SCORES_KOLOMMEN = ["studentnummer", "instrument", "item", "criterium", "score"]
+VERPLICHTE_CHO_KOLOMMEN = ["studentnummer", "selectiejaar", "groep"]
+
+
+# ── Dashboard helpers ─────────────────────────────────────────────────────────
 
 
 def get_score_cols(df: pd.DataFrame) -> list[str]:
@@ -53,6 +71,12 @@ def col_to_label(col: str) -> str:
     return name[0].upper() + name[1:] if name else col
 
 
+def shorten_item(name: str) -> str:
+    for suffix in [" schaalscore", " Schaalscore", " (1-2-3)"]:
+        name = name.replace(suffix, "")
+    return name
+
+
 def score_opties_uit_df(df: pd.DataFrame) -> list[dict]:
     cols = get_score_cols(df) + ["totaalscore"]
     return [{"label": col_to_label(c), "value": c} for c in cols]
@@ -60,66 +84,69 @@ def score_opties_uit_df(df: pd.DataFrame) -> list[dict]:
 
 def koppel_data(cho_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.DataFrame:
     instrument_gem = (
-        scores_df.groupby(["studentnummer", "instrument"])["score"]
-        .mean()
-        .reset_index()
+        scores_df.groupby(["studentnummer", "instrument"])["score"].mean().reset_index()
     )
-    pivot = instrument_gem.pivot(index="studentnummer", columns="instrument", values="score")
+    pivot = instrument_gem.pivot(
+        index="studentnummer", columns="instrument", values="score"
+    )
     score_cols = [f"{c}_score" for c in pivot.columns]
     pivot.columns = score_cols
-    pivot["totaalscore"] = pivot[score_cols].mean(axis=1).round(2)
+    zscores = pivot[score_cols].apply(
+        lambda s: (s - s.mean()) / s.std() if s.std() > 0 else 0
+    )
+    pivot["totaalscore"] = zscores.mean(axis=1).round(2)
     pivot = pivot.reset_index()
 
-    meta = scores_df.groupby("studentnummer").first()[["selectie_uitkomst"]].reset_index() \
-        if "selectie_uitkomst" in scores_df.columns else pd.DataFrame({"studentnummer": pivot["studentnummer"]})
+    meta_cols = ["studentnummer"]
+    for col in ["selectiejaar", "opleiding", "instellingscode"]:
+        if col in scores_df.columns:
+            meta_cols.append(col)
+    meta = (
+        scores_df.groupby("studentnummer")
+        .first()[[c for c in meta_cols if c != "studentnummer"]]
+        .reset_index()
+    )
     pivot = pivot.merge(meta, on="studentnummer", how="left")
 
-    df = pivot.merge(cho_df, on="studentnummer", how="inner")
+    df = pivot.merge(cho_df, on="studentnummer", how="left", suffixes=("", "_cho"))
+    for col in ["selectiejaar", "opleiding", "instellingscode"]:
+        cho_col = f"{col}_cho"
+        if cho_col in df.columns:
+            df[col] = df[col].fillna(df[cho_col])
+            df = df.drop(columns=[cho_col])
+
     df["groep"] = pd.Categorical(
-        df["groep"].fillna("Niet gestart"), categories=GROEP_VOLGORDE, ordered=True
+        df["groep"].fillna("Niet gestart"),
+        categories=GROEP_VOLGORDE,
+        ordered=True,
     )
     return df
-
-
-df_cho_demo    = pd.read_csv(CHO_PATH, sep=";")    if CHO_PATH.exists()    else pd.DataFrame()
-df_scores_demo = pd.read_csv(SCORES_PATH, sep=";") if SCORES_PATH.exists() else pd.DataFrame()
-
-if not df_cho_demo.empty and not df_scores_demo.empty:
-    df_demo = koppel_data(df_cho_demo, df_scores_demo)
-else:
-    df_demo = df_cho_demo.copy()
-    df_demo["groep"] = pd.Categorical(
-        df_demo["groep"].fillna("Niet gestart") if "groep" in df_demo.columns else "Niet gestart",
-        categories=GROEP_VOLGORDE, ordered=True,
-    )
-
-JAREN_DEMO    = sorted(df_demo["selectiejaar"].unique().tolist()) if "selectiejaar" in df_demo.columns else []
-SCORE_OPTIES_INIT = score_opties_uit_df(df_demo)
 
 
 def df_from_store(store_data: str | None) -> pd.DataFrame:
     if store_data is None:
-        return df_demo.copy()
+        return pd.DataFrame()
     df = pd.read_json(io.StringIO(store_data), orient="split")
-    df["groep"] = pd.Categorical(
-        df["groep"], categories=GROEP_VOLGORDE, ordered=True
-    )
+    df["groep"] = pd.Categorical(df["groep"], categories=GROEP_VOLGORDE, ordered=True)
     return df
 
 
-def maak_filter_opties(df: pd.DataFrame, kolom: str, alle_label: str = "Alle") -> list[dict]:
+def maak_filter_opties(
+    df: pd.DataFrame, kolom: str, alle_label: str = "Alle"
+) -> list[dict]:
+    if kolom not in df.columns:
+        return [{"label": alle_label, "value": "Alle"}]
     return [{"label": alle_label, "value": "Alle"}] + [
-        {"label": str(v), "value": str(v)}
-        for v in sorted(df[kolom].dropna().unique())
+        {"label": str(v), "value": str(v)} for v in sorted(df[kolom].dropna().unique())
     ]
 
 
 def filter_data(df: pd.DataFrame, cohort, geslacht, vooropleiding, incl_cohort=True):
-    if incl_cohort and cohort != "Alle":
+    if incl_cohort and cohort != "Alle" and "selectiejaar" in df.columns:
         df = df[df["selectiejaar"] == int(cohort)]
-    if geslacht != "Alle":
+    if geslacht != "Alle" and "geslacht" in df.columns:
         df = df[df["geslacht"] == geslacht]
-    if vooropleiding != "Alle":
+    if vooropleiding != "Alle" and "hoogste_vooropleiding" in df.columns:
         df = df[df["hoogste_vooropleiding"] == vooropleiding]
     return df
 
@@ -169,14 +196,33 @@ def bereken_pct(agg: pd.DataFrame, groep_kolom: str) -> pd.DataFrame:
     return agg
 
 
-def _parse_csv(contents: str) -> pd.DataFrame:
-    content_type, content_string = contents.split(",")
-    decoded = base64.b64decode(content_string).decode("utf-8")
-    sep = ";" if decoded[:500].count(";") > decoded[:500].count(",") else ","
-    return pd.read_csv(io.StringIO(decoded), sep=sep)
+# ── Upload overlay ────────────────────────────────────────────────────────────
 
 
-# ── Upload overlay ─────────────────────────────────────────────────────────────
+def _upload_card(title, description, upload_id, status_id, accept):
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.H6(title, className="mb-1"),
+                html.P(description, className="text-muted small mb-3"),
+                dcc.Upload(
+                    id=upload_id,
+                    children=html.Div(
+                        [
+                            "Sleep een bestand hierheen of ",
+                            html.A("blader", style={"cursor": "pointer"}),
+                        ]
+                    ),
+                    className="upload-zone",
+                    accept=accept,
+                    max_size=50 * 1024 * 1024,
+                ),
+                html.Div(id=status_id, className="mt-2"),
+            ]
+        ),
+        className="mb-3 text-start",
+    )
+
 
 UPLOAD_OVERLAY = html.Div(
     id="upload-overlay",
@@ -189,60 +235,95 @@ UPLOAD_OVERLAY = html.Div(
                 ),
                 html.H3("Evaluatietool Selectie", className="mb-1"),
                 html.P(
-                    "Upload beide bestanden om het dashboard te openen.",
+                    "Upload drie bestanden om het dashboard te openen.",
                     className="text-muted mb-4",
                 ),
-                dbc.Card(
-                    dbc.CardBody(
-                        [
-                            html.H6("Selectiescores uploaden", className="mb-1"),
-                            html.P(
-                                "selectiescores.csv met scores op instrument-, item- en criterium-niveau.",
-                                className="text-muted small mb-3",
-                            ),
-                            dcc.Upload(
-                                id="upload-selectiescores",
-                                children=html.Div(
-                                    ["Sleep een bestand hierheen of ", html.A("blader", style={"cursor": "pointer"})]
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                dbc.Label("Opleiding", className="small"),
+                                dbc.Input(
+                                    id="input-opleiding",
+                                    placeholder="bijv. Farmacie",
+                                    size="sm",
                                 ),
-                                className="upload-zone",
-                                accept=".csv",
-                                max_size=50 * 1024 * 1024,
-                            ),
-                            html.Div(id="scores-upload-status", className="mt-2"),
-                        ]
-                    ),
+                            ]
+                        ),
+                        dbc.Col(
+                            [
+                                dbc.Label("Selectiejaar", className="small"),
+                                dbc.Input(
+                                    id="input-selectiejaar",
+                                    placeholder="bijv. 2026",
+                                    size="sm",
+                                    type="number",
+                                ),
+                            ],
+                            width=4,
+                        ),
+                    ],
                     className="mb-3 text-start",
                 ),
-                dbc.Card(
-                    dbc.CardBody(
-                        [
-                            html.H6("Studiesuccesdata uploaden", className="mb-1"),
-                            html.P(
-                                "studiesucces_data.csv met 1CHO-gegevens en studieuitkomsten per kandidaat.",
-                                className="text-muted small mb-3",
-                            ),
-                            dcc.Upload(
-                                id="upload-studiesucces",
-                                children=html.Div(
-                                    ["Sleep een bestand hierheen of ", html.A("blader", style={"cursor": "pointer"})]
-                                ),
-                                className="upload-zone",
-                                accept=".csv",
-                                max_size=50 * 1024 * 1024,
-                            ),
-                            html.Div(id="cho-upload-status", className="mt-2"),
-                        ]
-                    ),
-                    className="mb-3 text-start",
+                _upload_card(
+                    "Selectiedata",
+                    "Het Excel-bestand met de selectieresultaten.",
+                    "upload-selectiedata",
+                    "selectiedata-status",
+                    ".xlsx,.xls",
+                ),
+                _upload_card(
+                    "Configuratiebestand",
+                    "Beschrijft welke kolommen uit het selectiebestand worden meegenomen.",
+                    "upload-config",
+                    "config-status",
+                    ".xlsx",
+                ),
+                maak_wizard_layout(),
+                html.Div(id="validatie-resultaat", className="mb-3"),
+                _upload_card(
+                    "1CHO-data",
+                    "Studiesuccesdata met groepindeling per kandidaat.",
+                    "upload-1cho",
+                    "cho-status",
+                    ".csv,.xlsx,.xls",
+                ),
+                dbc.Button(
+                    "Open dashboard",
+                    id="btn-open-dashboard",
+                    color="primary",
+                    size="lg",
+                    className="w-100 mb-3",
+                    disabled=True,
                 ),
                 html.Hr(className="my-3"),
                 html.P("Nog geen eigen data?", className="text-muted small mb-2"),
-                dbc.Button(
-                    "Gebruik synthetische demodata",
-                    id="btn-demodata",
-                    color="secondary",
-                    size="sm",
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            dcc.Dropdown(
+                                id="demo-dataset-picker",
+                                options=DEMO_DATASETS,
+                                value=DEMO_DATASETS[0]["value"]
+                                if DEMO_DATASETS
+                                else None,
+                                clearable=False,
+                                className="mb-2",
+                            ),
+                            width=8,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "Laden",
+                                id="btn-demodata",
+                                color="secondary",
+                                size="sm",
+                                className="w-100",
+                            ),
+                            width=4,
+                        ),
+                    ],
+                    className="g-2 align-items-end",
                 ),
             ],
             className="upload-card",
@@ -251,11 +332,8 @@ UPLOAD_OVERLAY = html.Div(
     className="upload-overlay",
 )
 
-# ── Sidebar ────────────────────────────────────────────────────────────────────
 
-cohort_init = [{"label": "Alle cohorten", "value": "Alle"}] + [
-    {"label": str(j), "value": str(j)} for j in JAREN_DEMO
-]
+# ── Sidebar ───────────────────────────────────────────────────────────────────
 
 SIDEBAR = html.Div(
     [
@@ -264,7 +342,7 @@ SIDEBAR = html.Div(
         dbc.Label("Cohort"),
         dcc.Dropdown(
             id="cohort-dropdown",
-            options=cohort_init,
+            options=[{"label": "Alle cohorten", "value": "Alle"}],
             value="Alle",
             clearable=False,
             className="mb-3",
@@ -272,7 +350,7 @@ SIDEBAR = html.Div(
         dbc.Label("Geslacht"),
         dcc.Dropdown(
             id="geslacht-dropdown",
-            options=maak_filter_opties(df_demo, "geslacht") if "geslacht" in df_demo.columns else [],
+            options=[{"label": "Alle", "value": "Alle"}],
             value="Alle",
             clearable=False,
             className="mb-3",
@@ -280,7 +358,7 @@ SIDEBAR = html.Div(
         dbc.Label("Vooropleiding"),
         dcc.Dropdown(
             id="vooropleiding-dropdown",
-            options=maak_filter_opties(df_demo, "hoogste_vooropleiding") if "hoogste_vooropleiding" in df_demo.columns else [],
+            options=[{"label": "Alle", "value": "Alle"}],
             value="Alle",
             clearable=False,
             className="mb-4",
@@ -301,7 +379,8 @@ SIDEBAR = html.Div(
     className="sidebar-wrapper",
 )
 
-# ── App layout ─────────────────────────────────────────────────────────────────
+
+# ── App layout ────────────────────────────────────────────────────────────────
 
 app = dash.Dash(
     __name__,
@@ -309,6 +388,7 @@ app = dash.Dash(
     title="Evaluatietool Selectie",
     suppress_callback_exceptions=True,
 )
+registreer_callbacks(app)
 
 app.layout = html.Div(
     [
@@ -334,56 +414,69 @@ app.layout = html.Div(
                                     children=[
                                         html.Div(
                                             [
-                                                html.H5("Selectiescores per uitkomstgroep"),
+                                                html.H5(
+                                                    "Selectiescores per uitkomstgroep"
+                                                ),
                                                 html.P(
                                                     "Hogere scores bij doorstromers dan bij uitvallers signaleren predictieve validiteit "
                                                     "van het selectie-instrument. Let op overlap: een instrument dat groepen niet "
                                                     "onderscheidt heeft weinig voorspellende waarde.",
                                                     className="text-muted small",
                                                 ),
-                                                html.Div(
+                                                dbc.Row(
                                                     [
-                                                        dbc.Label("Analyseniveau", className="me-2 mb-0 align-self-center", style={"fontSize": "13px"}),
-                                                        dbc.RadioItems(
-                                                            id="scores-niveau",
-                                                            options=[
-                                                                {"label": "Instrument", "value": "instrument"},
-                                                                {"label": "Item", "value": "item", "disabled": True},
-                                                                {"label": "Criterium", "value": "criterium", "disabled": True},
+                                                        dbc.Col(
+                                                            [
+                                                                dbc.Label(
+                                                                    "Instrument",
+                                                                    className="small",
+                                                                ),
+                                                                dcc.Dropdown(
+                                                                    id="instrument-filter",
+                                                                    options=[
+                                                                        {
+                                                                            "label": "Alle instrumenten",
+                                                                            "value": "Alle",
+                                                                        }
+                                                                    ],
+                                                                    value="Alle",
+                                                                    clearable=False,
+                                                                ),
                                                             ],
-                                                            value="instrument",
-                                                            inline=True,
+                                                            width=4,
                                                         ),
-                                                        html.Span(
-                                                            id="niveau-hint",
-                                                            className="text-muted ms-3 align-self-center",
-                                                            style={"fontSize": "12px"},
+                                                        dbc.Col(
+                                                            [
+                                                                dbc.Label(
+                                                                    "Criterium",
+                                                                    className="small",
+                                                                ),
+                                                                dcc.Dropdown(
+                                                                    id="criterium-filter",
+                                                                    options=[
+                                                                        {
+                                                                            "label": "Alle criteria",
+                                                                            "value": "Alle",
+                                                                        }
+                                                                    ],
+                                                                    value="Alle",
+                                                                    clearable=False,
+                                                                ),
+                                                            ],
+                                                            width=4,
                                                         ),
                                                     ],
-                                                    className="d-flex align-items-center mb-3",
+                                                    className="mb-3",
                                                 ),
-                                                dcc.Loading(dcc.Graph(id="fig-totaal"), type="dot"),
+                                                dcc.Loading(
+                                                    dcc.Graph(id="fig-totaal"),
+                                                    type="dot",
+                                                ),
                                                 html.Hr(),
                                                 html.H6("Gemiddelden per groep"),
                                                 dash_table.DataTable(
                                                     id="tabel-gemiddelden",
                                                     style_table={"overflowX": "auto"},
-                                                    **TABLE_STYLE,
-                                                ),
-                                                html.Hr(),
-                                                html.P(
-                                                    "Mann-Whitney U toets: vergelijkt de scoreverdeling van studenten die niet "
-                                                    "doorstroomden naar jaar 2 met studenten die dat wel deden. Een significante "
-                                                    "uitkomst betekent dat de twee groepen systematisch anders scoren op dat "
-                                                    "instrument, wat wijst op predictieve validiteit. De toets maakt geen aanname "
-                                                    "over een normale verdeling en is daardoor geschikt voor scores op een begrensde "
-                                                    "schaal (1-10). ns = niet significant (p>=0.05).  "
-                                                    "* p<0.05  ** p<0.01  *** p<0.001",
-                                                    className="text-muted small",
-                                                ),
-                                                dash_table.DataTable(
-                                                    id="tabel-mannwhitney",
-                                                    style_table={"overflowX": "auto", "maxWidth": "560px"},
                                                     **TABLE_STYLE,
                                                 ),
                                             ],
@@ -392,14 +485,44 @@ app.layout = html.Div(
                                     ],
                                 ),
                                 dbc.Tab(
-                                    label="Verdeling",
-                                    tab_id="tab-verdeling",
+                                    label="Samenhang",
+                                    tab_id="tab-samenhang",
                                     children=[
                                         html.Div(
                                             [
-                                                html.H5("Verdeling per groep"),
-                                                html.P(id="verdeling-caption", className="text-muted small"),
-                                                dcc.Loading(dcc.Graph(id="fig-verdeling"), type="dot"),
+                                                html.H5(
+                                                    "Correlatiematrix tussen items"
+                                                ),
+                                                html.P(
+                                                    "Hoe hangen de selectie-items onderling samen? Hoge correlaties "
+                                                    "tussen items betekenen dat ze grotendeels hetzelfde meten. "
+                                                    "Items die weinig correleren voegen elk unieke informatie toe.",
+                                                    className="text-muted small",
+                                                ),
+                                                dcc.Loading(
+                                                    dcc.Graph(id="fig-correlatie"),
+                                                    type="dot",
+                                                ),
+                                                html.Hr(),
+                                                html.H5(
+                                                    "Regressie-analyse: voorspelling studiesucces"
+                                                ),
+                                                html.P(
+                                                    "Logistische regressie met doorstroom naar jaar 2 als uitkomst "
+                                                    "(ja/nee). Per item: hoe sterk voorspelt het doorstroom, "
+                                                    "rekening houdend met de andere items? Een significant item "
+                                                    "voegt voorspellende waarde toe boven wat de andere items al verklaren.",
+                                                    className="text-muted small",
+                                                ),
+                                                html.Div(
+                                                    id="regressie-samenvatting",
+                                                    className="mb-3",
+                                                ),
+                                                dash_table.DataTable(
+                                                    id="tabel-regressie",
+                                                    style_table={"overflowX": "auto"},
+                                                    **TABLE_STYLE,
+                                                ),
                                             ],
                                             className="tab-body",
                                         ),
@@ -411,67 +534,45 @@ app.layout = html.Div(
                                     children=[
                                         html.Div(
                                             [
-                                                html.H5("Demografisch profiel per groep"),
+                                                html.H5("Verdeling per groep"),
+                                                html.P(
+                                                    id="verdeling-caption",
+                                                    className="text-muted small",
+                                                ),
+                                                dcc.Loading(
+                                                    dcc.Graph(id="fig-verdeling"),
+                                                    type="dot",
+                                                ),
+                                                html.Hr(),
+                                                html.H5("Demografisch profiel"),
                                                 html.P(
                                                     "Achtergrondkenmerken komen uit 1CHO en zijn alleen beschikbaar voor ingeschreven studenten.",
                                                     className="text-muted small",
                                                 ),
                                                 dbc.Row(
                                                     [
-                                                        dbc.Col(dcc.Loading(dcc.Graph(id="fig-geslacht"), type="dot")),
-                                                        dbc.Col(dcc.Loading(dcc.Graph(id="fig-herkomst"), type="dot")),
+                                                        dbc.Col(
+                                                            dcc.Loading(
+                                                                dcc.Graph(
+                                                                    id="fig-geslacht"
+                                                                ),
+                                                                type="dot",
+                                                            )
+                                                        ),
+                                                        dbc.Col(
+                                                            dcc.Loading(
+                                                                dcc.Graph(
+                                                                    id="fig-herkomst"
+                                                                ),
+                                                                type="dot",
+                                                            )
+                                                        ),
                                                     ]
                                                 ),
-                                                dcc.Loading(dcc.Graph(id="fig-vooropleiding"), type="dot"),
-                                                html.Hr(),
-                                                dcc.Loading(dcc.Graph(id="fig-instroom"), type="dot"),
-                                            ],
-                                            className="tab-body",
-                                        ),
-                                    ],
-                                ),
-                                dbc.Tab(
-                                    label="Instrumentvergelijking",
-                                    tab_id="tab-puntenwolk",
-                                    children=[
-                                        html.Div(
-                                            [
-                                                html.H5("Puntenwolk selectiescores"),
-                                                html.P(
-                                                    "Vergelijk twee selectie-instrumenten tegen elkaar. "
-                                                    "Punten ver van de diagonaal zijn kandidaten die op de twee instrumenten sterk verschillen.",
-                                                    className="text-muted small",
+                                                dcc.Loading(
+                                                    dcc.Graph(id="fig-vooropleiding"),
+                                                    type="dot",
                                                 ),
-                                                dbc.Row(
-                                                    [
-                                                        dbc.Col(
-                                                            [
-                                                                dbc.Label("X-as"),
-                                                                dcc.Dropdown(
-                                                                    id="scatter-x",
-                                                                    options=SCORE_OPTIES_INIT,
-                                                                    value=SCORE_OPTIES_INIT[0]["value"] if SCORE_OPTIES_INIT else None,
-                                                                    clearable=False,
-                                                                ),
-                                                            ],
-                                                            width=3,
-                                                        ),
-                                                        dbc.Col(
-                                                            [
-                                                                dbc.Label("Y-as"),
-                                                                dcc.Dropdown(
-                                                                    id="scatter-y",
-                                                                    options=SCORE_OPTIES_INIT,
-                                                                    value=SCORE_OPTIES_INIT[1]["value"] if len(SCORE_OPTIES_INIT) > 1 else SCORE_OPTIES_INIT[0]["value"] if SCORE_OPTIES_INIT else None,
-                                                                    clearable=False,
-                                                                ),
-                                                            ],
-                                                            width=3,
-                                                        ),
-                                                    ],
-                                                    className="mb-3",
-                                                ),
-                                                dcc.Loading(dcc.Graph(id="fig-puntenwolk"), type="dot"),
                                             ],
                                             className="tab-body",
                                         ),
@@ -483,55 +584,49 @@ app.layout = html.Div(
                                     children=[
                                         html.Div(
                                             [
-                                                html.H5("VO-eindcijfer vs selectiescores"),
+                                                html.H5(
+                                                    "VO-eindcijfer vs selectiescores"
+                                                ),
                                                 html.P(
-                                                    "Het VO-eindcijfer is het gemiddeld eindexamencijfer van de hoogste vooropleiding "
-                                                    "voor het hoger onderwijs; voor de meeste studenten is dat het VWO-diploma. "
-                                                    "Het komt rechtstreeks uit het EV-bestand van 1CHO en is daardoor onafhankelijk van "
-                                                    "wat de opleiding zelf heeft gemeten tijdens de selectie. "
-                                                    "De grafiek laat zien of de selectie-instrumenten informatie toevoegen die de school "
-                                                    "nog niet had. Een lage samenhang (r = 0) betekent dat het instrument iets "
-                                                    "wezenlijk anders meet dan cognitieve schoolprestaties, zoals motivatie of "
-                                                    "communicatievaardigheid. Een hoge samenhang (r = 1) suggereert dat de selectie "
-                                                    "grotendeels herhaalt wat het VO-cijfer al zegt. Alleen ingeschreven studenten zijn zichtbaar.",
+                                                    "Het VO-eindcijfer komt uit 1CHO en is onafhankelijk van de selectie. "
+                                                    "Een lage samenhang (r dicht bij 0) betekent dat het item iets wezenlijk "
+                                                    "anders meet dan cognitieve schoolprestaties. Een hoge samenhang "
+                                                    "suggereert dat de selectie herhaalt wat het VO-cijfer al zegt.",
                                                     className="text-muted small",
                                                 ),
                                                 dbc.Row(
                                                     [
                                                         dbc.Col(
                                                             [
-                                                                dbc.Label("Selectiescore (y-as)"),
+                                                                dbc.Label(
+                                                                    "Item (y-as)"
+                                                                ),
                                                                 dcc.Dropdown(
                                                                     id="vo-score",
-                                                                    options=SCORE_OPTIES_INIT,
-                                                                    value=SCORE_OPTIES_INIT[0]["value"] if SCORE_OPTIES_INIT else None,
+                                                                    options=[],
                                                                     clearable=False,
                                                                 ),
                                                             ],
-                                                            width=3,
+                                                            width=4,
                                                         ),
                                                     ],
                                                     className="mb-3",
                                                 ),
-                                                dcc.Loading(dcc.Graph(id="fig-vo"), type="dot"),
+                                                dcc.Loading(
+                                                    dcc.Graph(id="fig-vo"), type="dot"
+                                                ),
                                                 html.Hr(),
                                                 html.P(
-                                                    "Pearson r meet de lineaire samenhang tussen VO-eindcijfer en selectiescore. "
-                                                    "Een lage r is wenselijk: het instrument voegt informatie toe die VO-cijfers niet geven.",
+                                                    "Pearson r per item en totaalscore.",
                                                     className="text-muted small",
                                                 ),
                                                 dash_table.DataTable(
                                                     id="tabel-pearsonr",
-                                                    style_table={"overflowX": "auto", "maxWidth": "380px"},
+                                                    style_table={
+                                                        "overflowX": "auto",
+                                                        "maxWidth": "420px",
+                                                    },
                                                     **TABLE_STYLE,
-                                                ),
-                                                html.P(
-                                                    "Kleuren: groen (r < 0.3) = instrument meet iets anders dan schoolprestaties, "
-                                                    "goede discriminante validiteit. "
-                                                    "geel (0.3 tot 0.5) = enige overlap met VO-prestaties. "
-                                                    "rood (r >= 0.5) = instrument selecteert grotendeels op dezelfde dimensie als VO-cijfers. "
-                                                    "oranje (r < -0.2) = onverwacht negatief verband, nader onderzoek aanbevolen.",
-                                                    className="text-muted small mt-2",
                                                 ),
                                             ],
                                             className="tab-body",
@@ -551,7 +646,7 @@ app.layout = html.Div(
     ]
 )
 
-# ── Upload callbacks ───────────────────────────────────────────────────────────
+# ── Upload callbacks ──────────────────────────────────────────────────────────
 
 
 @app.callback(
@@ -563,101 +658,261 @@ def toggle_overlay(store_data):
 
 
 @app.callback(
-    Output("data-store", "data"),
-    Output("scores-store", "data"),
-    Output("scores-upload-status", "children"),
-    Output("cho-upload-status", "children"),
-    Input("upload-selectiescores", "contents"),
-    Input("upload-studiesucces", "contents"),
-    Input("btn-demodata", "n_clicks"),
-    Input("btn-reset", "n_clicks"),
-    State("upload-selectiescores", "filename"),
-    State("upload-studiesucces", "filename"),
+    Output("selectiedata-status", "children"),
+    Output("config-status", "children"),
+    Output("validatie-resultaat", "children"),
+    Output("cho-status", "children"),
+    Output("btn-open-dashboard", "disabled"),
+    Input("upload-selectiedata", "contents"),
+    Input("upload-config", "contents"),
+    Input("upload-1cho", "contents"),
+    Input("wiz-config-store", "data"),
+    State("upload-selectiedata", "filename"),
+    State("upload-config", "filename"),
+    State("upload-1cho", "filename"),
+    State("upload-selectiedata", "contents"),
+    State("upload-config", "contents"),
+    State("upload-1cho", "contents"),
     prevent_initial_call=True,
 )
-def verwerk_upload(scores_contents, cho_contents, _demo, _reset, scores_fn, cho_fn):
+def valideer_uploads(
+    sel_contents,
+    cfg_contents,
+    cho_contents,
+    wiz_config,
+    sel_fn,
+    cfg_fn,
+    cho_fn,
+    sel_state,
+    cfg_state,
+    cho_state,
+):
     trigger = ctx.triggered_id
+    no = dash.no_update
 
-    if trigger == "btn-reset":
-        return None, None, "", ""
+    sel = sel_state or sel_contents
+    cfg = cfg_state or cfg_contents
+    cho = cho_state or cho_contents
 
-    if trigger == "btn-demodata":
-        if df_cho_demo.empty or df_scores_demo.empty:
-            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
-        joined = koppel_data(df_cho_demo, df_scores_demo)
-        return (
-            joined.to_json(orient="split", date_format="iso"),
-            df_scores_demo.to_json(orient="split", date_format="iso"),
-            "Demodata geladen.",
-            "Demodata geladen.",
+    sel_status = no
+    cfg_status = no
+    validatie = no
+    cho_status = no
+    btn_disabled = True
+
+    if trigger == "upload-selectiedata" and sel:
+        sel_status = dbc.Alert(
+            f"{sel_fn} geladen.", color="success", className="small py-1"
         )
 
-    if trigger == "upload-selectiescores":
-        if scores_contents is None:
-            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+    if trigger == "upload-config" and cfg:
         try:
-            scores_df = _parse_csv(scores_contents)
+            config = lees_config(cfg)
+            n_kol = len(config.get("kolommen", []))
+            cfg_status = dbc.Alert(
+                f"{cfg_fn} geladen ({n_kol} kolommen).",
+                color="success",
+                className="small py-1",
+            )
         except Exception as e:
-            return dash.no_update, dash.no_update, dbc.Alert(str(e), color="danger", className="small py-1"), dash.no_update
-        missing = [c for c in VERPLICHTE_SCORES_KOLOMMEN if c not in scores_df.columns]
-        if missing:
-            return dash.no_update, dash.no_update, dbc.Alert(f"Ontbrekende kolommen: {', '.join(missing)}", color="danger", className="small py-1"), dash.no_update
-        status = dbc.Alert(f"{scores_fn} geladen.", color="success", className="small py-1")
-        if cho_contents is not None:
-            try:
-                cho_df = _parse_csv(cho_contents)
-                joined = koppel_data(cho_df, scores_df)
-                return joined.to_json(orient="split", date_format="iso"), scores_df.to_json(orient="split", date_format="iso"), status, dash.no_update
-            except Exception as e:
-                return dash.no_update, dash.no_update, dbc.Alert(str(e), color="danger", className="small py-1"), dash.no_update
-        return dash.no_update, dash.no_update, status, dash.no_update
+            cfg_status = dbc.Alert(f"Fout: {e}", color="danger", className="small py-1")
+            return sel_status, cfg_status, "", cho_status, True
 
-    if trigger == "upload-studiesucces":
-        if cho_contents is None:
-            return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+    if trigger == "wiz-config-store" and wiz_config:
+        wiz_cfg = json.loads(wiz_config)
+        n_kol = len(wiz_cfg.get("kolommen", []))
+        cfg_status = dbc.Alert(
+            f"Config gegenereerd ({n_kol} kolommen).",
+            color="success",
+            className="small py-1",
+        )
+
+    if trigger == "upload-1cho" and cho:
+        cho_status = dbc.Alert(
+            f"{cho_fn} geladen.", color="success", className="small py-1"
+        )
+
+    has_config = cfg or wiz_config
+
+    if sel and has_config:
         try:
-            cho_df = _parse_csv(cho_contents)
+            if cfg:
+                config = lees_config(cfg)
+            else:
+                config = json.loads(wiz_config)
+            checks = valideer_config(config, sel)
+            badges = []
+            for c in checks:
+                color = "success" if c["ok"] else "danger"
+                badges.append(
+                    dbc.Alert(c["check"], color=color, className="small py-1 mb-1")
+                )
+            validatie = html.Div(badges)
+
+            all_ok = all(c["ok"] for c in checks)
+            if all_ok and cho:
+                scores_df = transformeer_naar_lang(
+                    parse_selectiedata(sel, config), config
+                )
+                cho_df = parse_csv_or_excel(cho, cho_fn or "data.csv")
+                missing = [
+                    c for c in VERPLICHTE_CHO_KOLOMMEN if c not in cho_df.columns
+                ]
+                if missing:
+                    cho_status = dbc.Alert(
+                        f"Ontbrekende kolommen in 1CHO: {', '.join(missing)}",
+                        color="danger",
+                        className="small py-1",
+                    )
+                    return sel_status, cfg_status, validatie, cho_status, True
+
+                sel_ids = set(scores_df["studentnummer"].dropna().unique())
+                cho_ids = set(cho_df["studentnummer"].dropna().unique())
+                matches = sel_ids & cho_ids
+                if not matches:
+                    cho_status = dbc.Alert(
+                        f"Geen overlap tussen selectiedata ({len(sel_ids)} studenten) "
+                        f"en 1CHO-data ({len(cho_ids)} studenten). "
+                        "Controleer of beide bestanden hetzelfde studentnummer gebruiken.",
+                        color="danger",
+                        className="small py-1",
+                    )
+                    return sel_status, cfg_status, validatie, cho_status, True
+
+                n_zonder_match = len(sel_ids - cho_ids)
+                cho_alerts = [
+                    dbc.Alert(
+                        f"{len(matches)} van {len(sel_ids)} kandidaten gekoppeld.",
+                        color="success",
+                        className="small py-1 mb-1",
+                    )
+                ]
+                if n_zonder_match > 0:
+                    cho_alerts.append(
+                        dbc.Alert(
+                            f"{n_zonder_match} kandidaten niet in 1CHO "
+                            f"(worden 'Niet gestart').",
+                            color="info",
+                            className="small py-1 mb-1",
+                        )
+                    )
+                cho_status = html.Div(cho_alerts)
+                btn_disabled = False
+
         except Exception as e:
-            return dash.no_update, dash.no_update, dash.no_update, dbc.Alert(str(e), color="danger", className="small py-1")
-        missing = [c for c in VERPLICHTE_CHO_KOLOMMEN if c not in cho_df.columns]
-        if missing:
-            return dash.no_update, dash.no_update, dash.no_update, dbc.Alert(f"Ontbrekende kolommen: {', '.join(missing)}", color="danger", className="small py-1")
-        status = dbc.Alert(f"{cho_fn} geladen.", color="success", className="small py-1")
-        if scores_contents is not None:
-            try:
-                scores_df = _parse_csv(scores_contents)
-                joined = koppel_data(cho_df, scores_df)
-                return joined.to_json(orient="split", date_format="iso"), scores_df.to_json(orient="split", date_format="iso"), dash.no_update, status
-            except Exception as e:
-                return dash.no_update, dash.no_update, dash.no_update, dbc.Alert(str(e), color="danger", className="small py-1")
-        return dash.no_update, dash.no_update, dash.no_update, status
+            validatie = dbc.Alert(
+                f"Fout bij validatie: {e}", color="danger", className="small py-1"
+            )
 
-    return dash.no_update, dash.no_update, dash.no_update, dash.no_update
-
-
-# ── Niveau selector ────────────────────────────────────────────────────────────
+    return sel_status, cfg_status, validatie, cho_status, btn_disabled
 
 
 @app.callback(
-    Output("scores-niveau", "options"),
-    Output("scores-niveau", "value"),
-    Output("niveau-hint", "children"),
-    Input("scores-store", "data"),
-    State("scores-niveau", "value"),
+    Output("data-store", "data"),
+    Output("scores-store", "data"),
+    Input("btn-open-dashboard", "n_clicks"),
+    Input("btn-demodata", "n_clicks"),
+    Input("btn-reset", "n_clicks"),
+    State("upload-selectiedata", "contents"),
+    State("upload-config", "contents"),
+    State("upload-1cho", "contents"),
+    State("upload-1cho", "filename"),
+    State("input-opleiding", "value"),
+    State("input-selectiejaar", "value"),
+    State("demo-dataset-picker", "value"),
+    State("wiz-config-store", "data"),
+    prevent_initial_call=True,
 )
-def update_niveau_opties(scores_store, huidig_niveau):
-    heeft_scores = scores_store is not None
-    opties = [
-        {"label": "Instrument", "value": "instrument"},
-        {"label": "Item", "value": "item", "disabled": not heeft_scores},
-        {"label": "Criterium", "value": "criterium", "disabled": not heeft_scores},
-    ]
-    hint = "" if heeft_scores else "Laad selectiescores voor item- en criterium-detail"
-    nieuw_niveau = huidig_niveau if heeft_scores else "instrument"
-    return opties, nieuw_niveau, hint
+def laad_dashboard(
+    _open,
+    _demo,
+    _reset,
+    sel_contents,
+    cfg_contents,
+    cho_contents,
+    cho_fn,
+    input_opleiding,
+    input_selectiejaar,
+    demo_dataset,
+    wiz_config,
+):
+    trigger = ctx.triggered_id
+
+    if trigger == "btn-reset":
+        return None, None
+
+    if trigger == "btn-demodata":
+        result = _laad_demodata(demo_dataset)
+        return result[0], result[1]
+
+    has_config = cfg_contents or wiz_config
+    if trigger == "btn-open-dashboard" and sel_contents and has_config and cho_contents:
+        if cfg_contents:
+            config = lees_config(cfg_contents)
+        else:
+            config = json.loads(wiz_config)
+        if input_opleiding:
+            config["opleiding"] = input_opleiding
+        if input_selectiejaar:
+            config["jaar"] = str(int(input_selectiejaar))
+        scores_df = transformeer_naar_lang(
+            parse_selectiedata(sel_contents, config), config
+        )
+        cho_df = parse_csv_or_excel(cho_contents, cho_fn or "data.csv")
+        joined = koppel_data(cho_df, scores_df)
+        return (
+            joined.to_json(orient="split", date_format="iso"),
+            scores_df.to_json(orient="split", date_format="iso"),
+        )
+
+    return dash.no_update, dash.no_update
 
 
-# ── Sidebar callbacks ──────────────────────────────────────────────────────────
+def _file_to_data_uri(path: Path) -> str:
+    b64 = base64.b64encode(path.read_bytes()).decode()
+    return f"data:application/octet-stream;base64,{b64}"
+
+
+def _laad_demodata(dataset_name=None):
+    demo_subdir = DEMO_DIR / dataset_name if dataset_name else DEMO_DIR
+
+    sel_path = demo_subdir / "selectiedata.xlsx"
+    cfg_path = demo_subdir / "config.xlsx"
+    cho_path = demo_subdir / "1cho_data.csv"
+
+    if not all(p.exists() for p in [sel_path, cfg_path, cho_path]):
+        return (dash.no_update,) * 6
+
+    cfg_contents = _file_to_data_uri(cfg_path)
+    config = lees_config(cfg_contents)
+
+    sel_contents = _file_to_data_uri(sel_path)
+    sel_df = parse_selectiedata(sel_contents, config)
+    scores_df = transformeer_naar_lang(sel_df, config)
+    cho_df = pd.read_csv(cho_path, sep=";")
+
+    joined = koppel_data(cho_df, scores_df)
+
+    opleiding = config.get("opleiding", dataset_name or "")
+    jaar = config.get("jaar", "")
+    n_kandidaten = len(joined)
+    label = f"{opleiding} {jaar}".strip()
+
+    return (
+        joined.to_json(orient="split", date_format="iso"),
+        scores_df.to_json(orient="split", date_format="iso"),
+        "Demodata geladen.",
+        "Demodata geladen.",
+        dbc.Alert(
+            f"Demodata: {label} ({n_kandidaten} kandidaten)",
+            color="info",
+            className="small py-1",
+        ),
+        "Demodata geladen.",
+    )
+
+
+# ── Sidebar callbacks ─────────────────────────────────────────────────────────
 
 
 @app.callback(
@@ -667,37 +922,77 @@ def update_niveau_opties(scores_store, huidig_niveau):
     Output("geslacht-dropdown", "value"),
     Output("vooropleiding-dropdown", "options"),
     Output("vooropleiding-dropdown", "value"),
-    Output("scatter-x", "options"),
-    Output("scatter-x", "value"),
-    Output("scatter-y", "options"),
-    Output("scatter-y", "value"),
+    Output("instrument-filter", "options"),
+    Output("instrument-filter", "value"),
+    Output("criterium-filter", "options"),
+    Output("criterium-filter", "value"),
     Output("vo-score", "options"),
     Output("vo-score", "value"),
     Output("app-subtitle", "children"),
     Input("data-store", "data"),
+    State("scores-store", "data"),
 )
-def update_filters_on_data_change(store_data):
+def update_filters_on_data_change(store_data, scores_store):
     df = df_from_store(store_data)
-    jaren = sorted(df["selectiejaar"].unique().tolist()) if "selectiejaar" in df.columns else []
+    if df.empty:
+        empty_opts = [{"label": "Alle", "value": "Alle"}]
+        return (
+            empty_opts, "Alle",  # cohort
+            empty_opts, "Alle",  # geslacht
+            empty_opts, "Alle",  # vooropleiding
+            empty_opts, "Alle",  # instrument
+            empty_opts, "Alle",  # criterium
+            [], "totaalscore",   # vo-score
+            "",                  # subtitle
+        )
+
+    jaren = (
+        sorted(df["selectiejaar"].unique().tolist())
+        if "selectiejaar" in df.columns
+        else []
+    )
     cohort_opties = [{"label": "Alle cohorten", "value": "Alle"}] + [
         {"label": str(j), "value": str(j)} for j in jaren
     ]
-    opleiding  = df["opleiding"].dropna().iloc[0]  if "opleiding"  in df.columns and df["opleiding"].notna().any()  else ""
-    instelling = df["instellingscode"].dropna().iloc[0] if "instellingscode" in df.columns and df["instellingscode"].notna().any() else ""
-    subtitle   = f"{opleiding} | {instelling}" if opleiding else ""
+    opleiding = (
+        df["opleiding"].dropna().iloc[0]
+        if "opleiding" in df.columns and df["opleiding"].notna().any()
+        else ""
+    )
+    instelling = (
+        df["instellingscode"].dropna().iloc[0]
+        if "instellingscode" in df.columns and df["instellingscode"].notna().any()
+        else ""
+    )
+    subtitle = f"{opleiding} | {instelling}" if opleiding else ""
 
-    score_opties = score_opties_uit_df(df)
-    default_x  = score_opties[0]["value"]  if score_opties else None
-    default_y  = score_opties[1]["value"]  if len(score_opties) > 1 else default_x
-    default_vo = score_opties[0]["value"]  if score_opties else None
+    instrument_opties = [{"label": "Alle instrumenten", "value": "Alle"}]
+    criterium_opties = [{"label": "Alle criteria", "value": "Alle"}]
+    vo_opties = [{"label": "Totaalscore", "value": "totaalscore"}]
+    if scores_store:
+        scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+        for inst in sorted(scores_df["instrument"].unique()):
+            instrument_opties.append({"label": inst, "value": inst})
+        criteria = scores_df["criterium"].dropna().unique()
+        criteria = [c for c in sorted(criteria) if c.strip()]
+        for crit in criteria:
+            criterium_opties.append({"label": crit, "value": crit})
+        for item in sorted(scores_df["item"].unique()):
+            vo_opties.append({"label": shorten_item(item), "value": item})
 
     return (
-        cohort_opties, "Alle",
-        maak_filter_opties(df, "geslacht") if "geslacht" in df.columns else [{"label": "Alle", "value": "Alle"}], "Alle",
-        maak_filter_opties(df, "hoogste_vooropleiding") if "hoogste_vooropleiding" in df.columns else [{"label": "Alle", "value": "Alle"}], "Alle",
-        score_opties, default_x,
-        score_opties, default_y,
-        score_opties, default_vo,
+        cohort_opties,
+        "Alle",
+        maak_filter_opties(df, "geslacht"),
+        "Alle",
+        maak_filter_opties(df, "hoogste_vooropleiding"),
+        "Alle",
+        instrument_opties,
+        "Alle",
+        criterium_opties,
+        "Alle",
+        vo_opties,
+        "totaalscore",
         subtitle,
     )
 
@@ -710,8 +1005,14 @@ def update_filters_on_data_change(store_data):
 )
 def update_cohort_stats(geslacht, vooropleiding, store_data):
     df = df_from_store(store_data)
+    if df.empty:
+        return ""
     df = filter_data(df, "Alle", geslacht, vooropleiding, incl_cohort=False)
-    jaren = sorted(df["selectiejaar"].unique().tolist()) if "selectiejaar" in df.columns else []
+    jaren = (
+        sorted(df["selectiejaar"].unique().tolist())
+        if "selectiejaar" in df.columns
+        else []
+    )
     aantallen = df.groupby("selectiejaar").size() if jaren else pd.Series(dtype=int)
     return dbc.Row(
         [
@@ -719,7 +1020,9 @@ def update_cohort_stats(geslacht, vooropleiding, store_data):
                 html.Div(
                     [
                         html.Div(str(jaar), className="stat-year"),
-                        html.Div(str(int(aantallen.get(jaar, 0))), className="stat-value"),
+                        html.Div(
+                            str(int(aantallen.get(jaar, 0))), className="stat-value"
+                        ),
                     ],
                     className="stat-box",
                 )
@@ -730,127 +1033,104 @@ def update_cohort_stats(geslacht, vooropleiding, store_data):
     )
 
 
-# ── Dashboard callbacks ────────────────────────────────────────────────────────
+# ── Dashboard callbacks ───────────────────────────────────────────────────────
+
+
+GROEP_TABEL_KLEUREN = {
+    "Niet gestart": {"backgroundColor": "#f1f5f9", "color": "#475569"},
+    "Gestart, niet naar jaar 2": {"backgroundColor": "#fff7ed", "color": "#9a3412"},
+    "Doorgestroomd naar jaar 2": {"backgroundColor": "#f0fdf4", "color": "#166534"},
+}
 
 
 @app.callback(
     Output("fig-totaal", "figure"),
     Output("tabel-gemiddelden", "data"),
     Output("tabel-gemiddelden", "columns"),
-    Output("tabel-mannwhitney", "data"),
-    Output("tabel-mannwhitney", "columns"),
+    Output("tabel-gemiddelden", "style_data_conditional"),
     Input("cohort-dropdown", "value"),
     Input("geslacht-dropdown", "value"),
     Input("vooropleiding-dropdown", "value"),
-    Input("scores-niveau", "value"),
+    Input("instrument-filter", "value"),
+    Input("criterium-filter", "value"),
     State("data-store", "data"),
     State("scores-store", "data"),
 )
-def update_scores_tab(cohort, geslacht, vooropleiding, niveau, store_data, scores_store):
-    df = filter_data(df_from_store(store_data), cohort, geslacht, vooropleiding)
+def update_scores_tab(
+    cohort,
+    geslacht,
+    vooropleiding,
+    instrument_filter,
+    criterium_filter,
+    store_data,
+    scores_store,
+):
     leeg = go.Figure().update_layout(**CHART_BASE, margin=dict(t=10, b=10))
+    df = df_from_store(store_data)
+    if df.empty or not scores_store:
+        return leeg, [], [], []
 
-    if niveau in ("item", "criterium") and scores_store is not None:
-        scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
-        if niveau == "item":
-            pivot = scores_df.groupby(["studentnummer", "instrument", "item"])["score"].mean().reset_index()
-            pivot["score_naam"] = pivot["instrument"] + " / " + pivot["item"]
-        else:
-            pivot = scores_df.groupby(["studentnummer", "instrument", "item", "criterium"])["score"].mean().reset_index()
-            pivot["score_naam"] = pivot["instrument"] + " / " + pivot["item"] + " / " + pivot["criterium"]
-
-        df_groep = df[["studentnummer", "groep"]].drop_duplicates()
-        pivot = pivot.merge(df_groep, on="studentnummer", how="inner")
-        pivot["groep"] = pd.Categorical(pivot["groep"], categories=GROEP_VOLGORDE, ordered=True)
-        namen = sorted(pivot["score_naam"].unique())
-
-        fig = px.violin(
-            pivot, x="score_naam", y="score", color="groep",
-            color_discrete_map=GROEP_KLEUREN,
-            category_orders={"groep": GROEP_VOLGORDE, "score_naam": namen},
-            box=True, points=False, height=560,
-            labels={"score_naam": "", "score": "Score (1-10)", "groep": ""},
-        )
-        fig.update_layout(
-            violingap=0.15, legend=dict(orientation="h", y=-0.2),
-            xaxis_tickangle=-25, **CHART_BASE, margin=dict(t=20, b=10),
-        )
-
-        tabel_pivot = (
-            pivot.groupby(["groep", "score_naam"], observed=True)["score"]
-            .agg(["mean", "std"]).round(2).reset_index()
-            .rename(columns={"score_naam": "Score", "mean": "Gem.", "std": "SD", "groep": "Groep"})
-        )
-        gem_data = tabel_pivot.to_dict("records")
-        gem_cols = [{"name": c, "id": c} for c in tabel_pivot.columns]
-
-        a_ids = df[df["groep"] == "Gestart, niet naar jaar 2"]["studentnummer"]
-        b_ids = df[df["groep"] == "Doorgestroomd naar jaar 2"]["studentnummer"]
-        mw_rijen = []
-        for naam in namen:
-            sub = pivot[pivot["score_naam"] == naam]
-            a = sub[sub["studentnummer"].isin(a_ids)]["score"].dropna()
-            b = sub[sub["studentnummer"].isin(b_ids)]["score"].dropna()
-            if len(a) >= 2 and len(b) >= 2:
-                _, p = stats.mannwhitneyu(a, b, alternative="two-sided")
-                mw_rijen.append({"Score": naam, "p-waarde": fmt_p(float(p)), "Sig.": sig_sym(float(p))})
-            else:
-                mw_rijen.append({"Score": naam, "p-waarde": "n.v.t.", "Sig.": ""})
-        mw_cols = [{"name": c, "id": c} for c in ["Score", "p-waarde", "Sig."]]
-        return fig, gem_data, gem_cols, mw_rijen, mw_cols
-
-    # Instrument niveau
-    score_cols = get_score_cols(df)
-    all_cols   = sorted(score_cols) + ["totaalscore"]
-    valid_cols = [c for c in all_cols if c in df.columns]
-
-    if not valid_cols:
-        return leeg, [], [], [], []
-
-    df_long = df[["studentnummer", "groep"] + valid_cols].melt(
-        id_vars=["studentnummer", "groep"],
-        value_vars=valid_cols,
-        var_name="col",
-        value_name="score",
+    scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+    df_groep = filter_data(df, cohort, geslacht, vooropleiding)[
+        ["studentnummer", "groep"]
+    ].drop_duplicates()
+    scores = scores_df.merge(df_groep, on="studentnummer", how="inner")
+    scores["groep"] = pd.Categorical(
+        scores["groep"], categories=GROEP_VOLGORDE, ordered=True
     )
-    df_long["score_naam"] = df_long["col"].apply(col_to_label)
-    naam_volgorde = [col_to_label(c) for c in valid_cols]
 
-    fig = px.violin(
-        df_long, x="score_naam", y="score", color="groep",
+    if instrument_filter and instrument_filter != "Alle":
+        scores = scores[scores["instrument"] == instrument_filter]
+    if criterium_filter and criterium_filter != "Alle":
+        scores = scores[scores["criterium"] == criterium_filter]
+
+    if scores.empty:
+        return leeg, [], [], []
+
+    scores["item_kort"] = scores["item"].apply(shorten_item)
+    items_kort = sorted(scores["item_kort"].unique())
+
+    fig = px.box(
+        scores,
+        x="item_kort",
+        y="score",
+        color="groep",
         color_discrete_map=GROEP_KLEUREN,
-        category_orders={"groep": GROEP_VOLGORDE, "score_naam": naam_volgorde},
-        box=True, points=False, height=520,
-        labels={"score_naam": "", "score": "Score (1-10)", "groep": ""},
+        category_orders={"groep": GROEP_VOLGORDE, "item_kort": items_kort},
+        points="all" if len(df_groep) <= 30 else False,
+        height=520,
+        labels={"item_kort": "", "score": "Score", "groep": ""},
     )
     fig.update_layout(
-        violingap=0.2, legend=dict(orientation="h", y=-0.15),
-        **CHART_BASE, margin=dict(t=20, b=10),
+        boxgap=0.15,
+        legend=dict(orientation="h", y=1.05, yanchor="bottom"),
+        xaxis_tickangle=-25,
+        **CHART_BASE,
+        margin=dict(t=60, b=10),
     )
 
-    tabel = df.groupby("groep", observed=True)[valid_cols].agg(["mean", "std"]).round(2)
-    tabel.columns = [
-        f"{col_to_label(var)} {'gem.' if stat == 'mean' else 'SD'}"
-        for var, stat in tabel.columns
-    ]
-    tabel = tabel.reset_index().rename(columns={"groep": "Groep"})
-    gem_data = tabel.to_dict("records")
-    gem_cols = [{"name": c, "id": c} for c in tabel.columns]
+    tabel_pivot = (
+        scores.groupby(["groep", "item_kort"], observed=True)["score"]
+        .agg(["mean", "std"])
+        .round(2)
+        .reset_index()
+        .rename(
+            columns={"item_kort": "Item", "mean": "Gem.", "std": "SD", "groep": "Groep"}
+        )
+    )
+    gem_data = tabel_pivot.to_dict("records")
+    gem_cols = [{"name": c, "id": c} for c in tabel_pivot.columns]
 
-    a_groep = df[df["groep"] == "Gestart, niet naar jaar 2"]
-    b_groep = df[df["groep"] == "Doorgestroomd naar jaar 2"]
-    mw_rijen = []
-    for col in valid_cols:
-        a = a_groep[col].dropna()
-        b = b_groep[col].dropna()
-        if len(a) >= 2 and len(b) >= 2:
-            _, p = stats.mannwhitneyu(a, b, alternative="two-sided")
-            mw_rijen.append({"Score": col_to_label(col), "p-waarde": fmt_p(float(p)), "Sig.": sig_sym(float(p))})
-        else:
-            mw_rijen.append({"Score": col_to_label(col), "p-waarde": "n.v.t.", "Sig.": ""})
-    mw_cols = [{"name": c, "id": c} for c in ["Score", "p-waarde", "Sig."]]
+    gem_style = []
+    for groep, stijl in GROEP_TABEL_KLEUREN.items():
+        gem_style.append(
+            {
+                "if": {"filter_query": f'{{Groep}} = "{groep}"'},
+                **stijl,
+            }
+        )
 
-    return fig, gem_data, gem_cols, mw_rijen, mw_cols
+    return fig, gem_data, gem_cols, gem_style
 
 
 @app.callback(
@@ -863,6 +1143,9 @@ def update_scores_tab(cohort, geslacht, vooropleiding, niveau, store_data, score
 )
 def update_verdeling_tab(cohort, geslacht, vooropleiding, store_data):
     df = df_from_store(store_data)
+    if df.empty:
+        return go.Figure().update_layout(**CHART_BASE), ""
+
     labels = [str(cohort) if cohort != "Alle" else "alle cohorten"]
     if geslacht != "Alle":
         labels.append(geslacht)
@@ -880,24 +1163,36 @@ def update_verdeling_tab(cohort, geslacht, vooropleiding, store_data):
     ).round(1)
 
     fig = px.bar(
-        agg, x="selectiejaar", y="pct", color="groep", barmode="stack",
+        agg,
+        x="selectiejaar",
+        y="pct",
+        color="groep",
+        barmode="stack",
         color_discrete_map=GROEP_KLEUREN,
         category_orders={"groep": GROEP_VOLGORDE},
         labels={"selectiejaar": "Cohort", "pct": "Percentage (%)", "groep": ""},
-        text="n", custom_data=["n"],
+        text="n",
+        custom_data=["n"],
     )
     fig.update_traces(
-        texttemplate="%{text}", textposition="inside",
+        texttemplate="%{text}",
+        textposition="inside",
         hovertemplate="%{fullData.name}<br>%{y:.1f}%  (n=%{customdata[0]})<extra></extra>",
     )
     for jaar, tot in agg.groupby("selectiejaar")["n"].sum().items():
         fig.add_annotation(
-            x=jaar, y=101, text=f"n={tot}",
-            showarrow=False, yshift=6, font=dict(size=12),
+            x=jaar,
+            y=101,
+            text=f"n={tot}",
+            showarrow=False,
+            yshift=6,
+            font=dict(size=12),
         )
     fig.update_layout(
-        height=500, legend=dict(orientation="h", y=-0.15),
-        yaxis_range=[0, 115], **CHART_BASE,
+        height=500,
+        legend=dict(orientation="h", y=-0.15),
+        yaxis_range=[0, 115],
+        **CHART_BASE,
     )
     return fig, f"Gefilterd op: {', '.join(labels)}"
 
@@ -906,7 +1201,6 @@ def update_verdeling_tab(cohort, geslacht, vooropleiding, store_data):
     Output("fig-geslacht", "figure"),
     Output("fig-herkomst", "figure"),
     Output("fig-vooropleiding", "figure"),
-    Output("fig-instroom", "figure"),
     Input("cohort-dropdown", "value"),
     Input("geslacht-dropdown", "value"),
     Input("vooropleiding-dropdown", "value"),
@@ -914,94 +1208,86 @@ def update_verdeling_tab(cohort, geslacht, vooropleiding, store_data):
 )
 def update_demo_tab(cohort, geslacht, vooropleiding, store_data):
     df = filter_data(df_from_store(store_data), cohort, geslacht, vooropleiding)
+    leeg = go.Figure().update_layout(**CHART_BASE, height=300)
+
+    if df.empty or "geslacht" not in df.columns:
+        return leeg, leeg, leeg
 
     agg_g = bereken_pct(
-        df.groupby(["groep", "geslacht"], observed=True).size().reset_index(name="n"), "groep",
+        df.groupby(["groep", "geslacht"], observed=True).size().reset_index(name="n"),
+        "groep",
     )
     fig3 = px.bar(
-        agg_g, x="groep", y="pct", color="geslacht", barmode="stack",
+        agg_g,
+        x="groep",
+        y="pct",
+        color="geslacht",
+        barmode="stack",
         labels={"groep": "", "pct": "%", "geslacht": "Geslacht"},
         title="Geslacht per groep (%)",
     )
     fig3.update_layout(height=460, legend=dict(orientation="h", y=-0.2), **CHART_BASE)
     fix_xas_labels(fig3)
 
-    agg_h = bereken_pct(
-        df[df["herkomst"].notna()]
-        .assign(herkomst_kort=lambda d: d["herkomst"].map(lambda x: "Nederland" if x == "Nederland" else "niet-Nederland"))
-        .groupby(["groep", "herkomst_kort"], observed=True).size().reset_index(name="n"),
-        "groep",
-    )
-    fig4 = px.bar(
-        agg_h, x="groep", y="pct", color="herkomst_kort", barmode="stack",
-        color_discrete_map={"Nederland": "#3b82f6", "niet-Nederland": "#a78bfa"},
-        labels={"groep": "", "pct": "%", "herkomst_kort": "Herkomst"},
-        title="Herkomst per groep (%)",
-    )
-    fig4.update_layout(height=460, legend=dict(orientation="h", y=-0.2), **CHART_BASE)
-    fix_xas_labels(fig4)
+    if "herkomst" in df.columns and df["herkomst"].notna().any():
+        agg_h = bereken_pct(
+            df[df["herkomst"].notna()]
+            .assign(
+                herkomst_kort=lambda d: d["herkomst"].map(
+                    lambda x: "Nederland" if x == "Nederland" else "niet-Nederland"
+                )
+            )
+            .groupby(["groep", "herkomst_kort"], observed=True)
+            .size()
+            .reset_index(name="n"),
+            "groep",
+        )
+        fig4 = px.bar(
+            agg_h,
+            x="groep",
+            y="pct",
+            color="herkomst_kort",
+            barmode="stack",
+            color_discrete_map={"Nederland": "#3b82f6", "niet-Nederland": "#a78bfa"},
+            labels={"groep": "", "pct": "%", "herkomst_kort": "Herkomst"},
+            title="Herkomst per groep (%)",
+        )
+        fig4.update_layout(
+            height=460, legend=dict(orientation="h", y=-0.2), **CHART_BASE
+        )
+        fix_xas_labels(fig4)
+    else:
+        fig4 = leeg
 
-    agg_v = bereken_pct(
-        df.groupby(["hoogste_vooropleiding", "groep"], observed=True).size().reset_index(name="n"), "groep",
-    )
-    fig5 = px.bar(
-        agg_v, y="hoogste_vooropleiding", x="pct", color="groep", barmode="group", orientation="h",
-        color_discrete_map=GROEP_KLEUREN,
-        category_orders={"groep": GROEP_VOLGORDE},
-        labels={"hoogste_vooropleiding": "", "pct": "%", "groep": ""},
-        title="Vooropleiding per groep (%)",
-    )
-    fig5.update_layout(height=420, legend=dict(orientation="h", y=-0.2), **CHART_BASE)
+    if (
+        "hoogste_vooropleiding" in df.columns
+        and df["hoogste_vooropleiding"].notna().any()
+    ):
+        agg_v = bereken_pct(
+            df.groupby(["hoogste_vooropleiding", "groep"], observed=True)
+            .size()
+            .reset_index(name="n"),
+            "groep",
+        )
+        fig5 = px.bar(
+            agg_v,
+            y="hoogste_vooropleiding",
+            x="pct",
+            color="groep",
+            barmode="group",
+            orientation="h",
+            color_discrete_map=GROEP_KLEUREN,
+            category_orders={"groep": GROEP_VOLGORDE},
+            labels={"hoogste_vooropleiding": "", "pct": "%", "groep": ""},
+            title="Vooropleiding per groep (%)",
+        )
+        fig5.update_layout(
+            height=420, legend=dict(orientation="h", y=-0.2), **CHART_BASE
+        )
+    else:
+        fig5 = leeg
 
-    agg_i = bereken_pct(
-        df[df["instroom_type"].notna()]
-        .groupby(["groep", "instroom_type"], observed=True).size().reset_index(name="n"),
-        "groep",
-    )
-    fig6 = px.bar(
-        agg_i, x="groep", y="pct", color="instroom_type", barmode="stack",
-        color_discrete_map={"direct": "#3b82f6", "tussenjaar": "#f59e0b", "switcher": "#8b5cf6"},
-        category_orders={"instroom_type": ["direct", "tussenjaar", "switcher"]},
-        labels={"groep": "", "pct": "%", "instroom_type": "Instroom"},
-        title="Instroomtype per groep (%): direct, tussenjaar, switcher",
-    )
-    fig6.update_layout(height=460, legend=dict(orientation="h", y=-0.2), **CHART_BASE)
-    fix_xas_labels(fig6)
-
-    return fig3, fig4, fig5, fig6
-
-
-@app.callback(
-    Output("fig-puntenwolk", "figure"),
-    Input("cohort-dropdown", "value"),
-    Input("geslacht-dropdown", "value"),
-    Input("vooropleiding-dropdown", "value"),
-    Input("scatter-x", "value"),
-    Input("scatter-y", "value"),
-    State("data-store", "data"),
-)
-def update_puntenwolk_tab(cohort, geslacht, vooropleiding, x_var, y_var, store_data):
-    df = filter_data(df_from_store(store_data), cohort, geslacht, vooropleiding)
-    score_cols = get_score_cols(df) + ["totaalscore"]
-    if x_var not in df.columns:
-        x_var = score_cols[0] if score_cols else None
-    if y_var not in df.columns:
-        y_var = score_cols[1] if len(score_cols) > 1 else score_cols[0] if score_cols else None
-    if x_var is None or y_var is None:
-        return go.Figure().update_layout(**CHART_BASE)
-
-    fig = px.scatter(
-        df[df["groep"].notna()],
-        x=x_var, y=y_var,
-        color="groep",
-        color_discrete_map=GROEP_KLEUREN,
-        category_orders={"groep": GROEP_VOLGORDE},
-        labels={x_var: col_to_label(x_var), y_var: col_to_label(y_var), "groep": ""},
-        opacity=0.55, height=560,
-    )
-    fig.update_traces(marker=dict(size=6))
-    fig.update_layout(legend=dict(orientation="h", y=-0.15), **CHART_BASE)
-    return fig
+    return fig3, fig4, fig5
 
 
 @app.callback(
@@ -1014,54 +1300,124 @@ def update_puntenwolk_tab(cohort, geslacht, vooropleiding, x_var, y_var, store_d
     Input("vooropleiding-dropdown", "value"),
     Input("vo-score", "value"),
     State("data-store", "data"),
+    State("scores-store", "data"),
 )
-def update_vo_tab(cohort, geslacht, vooropleiding, score_var, store_data):
-    df = filter_data(df_from_store(store_data), cohort, geslacht, vooropleiding)
-
-    if "gem_eindcijfer_vo" not in df.columns:
-        leeg = go.Figure().update_layout(**CHART_BASE)
+def update_vo_tab(
+    cohort, geslacht, vooropleiding, score_keuze, store_data, scores_store
+):
+    leeg = go.Figure().update_layout(**CHART_BASE)
+    df = df_from_store(store_data)
+    if df.empty or "gem_eindcijfer_vo" not in df.columns:
         return leeg, [], [], []
 
-    df_vo = df[df["gem_eindcijfer_vo"].notna()]
-    score_cols = get_score_cols(df) + ["totaalscore"]
-    if score_var not in df.columns:
-        score_var = score_cols[0] if score_cols else None
-    if score_var is None:
-        return go.Figure().update_layout(**CHART_BASE), [], [], []
+    scores_df = (
+        pd.read_json(io.StringIO(scores_store), orient="split")
+        if scores_store
+        else None
+    )
 
-    score_label = col_to_label(score_var)
+    df_filtered = filter_data(df, cohort, geslacht, vooropleiding)
+    df_vo = df_filtered[df_filtered["gem_eindcijfer_vo"].notna()].copy()
+    if df_vo.empty:
+        return leeg, [], [], []
+
+    if score_keuze == "totaalscore" and "totaalscore" in df_vo.columns:
+        plot_df = df_vo[
+            ["studentnummer", "groep", "gem_eindcijfer_vo", "totaalscore"]
+        ].copy()
+        plot_df["score_val"] = plot_df["totaalscore"]
+        score_label = "Totaalscore"
+    elif scores_df is not None:
+        item_scores = scores_df[scores_df["item"] == score_keuze][
+            ["studentnummer", "score"]
+        ]
+        plot_df = df_vo[["studentnummer", "groep", "gem_eindcijfer_vo"]].merge(
+            item_scores, on="studentnummer", how="inner"
+        )
+        plot_df["score_val"] = plot_df["score"]
+        score_label = shorten_item(score_keuze)
+    else:
+        return leeg, [], [], []
+
+    ingeschreven = plot_df[
+        plot_df["groep"].isin(
+            ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]
+        )
+    ]
+
     fig = px.scatter(
-        df_vo[df_vo["groep"].isin(["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"])],
-        x="gem_eindcijfer_vo", y=score_var,
+        ingeschreven,
+        x="gem_eindcijfer_vo",
+        y="score_val",
         color="groep",
         color_discrete_map=GROEP_KLEUREN,
         category_orders={"groep": GROEP_VOLGORDE},
-        labels={"gem_eindcijfer_vo": "VO-eindcijfer", score_var: score_label, "groep": ""},
-        opacity=0.55, height=500,
+        labels={
+            "gem_eindcijfer_vo": "VO-eindcijfer",
+            "score_val": score_label,
+            "groep": "",
+        },
+        opacity=0.55,
+        height=500,
     )
     fig.update_traces(marker=dict(size=6))
     for groep in ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]:
-        sub = df_vo[df_vo["groep"] == groep][["gem_eindcijfer_vo", score_var]].dropna()
+        sub = ingeschreven[ingeschreven["groep"] == groep][
+            ["gem_eindcijfer_vo", "score_val"]
+        ].dropna()
         if len(sub) >= 2:
-            m, b = np.polyfit(sub["gem_eindcijfer_vo"], sub[score_var], 1)
-            x_line = np.linspace(sub["gem_eindcijfer_vo"].min(), sub["gem_eindcijfer_vo"].max(), 50)
-            fig.add_trace(go.Scatter(
-                x=x_line, y=m * x_line + b, mode="lines",
-                line=dict(color=GROEP_KLEUREN[groep], width=2, dash="dot"),
-                showlegend=False, hoverinfo="skip",
-            ))
-    fig.update_layout(legend=dict(orientation="h", y=-0.15), **CHART_BASE)
+            m, b = np.polyfit(sub["gem_eindcijfer_vo"], sub["score_val"], 1)
+            x_line = np.linspace(
+                sub["gem_eindcijfer_vo"].min(), sub["gem_eindcijfer_vo"].max(), 50
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=x_line,
+                    y=m * x_line + b,
+                    mode="lines",
+                    line=dict(color=GROEP_KLEUREN[groep], width=2, dash="dot"),
+                    showlegend=False,
+                    hoverinfo="skip",
+                )
+            )
+    fig.update_layout(
+        legend=dict(orientation="h", y=1.05, yanchor="bottom"), **CHART_BASE
+    )
 
     cor_rijen = []
-    for col in sorted(get_score_cols(df)) + ["totaalscore"]:
-        if col not in df.columns:
-            continue
-        subset = df_vo[df_vo[col].notna()]
-        if len(subset) >= 2:
-            r = float(subset["gem_eindcijfer_vo"].corr(subset[col]))
-            cor_rijen.append({"Score": col_to_label(col), "r (Pearson)": round(r, 3) if not np.isnan(r) else None})
-        else:
-            cor_rijen.append({"Score": col_to_label(col), "r (Pearson)": None})
+    if scores_df is not None:
+        all_items = sorted(scores_df["item"].unique())
+        score_names = [("Totaalscore", "totaalscore")] + [
+            (shorten_item(it), it) for it in all_items
+        ]
+        for label, item_name in score_names:
+            if item_name == "totaalscore" and "totaalscore" in df_vo.columns:
+                sub = df_vo[["gem_eindcijfer_vo", "totaalscore"]].dropna()
+                r = (
+                    float(sub["gem_eindcijfer_vo"].corr(sub["totaalscore"]))
+                    if len(sub) >= 2
+                    else None
+                )
+            else:
+                item_scores = scores_df[scores_df["item"] == item_name][
+                    ["studentnummer", "score"]
+                ]
+                merged = df_vo[["studentnummer", "gem_eindcijfer_vo"]].merge(
+                    item_scores, on="studentnummer"
+                )
+                r = (
+                    float(merged["gem_eindcijfer_vo"].corr(merged["score"]))
+                    if len(merged) >= 2
+                    else None
+                )
+            cor_rijen.append(
+                {
+                    "Item": label,
+                    "r (Pearson)": round(r, 3)
+                    if r is not None and not np.isnan(r)
+                    else None,
+                }
+            )
 
     style_cond = []
     for i, row in enumerate(cor_rijen):
@@ -1076,10 +1432,174 @@ def update_vo_tab(cohort, geslacht, vooropleiding, score_var, store_data):
             bg, fg = "#fef08a", "#713f12"
         else:
             bg, fg = "#fecaca", "#7f1d1d"
-        style_cond.append({"if": {"row_index": i, "column_id": "r (Pearson)"}, "backgroundColor": bg, "color": fg})
+        style_cond.append(
+            {
+                "if": {"row_index": i, "column_id": "r (Pearson)"},
+                "backgroundColor": bg,
+                "color": fg,
+            }
+        )
 
-    pearson_cols = [{"name": c, "id": c} for c in ["Score", "r (Pearson)"]]
+    pearson_cols = [{"name": c, "id": c} for c in ["Item", "r (Pearson)"]]
     return fig, cor_rijen, pearson_cols, style_cond
+
+
+@app.callback(
+    Output("fig-correlatie", "figure"),
+    Output("regressie-samenvatting", "children"),
+    Output("tabel-regressie", "data"),
+    Output("tabel-regressie", "columns"),
+    Output("tabel-regressie", "style_data_conditional"),
+    Input("cohort-dropdown", "value"),
+    Input("geslacht-dropdown", "value"),
+    Input("vooropleiding-dropdown", "value"),
+    State("data-store", "data"),
+    State("scores-store", "data"),
+)
+def update_samenhang_tab(cohort, geslacht, vooropleiding, store_data, scores_store):
+    leeg = go.Figure().update_layout(**CHART_BASE)
+    df = df_from_store(store_data)
+    if df.empty or not scores_store:
+        return leeg, "", [], [], []
+
+    scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+    df_filtered = filter_data(df, cohort, geslacht, vooropleiding)
+    student_ids = df_filtered["studentnummer"].unique()
+
+    scores = scores_df[scores_df["studentnummer"].isin(student_ids)]
+    if scores.empty:
+        return leeg, "", [], [], []
+
+    item_pivot = scores.pivot_table(
+        index="studentnummer", columns="item", values="score", aggfunc="mean"
+    )
+    item_pivot.columns = [shorten_item(c) for c in item_pivot.columns]
+    score_cols = list(item_pivot.columns)
+    corr_matrix = item_pivot[score_cols].corr().round(3)
+
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=corr_matrix.values,
+            x=corr_matrix.columns,
+            y=corr_matrix.index,
+            colorscale="RdBu_r",
+            zmid=0,
+            zmin=-1,
+            zmax=1,
+            text=corr_matrix.values.round(2),
+            texttemplate="%{text}",
+            textfont={"size": 10},
+        )
+    )
+    fig.update_layout(
+        height=500,
+        xaxis_tickangle=-30,
+        **CHART_BASE,
+        margin=dict(t=20, b=10),
+    )
+
+    regressie_msg = ""
+    reg_data = []
+    reg_cols = []
+    reg_style = []
+
+    ingeschreven = df_filtered[
+        df_filtered["groep"].isin(
+            ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]
+        )
+    ].copy()
+
+    if len(ingeschreven) < 10:
+        regressie_msg = dbc.Alert(
+            f"Te weinig ingeschreven studenten ({len(ingeschreven)}) voor betrouwbare regressie. "
+            "Minimaal 10 nodig.",
+            color="warning",
+            className="small",
+        )
+        return fig, regressie_msg, reg_data, reg_cols, reg_style
+
+    ingeschreven["doorgestroomd"] = (
+        ingeschreven["groep"] == "Doorgestroomd naar jaar 2"
+    ).astype(int)
+
+    item_pivot_inschr = item_pivot.loc[
+        item_pivot.index.isin(ingeschreven["studentnummer"])
+    ].dropna()
+
+    if len(item_pivot_inschr) < 10:
+        regressie_msg = dbc.Alert(
+            "Te weinig complete cases voor regressie.",
+            color="warning",
+            className="small",
+        )
+        return fig, regressie_msg, reg_data, reg_cols, reg_style
+
+    y = ingeschreven.set_index("studentnummer").loc[
+        item_pivot_inschr.index, "doorgestroomd"
+    ]
+    X = item_pivot_inschr[score_cols]
+
+    try:
+        import statsmodels.api as sm
+
+        X_const = sm.add_constant(X.astype(float))
+        model = sm.Logit(y.astype(float), X_const).fit(disp=0, maxiter=100)
+
+        n_doorgestroomd = int(y.sum())
+        n_niet = int(len(y) - y.sum())
+        pseudo_r2 = round(float(model.prsquared), 3)
+        regressie_msg = html.Div(
+            [
+                html.Span(
+                    f"n = {len(y)} (doorgestroomd: {n_doorgestroomd}, niet: {n_niet})",
+                    className="small text-muted me-3",
+                ),
+                html.Span(f"Pseudo R² = {pseudo_r2}", className="small fw-bold"),
+            ]
+        )
+
+        for item_naam in score_cols:
+            if item_naam not in model.params.index:
+                continue
+            coef = round(float(model.params[item_naam]), 3)
+            odds = round(float(np.exp(model.params[item_naam])), 2)
+            p = float(model.pvalues[item_naam])
+            reg_data.append(
+                {
+                    "Item": item_naam,
+                    "Coefficient": coef,
+                    "Odds ratio": odds,
+                    "p-waarde": fmt_p(p),
+                    "Sig.": sig_sym(p),
+                }
+            )
+
+        reg_cols = [
+            {"name": c, "id": c}
+            for c in ["Item", "Coefficient", "Odds ratio", "p-waarde", "Sig."]
+        ]
+
+        for i, row in enumerate(reg_data):
+            p_str = row["p-waarde"]
+            p_val = 0.0001 if p_str == "< 0.001" else float(p_str)
+            if p_val < 0.05:
+                reg_style.append(
+                    {
+                        "if": {"row_index": i, "column_id": "Sig."},
+                        "backgroundColor": "#bbf7d0",
+                        "color": "#166534",
+                        "fontWeight": "600",
+                    }
+                )
+
+    except Exception as e:
+        regressie_msg = dbc.Alert(
+            f"Regressie kon niet worden uitgevoerd: {e}",
+            color="warning",
+            className="small",
+        )
+
+    return fig, regressie_msg, reg_data, reg_cols, reg_style
 
 
 if __name__ == "__main__":

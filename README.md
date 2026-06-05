@@ -1,37 +1,16 @@
 # evaluatietool-voorbeeld
 
-Proof-of-concept voor een evaluatietool die selectiedata van opleidingen koppelt
-aan 1CHO-data om studiesucces in kaart te brengen.
+Evaluatietool die selectiedata van opleidingen koppelt aan 1CHO-data om
+studiesucces in kaart te brengen. Werkt met elk selectiebestand, zolang er
+een configuratiebestand bij zit dat beschrijft welke kolommen meegenomen
+moeten worden.
 
-## Drie groepen
+Getest met vier bestanden van twee opleidingen:
+- Farmacie LUMC 2025 (master, 60 kolommen, gesprekken + diploma)
+- Farmacie LUMC 2026 (master, 97 kolommen, digitale toetsen)
+- Psychologie Leiden 2022-2023 (bachelor, 9 kolommen, geaggregeerde scores)
+- Psychologie Leiden 2026-2027 (bachelor, 46 kolommen, vakscores + matching)
 
-**Niet gestart** — Student is niet geselecteerd, of is geselecteerd maar staat
-niet in 1CHO (aanmelding ingetrokken, studie nooit gestart).
-
-**Gestart, niet naar jaar 2** — Student staat in 1CHO voor jaar 1 maar heeft
-geen jaar-2 rij voor dezelfde opleiding en instelling. Geen tweede jaar = uitval
-of overstap na het eerste jaar.
-
-**Doorgestroomd naar jaar 2** — Student heeft zowel een jaar-1 als een jaar-2 rij
-in 1CHO.
-
-## Projectstructuur
-
-```
-evaluatietool-voorbeeld/
-├── app.py                          # Dash dashboard
-├── assets/                         # Statische bestanden (CSS, logo)
-├── pyproject.toml                  # Python dependencies (uv)
-├── uv.lock
-├── scripts/
-│   └── maak_data.py                # Genereert synthetische data (dev/demo)
-└── data/
-    └── synthetic/
-        ├── selectiedata_voorbeeld.csv         # Synthetische selectiedata (breed: een rij per kandidaat)
-        ├── selectiescores_voorbeeld.csv       # Scores per instrument, item en criterium (lang formaat)
-        ├── EV_DEMO_selectieopleiding.csv      # Synthetische 1CHO-data (raw EV formaat)
-        └── analysedata.csv                    # Startpunt voor het dashboard (selectie + 1CHO gekoppeld)
-```
 
 ## Gebruik
 
@@ -40,73 +19,102 @@ uv sync
 uv run python app.py
 ```
 
-De app draait standaard op http://localhost:8050.
+De app draait op http://localhost:8050 en toont een uploadscherm. Upload drie
+bestanden: het selectiebestand, het configuratiebestand en de 1CHO-data. Of
+kies een van de demobestanden om het dashboard te verkennen.
 
-## Data
 
-### Selectiedata
+## Drie groepen
 
-Een opleiding levert selectiedata aan op instrument-, item- en criterium-niveau.
-Dat is het verwachte invoerformaat: een rij per kandidaat per instrument per item
-per criterium.
+**Niet gestart** -- Kandidaat staat niet in 1CHO. Niet toegelaten, of wel
+geselecteerd maar nooit gestart.
 
-**`selectiescores_voorbeeld.csv`** is het verwachte invoerformaat:
+**Gestart, niet naar jaar 2** -- Student staat in 1CHO voor jaar 1 maar heeft
+geen jaar-2 rij. Uitval of overstap na het eerste jaar.
 
-| Kolom | Type | Beschrijving |
+**Doorgestroomd naar jaar 2** -- Student heeft zowel een jaar-1 als een jaar-2
+rij in 1CHO.
+
+
+## Dashboard
+
+Vier tabbladen:
+
+1. **Selectiescores** -- Boxplots per item met de drie groepen, filters op
+   instrument/criterium/cohort/geslacht/vooropleiding, tabel met gemiddelden
+   en SD per groep.
+
+2. **Samenhang** -- Correlatiematrix tussen items (heatmap), logistische
+   regressie met doorstroom als uitkomst (coefficient, odds ratio, p-waarde,
+   pseudo R-kwadraat).
+
+3. **Demografisch** -- Verdeling per cohort (gestapeld staafdiagram), geslacht,
+   herkomst en vooropleiding per groep. Data uit 1CHO.
+
+4. **VO-cijfer** -- Scatterplot en Pearson r per item vs. het gemiddelde
+   VO-eindcijfer. Lage correlatie = het item meet iets anders dan
+   schoolprestaties.
+
+
+## Configuratiebestand
+
+Per selectiebestand maakt een analist een configuratiebestand (Excel) met twee
+tabbladen:
+
+**Instellingen**: welke kolom is het studentnummer, op welke rij staan de
+kolomnamen, welke kolom is de totaalscore.
+
+**Kolommen**: per kolom die meegenomen moet worden een rij met de originele
+kolomnaam, een instrumentnaam, een itemnaam, een criterium (optioneel), en
+een score-type.
+
+Er is een leeg templatebestand (`config_template.xlsx`) met toelichtingen in
+elke cel. De bestaande configs staan in de root:
+
+| Config | Opleiding | Kolommen in config |
 |---|---|---|
-| `kandidaat_id` | integer | Unieke identifier per kandidaat |
-| `persoonsgebonden_nummer` | float | Koppelsleutel naar 1CHO (leeg als niet geselecteerd) |
-| `selectiejaar` | integer | Jaar van de selectieprocedure |
-| `opleiding` | tekst | Naam van de opleiding |
-| `instellingscode` | tekst | Instelling-identifier |
-| `instrument` | tekst | Naam van het selectie-instrument (bijv. interview) |
-| `item` | tekst | Onderdeel binnen het instrument (bijv. vraag_1) |
-| `criterium` | tekst | Beoordelingscriterium voor dit item (bijv. inhoud) |
-| `score` | float | Score op dit criterium (schaal 1-10) |
-| `selectie_uitkomst` | tekst | geselecteerd / reserve / niet geselecteerd |
+| `config_FAR_Leiden_2025.xlsx` | Farmacie LUMC 2025 | 11 van 60 |
+| `config_FAR_Leiden_2026.xlsx` | Farmacie LUMC 2026 | 12 van 97 |
+| `config_Psychologie_2022_2023.xlsx` | Psychologie 2022-2023 | 6 van 9 |
+| `config_Psychologie_2026_2027.xlsx` | Psychologie 2026-2027 | 19 van 46 |
 
-Voorbeeld:
+
+## Een nieuwe opleiding toevoegen
+
+1. Open `config_template.xlsx` en vul de twee tabbladen in voor het nieuwe
+   selectiebestand.
+2. Maak 1CHO-data aan met kolommen: `studentnummer`, `selectiejaar`, `groep`
+   (en optioneel `geslacht`, `herkomst`, `hoogste_vooropleiding`,
+   `gem_eindcijfer_vo`).
+3. Upload de drie bestanden in het dashboard.
+
+
+## Projectstructuur
 
 ```
-kandidaat_id;persoonsgebonden_nummer;selectiejaar;opleiding;instellingscode;instrument;item;criterium;score;selectie_uitkomst
-10001;10001.0;2021;B Gezondheidswetenschappen;DEMO;interview;vraag_1;inhoud;7.2;geselecteerd
-10001;10001.0;2021;B Gezondheidswetenschappen;DEMO;interview;vraag_1;presentatie;6.8;geselecteerd
-10001;10001.0;2021;B Gezondheidswetenschappen;DEMO;motivatiebrief;motivatie;kwaliteit;7.0;geselecteerd
-10002;;2021;B Gezondheidswetenschappen;DEMO;interview;vraag_1;inhoud;4.9;niet geselecteerd
+evaluatietool-voorbeeld/
+  app.py                          Dash dashboard
+  transformatie.py                Config inlezen, valideren, breed->lang omzetten
+  assets/                         Statische bestanden (CSS, logo)
+  config_template.xlsx            Leeg configuratiebestand met uitleg
+  config_*.xlsx                   Configuratiebestanden per opleiding
+  data/
+    demo/                         Demodata per opleiding (selectiedata + config + 1cho)
+    real/                         Echte selectiebestanden (niet in git)
+  scripts/
+    maak_data.py                  Genereert demodata voor alle opleidingen
+    maak_presentatie.py           Genereert de presentatie (pptx)
+    maak_template.py              Genereert config_template.xlsx
+    update_configs.py             Genereert config-bestanden per opleiding
 ```
 
-De instrumenten in de synthetische data:
 
-| Instrument | Items | Criteria per item |
-|---|---|---|
-| interview | vraag_1, vraag_2, vraag_3 | inhoud, presentatie |
-| motivatiebrief | motivatie, aansluiting | kwaliteit |
-| cv | opleiding, ervaring | relevantie |
+## Demodata genereren
 
-**`selectiedata_voorbeeld.csv`** is een intern afgeleid bestand met geaggregeerde
-scores per instrument (gemiddelde over items en criteria) en wordt gebruikt in de
-koppelstap. Gebruikers hoeven dit bestand niet zelf aan te leveren.
+```bash
+uv run python scripts/maak_data.py
+```
 
-### 1CHO-data
-
-`EV_DEMO_selectieopleiding.csv` volgt het raw EV_* formaat van 1cijferho, inclusief
-numerieke codes:
-
-| Kolom | Codering |
-|---|---|
-| `geslacht` | V / M / O |
-| `opleidingsvorm` | 1 = voltijd, 2 = deeltijd |
-| `opleidingsfase` | B = bachelor, M = master |
-| `hoogste_vooropleiding` | numeriek (zie Dec_vooropl.csv van 1cijferho) |
-| `herkomst_indikking_volgens_cbs_definitie` | 1 = NL, 2 = westers, 3–7 = niet-westers |
-| `indicatie_actief_op_peildatum` | 1 = actief op 1 oktober |
-| `soort_inschrijving_continu_type_ho_binnen_ho` | 1 = eerstejaars, 2 = hogerejaars |
-
-De koppelsleutel is `persoonsgebonden_nummer`. In de praktijk moet koppeling via
-een beveiligd proces verlopen.
-
-### Echte data gebruiken
-
-Vervang de bestanden in `data/synthetic/` door echte data en pas het koppelproces
-aan. De 1CHO-data (`EV_*.csv`) komt rechtstreeks uit de output van 1cijferho.
-Zorg dat `analysedata.csv` dezelfde kolomstructuur heeft als de synthetische versie.
+Dit kopieert selectiedata en configs naar `data/demo/` subdirectories en
+genereert synthetische 1CHO-data voor elke opleiding. De demodata is
+beschikbaar in het uploadscherm.
