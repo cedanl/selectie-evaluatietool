@@ -234,14 +234,15 @@ def bouw_config_dict(
     koppel_id_kolom: str,
     totaalscore_kolom: str,
     opleiding: str,
+    instellingscode: str,
     jaar: str,
     kolommen: list[dict],
 ) -> dict:
     return {
         "koppel_id_kolom": str(koppel_id_kolom).strip(),
         "opleiding": str(opleiding).strip(),
+        "instellingscode": str(instellingscode).strip(),
         "jaar": str(jaar).strip(),
-        "instellingscode": "",
         "blad_naam": str(blad_naam).strip(),
         "header_rij": str(int(header_rij)),
         "totaalscore_kolom": str(totaalscore_kolom).strip(),
@@ -257,6 +258,7 @@ def exporteer_config_excel(config: dict) -> bytes:
     inst_rijen = [
         ("koppel_id_kolom", config.get("koppel_id_kolom", "")),
         ("opleiding", config.get("opleiding", "")),
+        ("instellingscode", config.get("instellingscode", "")),
         ("jaar", config.get("jaar", "")),
         ("blad_naam", config.get("blad_naam", "")),
         ("header_rij", config.get("header_rij", "1")),
@@ -335,6 +337,44 @@ def maak_wizard_layout() -> html.Div:
                                             ),
                                         ],
                                         width=4,
+                                    ),
+                                ],
+                                className="mb-2",
+                            ),
+                            # Opleiding en jaar
+                            dbc.Row(
+                                [
+                                    dbc.Col(
+                                        [
+                                            dbc.Label("Opleiding", className="small"),
+                                            dbc.Input(
+                                                id="wiz-opleiding",
+                                                placeholder="bijv. Farmacie",
+                                                size="sm",
+                                            ),
+                                        ]
+                                    ),
+                                    dbc.Col(
+                                        [
+                                            dbc.Label("Instelling", className="small"),
+                                            dbc.Input(
+                                                id="wiz-instelling",
+                                                placeholder="bijv. LUMC",
+                                                size="sm",
+                                            ),
+                                        ]
+                                    ),
+                                    dbc.Col(
+                                        [
+                                            dbc.Label("Selectiejaar", className="small"),
+                                            dbc.Input(
+                                                id="wiz-jaar",
+                                                placeholder="bijv. 2026",
+                                                size="sm",
+                                                type="number",
+                                            ),
+                                        ],
+                                        width=3,
                                     ),
                                 ],
                                 className="mb-2",
@@ -580,12 +620,13 @@ def registreer_callbacks(app: dash.Dash) -> None:
         State("wiz-header-rij", "value"),
         State("wiz-id-kolom", "value"),
         State("wiz-totaalscore", "value"),
-        State("input-opleiding", "value"),
-        State("input-selectiejaar", "value"),
+        State("wiz-opleiding", "value"),
+        State("wiz-instelling", "value"),
+        State("wiz-jaar", "value"),
         prevent_initial_call=True,
     )
     def bevestig_config(
-        n, tabel_data, blad, header_rij, id_kol, totaal_kol, opleiding, jaar
+        n, tabel_data, blad, header_rij, id_kol, totaal_kol, opleiding, instelling, jaar
     ):
         if not n or not tabel_data:
             return dash.no_update, dash.no_update, {"display": "none"}
@@ -614,6 +655,7 @@ def registreer_callbacks(app: dash.Dash) -> None:
             koppel_id_kolom=id_kol,
             totaalscore_kolom=totaal_kol or "",
             opleiding=opleiding or "",
+            instellingscode=instelling or "",
             jaar=str(jaar) if jaar else "",
             kolommen=tabel_data,
         )
