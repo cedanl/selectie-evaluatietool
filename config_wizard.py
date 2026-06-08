@@ -323,9 +323,19 @@ def maak_wizard_layout() -> html.Div:
                     dbc.CardBody(
                         [
                             html.P(
-                                "Detecteert automatisch welke kolommen scorekolommen zijn. "
-                                "Controleer het resultaat en pas aan waar nodig.",
-                                className="small text-muted mb-3",
+                                "Het dashboard heeft een korte configuratie nodig: welke "
+                                "kolommen in je selectiebestand scores zijn, en welke kolom "
+                                "de student identificeert om aan de 1CHO-data te koppelen. "
+                                "Normaal leg je dat vast in een apart Excel-bestand; deze "
+                                "wizard genereert het voor je.",
+                                className="wiz-uitleg mb-2",
+                            ),
+                            html.P(
+                                "De wizard leest je selectiebestand en raadt de instellingen. "
+                                "Loop de velden hieronder na, pas aan waar nodig, en klik op "
+                                "'Bevestig config'. Daarna upload je de 1CHO-data om het "
+                                "dashboard te openen.",
+                                className="wiz-uitleg mb-3",
                             ),
                             # Blad en headerrij
                             dbc.Row(
@@ -408,7 +418,11 @@ def maak_wizard_layout() -> html.Div:
                                                 id="wiz-id-kolom",
                                                 placeholder="Wordt automatisch gedetecteerd",
                                                 clearable=False,
-                                                className="mb-2",
+                                            ),
+                                            dbc.FormText(
+                                                "De kolom die een student herkent (bijv. "
+                                                "studentnummer). Hiermee koppelen we de "
+                                                "scores aan de 1CHO-data."
                                             ),
                                         ]
                                     ),
@@ -421,7 +435,10 @@ def maak_wizard_layout() -> html.Div:
                                                 id="wiz-totaalscore",
                                                 placeholder="Wordt automatisch gedetecteerd",
                                                 clearable=True,
-                                                className="mb-2",
+                                            ),
+                                            dbc.FormText(
+                                                "Optioneel: de kolom met de eindscore, "
+                                                "als die in je bestand staat."
                                             ),
                                         ]
                                     ),
@@ -433,6 +450,14 @@ def maak_wizard_layout() -> html.Div:
                                 id="wiz-tabel-container",
                                 children=[
                                     dbc.Label("Scorekolommen", className="small"),
+                                    html.P(
+                                        "Elke rij is een kolom die de wizard als score "
+                                        "herkent. Instrument is het meetinstrument (bijv. een "
+                                        "test of beoordeling), Item is wat het meet, en "
+                                        "Criterium is een optionele groepering. Pas de teksten "
+                                        "aan of verwijder rijen die geen selectiescore zijn.",
+                                        className="wiz-uitleg mb-2",
+                                    ),
                                     html.P(
                                         "Upload selectiedata om kolommen te detecteren.",
                                         id="wiz-tabel-placeholder",

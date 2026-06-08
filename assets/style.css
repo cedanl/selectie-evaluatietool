@@ -148,3 +148,17 @@ body {
 .main-wrapper .text-muted {
     color: #475569 !important;
 }
+
+/* Config wizard zit in de upload-overlay (buiten .main-wrapper); de uitleg en
+   veldhints daar apart leesbaar maken. */
+.wiz-uitleg {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #475569;
+}
+
+.upload-card .form-text {
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: #64748b;
+}
