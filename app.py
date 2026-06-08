@@ -36,8 +36,13 @@ from shared import (
     GROEP_SUCCES,
     CHART_BASE,
     shorten_item,
+    schaal_grenzen,
+    bucket_per_item,
+    grenzen_van_label,
     sig_sym,
     fmt_p,
+    vergelijk_succes_per_item,
+    VERGELIJKING_KOLOMMEN,
 )
 
 DEMO_DIR = Path("data/demo")
@@ -382,8 +387,8 @@ app.layout = html.Div(
                                                     "Selectiescores per uitkomstgroep"
                                                 ),
                                                 html.P(
-                                                    "Hier vergelijken we de selectiescores van drie groepen studenten. "
-                                                    "Als studenten die doorstromen naar jaar 2 hoger scoren dan studenten die "
+                                                    "Hier vergelijken we de selectiescores van de uitkomstgroepen. "
+                                                    "Als studenten die doorstromen naar jaar 2 of hun diploma halen hoger scoren dan studenten die "
                                                     "uitvallen, dan werkt het selectie-instrument: het selecteert de juiste mensen. "
                                                     "Als de groepen ongeveer gelijk scoren, voorspelt dat item niet goed wie het gaat redden.",
                                                     className="text-muted small",
@@ -408,7 +413,7 @@ app.layout = html.Div(
                                                                     clearable=False,
                                                                 ),
                                                             ],
-                                                            width=4,
+                                                            width=3,
                                                         ),
                                                         dbc.Col(
                                                             [
@@ -428,7 +433,7 @@ app.layout = html.Div(
                                                                     clearable=False,
                                                                 ),
                                                             ],
-                                                            width=4,
+                                                            width=3,
                                                         ),
                                                         dbc.Col(
                                                             [
@@ -448,7 +453,27 @@ app.layout = html.Div(
                                                                     clearable=False,
                                                                 ),
                                                             ],
-                                                            width=4,
+                                                            width=3,
+                                                        ),
+                                                        dbc.Col(
+                                                            [
+                                                                dbc.Label(
+                                                                    "Schaal/Bereik",
+                                                                    className="small",
+                                                                ),
+                                                                dcc.Dropdown(
+                                                                    id="bereik-filter",
+                                                                    options=[
+                                                                        {
+                                                                            "label": "Alle schalen",
+                                                                            "value": "Alle",
+                                                                        }
+                                                                    ],
+                                                                    value="Alle",
+                                                                    clearable=False,
+                                                                ),
+                                                            ],
+                                                            width=3,
                                                         ),
                                                     ],
                                                     className="mb-3",
@@ -462,6 +487,102 @@ app.layout = html.Div(
                                                 dash_table.DataTable(
                                                     id="tabel-gemiddelden",
                                                     style_table={"overflowX": "auto"},
+                                                    **TABLE_STYLE,
+                                                ),
+                                                html.Hr(),
+                                                html.H6(
+                                                    "Verschiltoets: scoren succesvolle studenten hoger?"
+                                                ),
+                                                html.P(
+                                                    "Deze tabel vergelijkt per item twee groepen studenten die met de "
+                                                    "opleiding zijn begonnen, en toetst of de succesgroep bij de selectie "
+                                                    "hoger scoorde:",
+                                                    className="text-muted small mb-1",
+                                                ),
+                                                html.Ul(
+                                                    [
+                                                        html.Li(
+                                                            [
+                                                                html.B("Succes: "),
+                                                                "studenten die doorstroomden naar jaar 2 of hun diploma haalden "
+                                                                "(de groepen 'Doorgestroomd naar jaar 2' en 'Gestart, diploma gehaald').",
+                                                            ]
+                                                        ),
+                                                        html.Li(
+                                                            [
+                                                                html.B("Geen succes: "),
+                                                                "studenten die wel begonnen maar uitvielen, zonder jaar 2 en zonder "
+                                                                "diploma (de groep 'Gestart, niet naar jaar 2').",
+                                                            ]
+                                                        ),
+                                                    ],
+                                                    className="text-muted small mb-1",
+                                                ),
+                                                html.P(
+                                                    "Studenten die nooit met de opleiding zijn gestart ('Niet gestart') blijven "
+                                                    "buiten deze toets: voor hen is er geen studieresultaat om mee te vergelijken. "
+                                                    "Een positieve effectgrootte betekent dat de succesgroep hoger scoorde: hoe "
+                                                    "groter, hoe sterker dat item onderscheid maakt tussen wie het wel en niet redt.",
+                                                    className="text-muted small",
+                                                ),
+                                                html.Details(
+                                                    [
+                                                        html.Summary(
+                                                            "Uitleg verschiltoets",
+                                                            className="small text-muted",
+                                                            style={"cursor": "pointer"},
+                                                        ),
+                                                        html.Div(
+                                                            [
+                                                                html.Ul(
+                                                                    [
+                                                                        html.Li(
+                                                                            "Toets: Mann-Whitney U, die past bij de ordinale en vaak scheve "
+                                                                            "schalen van selectie-items. Hij vergelijkt de bovenstaande "
+                                                                            "succesgroep met de uitvallers."
+                                                                        ),
+                                                                        html.Li(
+                                                                            "Effect (r): de rank-biseriale correlatie, van -1 tot +1. Positief = "
+                                                                            "de succesgroep scoort hoger. Vuistregels (Cohen 1988): < 0.10 "
+                                                                            "verwaarloosbaar, 0.10-0.30 zwak, 0.30-0.50 matig, > 0.50 sterk."
+                                                                        ),
+                                                                        html.Li(
+                                                                            "95%-BI: het betrouwbaarheidsinterval rond de effectgrootte. Een breed "
+                                                                            "interval betekent veel onzekerheid, wat bij kleine groepen normaal is. "
+                                                                            "Loopt het interval door 0, dan is zelfs de richting onzeker."
+                                                                        ),
+                                                                        html.Li(
+                                                                            "p: de kans op dit verschil als er in werkelijkheid geen verschil zou "
+                                                                            "zijn. p < 0.05 geldt als significant (* p<0.05, ** p<0.01, "
+                                                                            "*** p<0.001, ns = niet significant)."
+                                                                        ),
+                                                                    ],
+                                                                    className="small text-muted mb-1",
+                                                                ),
+                                                                html.P(
+                                                                    "De items staan gesorteerd op effectgrootte, dus de sterkste voorspellers "
+                                                                    "bovenaan. Items met minder dan 3 studenten in een groep worden niet "
+                                                                    "getoetst en staan met een toelichting in de tabel.",
+                                                                    className="small text-muted mb-0",
+                                                                ),
+                                                            ],
+                                                            className="mt-1 mb-2",
+                                                        ),
+                                                    ],
+                                                    className="mb-3",
+                                                ),
+                                                dash_table.DataTable(
+                                                    id="tabel-vergelijking",
+                                                    style_table={"overflowX": "auto"},
+                                                    style_data_conditional=[
+                                                        {
+                                                            "if": {
+                                                                "filter_query": '{p} contains "*"'
+                                                            },
+                                                            "backgroundColor": "#f0fdf4",
+                                                            "fontWeight": "bold",
+                                                        }
+                                                    ],
                                                     **TABLE_STYLE,
                                                 ),
                                             ],
@@ -587,7 +708,8 @@ app.layout = html.Div(
                                                 ),
                                                 html.P(
                                                     "Welke onderdelen van de selectie voorspellen het beste of een student "
-                                                    "doorstroomt naar jaar 2? Dit model kijkt naar alle items tegelijk en "
+                                                    "de opleiding succesvol vervolgt (doorstroom naar jaar 2, of een diploma "
+                                                    "bij eenjarige opleidingen)? Dit model kijkt naar alle items tegelijk en "
                                                     "bepaalt per item hoeveel het bijdraagt aan de voorspelling.",
                                                     className="text-muted small",
                                                 ),
@@ -732,7 +854,9 @@ app.layout = html.Div(
                                                                     "Doorstroom naar jaar 2 wordt bepaald door te kijken of een student "
                                                                     "een tweede inschrijving heeft voor dezelfde opleiding in het jaar na "
                                                                     "het selectiejaar. Heeft een student alleen een eerstejaars inschrijving "
-                                                                    "en geen tweedejaars, dan is dat uitval.",
+                                                                    "en geen tweedejaars, dan is dat uitval. Bij eenjarige opleidingen zoals "
+                                                                    "een master bestaat er geen jaar 2; daar geldt een diploma in het "
+                                                                    "cohortjaar als succes.",
                                                                     className="small text-muted mb-0",
                                                                 ),
                                                             ],
@@ -1223,6 +1347,15 @@ def update_filters_on_data_change(store_data, scores_store):
     )
 
 
+def _sorteer_bereik(label: str) -> tuple[int, float, float]:
+    """Sorteersleutel voor bereiklabels: op bovengrens, 'onbekend' achteraan."""
+    grenzen = grenzen_van_label(label)
+    if grenzen is None:
+        return (1, 0.0, 0.0)
+    onder, boven = grenzen
+    return (0, boven, onder)
+
+
 @app.callback(
     Output("instrument-filter", "options"),
     Output("instrument-filter", "value"),
@@ -1230,80 +1363,98 @@ def update_filters_on_data_change(store_data, scores_store):
     Output("criterium-filter", "value"),
     Output("item-filter", "options"),
     Output("item-filter", "value"),
+    Output("bereik-filter", "options"),
+    Output("bereik-filter", "value"),
     Input("instrument-filter", "value"),
     Input("criterium-filter", "value"),
     Input("item-filter", "value"),
+    Input("bereik-filter", "value"),
     Input("scores-store", "data"),
 )
-def update_score_filters(instrument_val, criterium_val, item_val, scores_store):
+def update_score_filters(
+    instrument_val, criterium_val, item_val, bereik_val, scores_store
+):
     alle_inst = [{"label": "Alle instrumenten", "value": "Alle"}]
     alle_crit = [{"label": "Alle criteria", "value": "Alle"}]
     alle_item = [{"label": "Alle items", "value": "Alle"}]
+    alle_bereik = [{"label": "Alle schalen", "value": "Alle"}]
 
     if not scores_store:
-        return alle_inst, "Alle", alle_crit, "Alle", alle_item, "Alle"
+        return (
+            alle_inst,
+            "Alle",
+            alle_crit,
+            "Alle",
+            alle_item,
+            "Alle",
+            alle_bereik,
+            "Alle",
+        )
 
     scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
-    meta = scores_df[["instrument", "item", "criterium"]].drop_duplicates()
+    meta = scores_df[["instrument", "item", "criterium"]].drop_duplicates().copy()
+    meta["bereik"] = meta["item"].map(bucket_per_item(scores_df))
 
-    filtered = meta.copy()
-    if instrument_val and instrument_val != "Alle":
-        filtered = filtered[filtered["instrument"] == instrument_val]
-    if criterium_val and criterium_val != "Alle":
-        filtered = filtered[filtered["criterium"] == criterium_val]
-    if item_val and item_val != "Alle":
-        filtered = filtered[filtered["item"] == item_val]
+    sel = {
+        "instrument": instrument_val,
+        "criterium": criterium_val,
+        "item": item_val,
+        "bereik": bereik_val,
+    }
 
-    if filtered.empty:
-        filtered = meta.copy()
-        instrument_val = "Alle"
-        criterium_val = "Alle"
-        item_val = "Alle"
+    # Levert de huidige combinatie niets op, reset dan alles naar "Alle".
+    huidig = meta
+    for dim, val in sel.items():
+        if val and val != "Alle":
+            huidig = huidig[huidig[dim] == val]
+    if huidig.empty:
+        sel = {dim: "Alle" for dim in sel}
 
-    beschikbare_items = set(filtered["item"])
-    beschikbare_criteria = set(filtered["criterium"].dropna()) - {""}
-    beschikbare_instrumenten = set(filtered["instrument"])
-
-    if instrument_val and instrument_val != "Alle":
-        subset = meta[meta["instrument"] == instrument_val]
-        beschikbare_items = set(subset["item"])
-        beschikbare_criteria = set(subset["criterium"].dropna()) - {""}
-    if criterium_val and criterium_val != "Alle":
-        subset = meta[meta["criterium"] == criterium_val]
-        beschikbare_items = beschikbare_items & set(subset["item"])
-        beschikbare_instrumenten = set(subset["instrument"])
-    if item_val and item_val != "Alle":
-        subset = meta[meta["item"] == item_val]
-        beschikbare_instrumenten = set(subset["instrument"])
-        beschikbare_criteria = set(subset["criterium"].dropna()) - {""}
+    def beschikbare_waarden(dim):
+        # Waarden van dim in rijen die aan alle andere actieve selecties voldoen;
+        # dat maakt de dropdowns cascaderend.
+        m = meta
+        for ander, val in sel.items():
+            if ander == dim or not val or val == "Alle":
+                continue
+            m = m[m[ander] == val]
+        return set(m[dim].dropna())
 
     inst_opts = alle_inst + [
         {"label": i, "value": i}
         for i in sorted(meta["instrument"].unique())
-        if i in beschikbare_instrumenten
+        if i in beschikbare_waarden("instrument")
     ]
+    crit_set = beschikbare_waarden("criterium") - {""}
     crit_opts = alle_crit + [
         {"label": c, "value": c}
         for c in sorted(meta["criterium"].dropna().unique())
-        if c.strip() and c in beschikbare_criteria
+        if c.strip() and c in crit_set
     ]
+    item_set = beschikbare_waarden("item")
     item_opts = alle_item + [
         {"label": shorten_item(it), "value": it}
         for it in sorted(meta["item"].unique())
-        if it in beschikbare_items
+        if it in item_set
+    ]
+    bereik_opts = alle_bereik + [
+        {"label": b, "value": b}
+        for b in sorted(beschikbare_waarden("bereik"), key=_sorteer_bereik)
     ]
 
-    inst_valid = (
-        instrument_val
-        if any(o["value"] == instrument_val for o in inst_opts)
-        else "Alle"
-    )
-    crit_valid = (
-        criterium_val if any(o["value"] == criterium_val for o in crit_opts) else "Alle"
-    )
-    item_valid = item_val if any(o["value"] == item_val for o in item_opts) else "Alle"
+    def geldig(val, opts):
+        return val if any(o["value"] == val for o in opts) else "Alle"
 
-    return inst_opts, inst_valid, crit_opts, crit_valid, item_opts, item_valid
+    return (
+        inst_opts,
+        geldig(sel["instrument"], inst_opts),
+        crit_opts,
+        geldig(sel["criterium"], crit_opts),
+        item_opts,
+        geldig(sel["item"], item_opts),
+        bereik_opts,
+        geldig(sel["bereik"], bereik_opts),
+    )
 
 
 @app.callback(
@@ -1391,12 +1542,15 @@ GROEP_TABEL_KLEUREN = {
     Output("tabel-gemiddelden", "data"),
     Output("tabel-gemiddelden", "columns"),
     Output("tabel-gemiddelden", "style_data_conditional"),
+    Output("tabel-vergelijking", "data"),
+    Output("tabel-vergelijking", "columns"),
     Input("cohort-dropdown", "value"),
     Input("geslacht-dropdown", "value"),
     Input("vooropleiding-dropdown", "value"),
     Input("instrument-filter", "value"),
     Input("criterium-filter", "value"),
     Input("item-filter", "value"),
+    Input("bereik-filter", "value"),
     State("data-store", "data"),
     State("scores-store", "data"),
 )
@@ -1407,13 +1561,14 @@ def update_scores_tab(
     instrument_filter,
     criterium_filter,
     item_filter,
+    bereik_filter,
     store_data,
     scores_store,
 ):
     leeg = go.Figure().update_layout(**CHART_BASE, margin=dict(t=10, b=10))
     df = df_from_store(store_data)
     if df.empty or not scores_store:
-        return leeg, [], [], []
+        return leeg, [], [], [], [], []
 
     scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
     df_groep = filter_data(df, cohort, geslacht, vooropleiding)[
@@ -1430,9 +1585,15 @@ def update_scores_tab(
         scores = scores[scores["criterium"] == criterium_filter]
     if item_filter and item_filter != "Alle":
         scores = scores[scores["item"] == item_filter]
+    if bereik_filter and bereik_filter != "Alle":
+        # Op de volledige verdeling bucketen, zodat de keuze dezelfde items
+        # raakt als de dropdown en niet meeschuift met de demografische selectie.
+        bereik_per_item = bucket_per_item(scores_df)
+        items_in_bereik = bereik_per_item.index[bereik_per_item == bereik_filter]
+        scores = scores[scores["item"].isin(items_in_bereik)]
 
     if scores.empty:
-        return leeg, [], [], []
+        return leeg, [], [], [], [], []
 
     scores["item_kort"] = scores["item"].apply(shorten_item)
     items_kort = sorted(scores["item_kort"].unique())
@@ -1475,6 +1636,13 @@ def update_scores_tab(
             margin=dict(t=60, b=10),
         )
 
+    # Bij een gekozen schaal de y-as op de afgeronde grenzen vastzetten, zodat
+    # items met een vergelijkbaar bereik eerlijk naast elkaar staan.
+    if bereik_filter and bereik_filter != "Alle":
+        grenzen = schaal_grenzen(scores["score"])
+        if grenzen is not None:
+            fig.update_yaxes(range=list(grenzen))
+
     criterium_map = dict(
         scores.drop_duplicates("item_kort")[["item_kort", "criterium"]].values
     )
@@ -1507,7 +1675,11 @@ def update_scores_tab(
             }
         )
 
-    return fig, gem_data, gem_cols, gem_style
+    vergelijking = vergelijk_succes_per_item(scores)
+    verg_data = vergelijking.to_dict("records")
+    verg_cols = [{"name": c, "id": c} for c in VERGELIJKING_KOLOMMEN]
+
+    return fig, gem_data, gem_cols, gem_style, verg_data, verg_cols
 
 
 @app.callback(

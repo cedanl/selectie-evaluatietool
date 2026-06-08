@@ -25,8 +25,13 @@ from shared import (
     GROEP_DIPLOMA,
     CHART_BASE,
     shorten_item,
+    schaal_grenzen,
+    bucket_per_item,
+    grenzen_van_label,
     sig_sym,
     fmt_p,
+    vergelijk_succes_per_item,
+    VERGELIJKING_KOLOMMEN,
 )
 
 log = logging.getLogger(__name__)
@@ -236,6 +241,12 @@ class RapportPDF(FPDF):
         self.ln(3)
 
 
+def _bovengrens_van_label(label: str) -> float:
+    """Bovengrens uit een 'onder-boven' schaallabel, voor oplopend sorteren."""
+    grenzen = grenzen_van_label(label)
+    return grenzen[1] if grenzen else float("inf")
+
+
 def _build_figures(
     df: pd.DataFrame,
     scores_df: pd.DataFrame,
@@ -245,28 +256,41 @@ def _build_figures(
 ) -> dict[str, tuple[go.Figure, int, int]]:
     figures = {}
 
-    items_kort = sorted(scores_met_groep["item_kort"].unique())
-    try:
-        fig_box = px.box(
-            scores_met_groep,
-            x="item_kort",
-            y="score",
-            color="groep",
-            color_discrete_map=GROEP_KLEUREN,
-            category_orders={"groep": GROEP_VOLGORDE, "item_kort": items_kort},
-            height=500,
-            labels={"item_kort": "", "score": "Score", "groep": ""},
-        )
-        fig_box.update_layout(
-            boxgap=0.15,
-            legend=dict(orientation="h", y=1.08, yanchor="bottom"),
-            xaxis_tickangle=-25,
-            **CHART_BASE,
-            margin=dict(t=60, b=10, l=50, r=20),
-        )
-        figures["boxplot"] = (fig_box, 1000, 500)
-    except Exception:
-        log.warning("Boxplot kon niet worden gemaakt", exc_info=True)
+    # Eén boxplot per schaal: items met een ander bereik horen niet op dezelfde
+    # y-as. De buckets komen uit dezelfde bron als het dashboard.
+    box_df = scores_met_groep.assign(
+        bereik=scores_met_groep["item"].map(bucket_per_item(scores_df))
+    )
+    for bereik in sorted(box_df["bereik"].dropna().unique(), key=_bovengrens_van_label):
+        subset = box_df[box_df["bereik"] == bereik]
+        items_kort = sorted(subset["item_kort"].unique())
+        try:
+            fig_box = px.box(
+                subset,
+                x="item_kort",
+                y="score",
+                color="groep",
+                color_discrete_map=GROEP_KLEUREN,
+                category_orders={"groep": GROEP_VOLGORDE, "item_kort": items_kort},
+                height=500,
+                labels={"item_kort": "", "score": "Score", "groep": ""},
+            )
+            fig_box.update_layout(
+                boxgap=0.15,
+                legend=dict(orientation="h", y=1.08, yanchor="bottom"),
+                xaxis_tickangle=-25,
+                **CHART_BASE,
+                margin=dict(t=70, b=10, l=50, r=20),
+                title=dict(text=f"Schaal {bereik}", x=0.01, font=dict(size=13)),
+            )
+            grenzen = schaal_grenzen(subset["score"])
+            if grenzen is not None:
+                fig_box.update_yaxes(range=list(grenzen))
+            figures[f"boxplot::{bereik}"] = (fig_box, 1000, 500)
+        except Exception:
+            log.warning(
+                "Boxplot voor schaal %s kon niet worden gemaakt", bereik, exc_info=True
+            )
 
     try:
         corr_matrix = item_pivot[score_cols].corr().round(2)
@@ -799,16 +823,20 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
         "die stoppen of niet gestart zijn."
     )
     pdf.body_text(
-        "De boxplot hieronder toont de verdeling van scores per item, "
-        "uitgesplitst naar de drie groepen. Elke box laat zien waar de "
+        "De boxplots hieronder tonen de verdeling van scores per item, "
+        "uitgesplitst naar de uitkomstgroepen. Items zijn gegroepeerd per "
+        "meetschaal, zodat een item op een 1-5 schaal niet op dezelfde as wordt "
+        "geplet als een item op een 0-100 schaal. Elke box laat zien waar de "
         "middelste 50% van de scores ligt. De lijn in het midden van de box "
         "is de mediaan (het middelste getal). Als de groene boxen (doorstromers) "
         "duidelijk hoger liggen dan de oranje en grijze, dan heeft dat item "
         "voorspellende waarde."
     )
 
-    if images.get("boxplot"):
-        pdf.add_image_from_bytes(images["boxplot"])
+    boxplot_keys = [k for k in images if k.startswith("boxplot::") and images[k]]
+    if boxplot_keys:
+        for key in boxplot_keys:
+            pdf.add_image_from_bytes(images[key])
     else:
         pdf.body_text("[Boxplot kon niet worden gegenereerd]")
 
@@ -835,6 +863,44 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
         gem_rows,
         col_widths=[65, 55, 25, 25, 20],
     )
+
+    pdf.subsection_title("Verschiltoets: scoren succesvolle studenten hoger?")
+    pdf.body_text(
+        "De tabel hieronder vergelijkt per item twee groepen studenten die met "
+        "de opleiding zijn begonnen. De succesgroep bestaat uit studenten die "
+        "doorstroomden naar jaar 2 of hun diploma haalden (de groepen "
+        "'Doorgestroomd naar jaar 2' en 'Gestart, diploma gehaald'). De groep "
+        "zonder succes bestaat uit studenten die wel begonnen maar uitvielen, "
+        "zonder jaar 2 en zonder diploma ('Gestart, niet naar jaar 2'). "
+        "Studenten die nooit zijn gestart ('Niet gestart') blijven buiten deze "
+        "toets, want voor hen is er geen studieresultaat om mee te vergelijken."
+    )
+    pdf.body_text(
+        "De toets is een Mann-Whitney "
+        "U, die past bij de ordinale en vaak scheve schalen van selectie-items. "
+        "De effectgrootte (Effect r) is de rank-biseriale correlatie van -1 tot "
+        "+1: positief betekent dat de succesgroep hoger scoorde. Vuistregels "
+        "(Cohen, 1988): r < 0.10 verwaarloosbaar, 0.10-0.30 zwak, 0.30-0.50 "
+        "matig, boven 0.50 sterk. Het 95%-BI geeft de onzekerheid rond de "
+        "effectgrootte; loopt het door 0, dan is zelfs de richting onzeker. Een "
+        "p-waarde onder 0.05 geldt als significant. De items staan op "
+        "effectgrootte gesorteerd, de sterkste voorspellers bovenaan."
+    )
+    vergelijking = vergelijk_succes_per_item(scores_met_groep)
+    if vergelijking.empty:
+        pdf.body_text(
+            "Er zijn te weinig gestarte studenten om de groepen te vergelijken."
+        )
+    else:
+        verg_rows = [
+            [str(rij[kolom]) for kolom in VERGELIJKING_KOLOMMEN]
+            for _, rij in vergelijking.iterrows()
+        ]
+        pdf.add_data_table(
+            ["Item", "Succes n", "Geen n", "Effect r", "Sterkte", "95%-BI", "p"],
+            verg_rows,
+            col_widths=[50, 20, 20, 22, 26, 32, 20],
+        )
 
     # Section 4: Samenhang en regressie
     pdf.add_page()
@@ -934,7 +1000,7 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
     if images.get("verdeling"):
         pdf.subsection_title("Verdeling per cohort")
         pdf.body_text(
-            "Het gestapelde staafdiagram laat zien hoe de drie groepen verdeeld "
+            "Het gestapelde staafdiagram laat zien hoe de groepen verdeeld "
             "zijn per cohort (selectiejaar). De getallen in de staven geven het "
             "absolute aantal kandidaten weer."
         )
