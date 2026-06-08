@@ -134,3 +134,17 @@ body {
     border-color: #94a3b8;
     background: #f1f5f9;
 }
+
+/* Uitleg- en toelichtingstekst in de hoofdinhoud leesbaarder maken.
+   Bootstrap's .small (0.875em) en .text-muted (lichtgrijs) zijn samen te
+   klein en te licht voor lopende uitleg; hier iets groter en met meer
+   contrast. De sidebar (.sidebar-wrapper) blijft bewust ongemoeid. */
+.main-wrapper .small,
+.main-wrapper small {
+    font-size: 0.95rem;
+    line-height: 1.55;
+}
+
+.main-wrapper .text-muted {
+    color: #475569 !important;
+}
