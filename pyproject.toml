@@ -1,5 +1,5 @@
 [project]
-name = "evaluatietool-voorbeeld"
+name = "selectie-evaluatietool"
 version = "0.1.0"
 description = "Evaluatietool: selectiedata koppelen aan 1CHO voor studiesucces analyse"
 license = "MIT"
