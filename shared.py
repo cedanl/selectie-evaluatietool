@@ -153,6 +153,15 @@ VERGELIJKING_KOLOMMEN = [
     "p",
 ]
 
+VERSCHIL_KOLOMMEN = [
+    "Item",
+    "n",
+    "Verschil",
+    "Effectgrootte",
+    "Sterkte",
+    "p",
+]
+
 
 def effect_sterkte(r: float) -> str:
     """Magnitudelabel voor een rank-biseriale effectgrootte (zelfde grenzen als
@@ -243,6 +252,8 @@ def vergelijk_succes_per_item(
             "95%-BI": "-",
             "p": "-",
             "_sort": -1.0,
+            "_r": None,
+            "_p": 1.0,
         }
         if len(succes) < min_per_groep or len(geen) < min_per_groep:
             rij["Sterkte"] = "te weinig data"
@@ -265,6 +276,8 @@ def vergelijk_succes_per_item(
                 "95%-BI": f"{lo:+.2f} tot {hi:+.2f}",
                 "p": f"{fmt_p(float(toets.pvalue))} {sig_sym(float(toets.pvalue))}",
                 "_sort": abs(r),
+                "_r": r,
+                "_p": float(toets.pvalue),
             }
         )
         rijen.append(rij)
@@ -273,4 +286,228 @@ def vergelijk_succes_per_item(
     if tabel.empty:
         return tabel
     tabel = tabel.sort_values("_sort", ascending=False).drop(columns="_sort")
-    return tabel[VERGELIJKING_KOLOMMEN].reset_index(drop=True)
+    return tabel[VERGELIJKING_KOLOMMEN + ["_r", "_p"]].reset_index(drop=True)
+
+
+# Demografische dimensies voor de analyse-tabs en de rapportsectie. Een dimensie
+# toevoegen is één regel (key, kolom in de data, en een label).
+DEMO_DIMENSIES = [
+    {"key": "geslacht", "kolom": "geslacht", "label": "Geslacht"},
+    {
+        "key": "vooropleiding",
+        "kolom": "hoogste_vooropleiding",
+        "label": "Vooropleiding",
+    },
+]
+
+
+def demografie_scores(
+    df: pd.DataFrame, scores_df: pd.DataFrame, dim: dict
+) -> pd.DataFrame | None:
+    """Long-format scores van ingeschreven studenten met de demografische
+    groepskolom erbij, of ``None`` als de dimensie niet beschikbaar is.
+
+    Eén bron voor de demografische tab, het 'wat valt op'-overzicht en het PDF-
+    rapport, zodat die niet uiteenlopen. De demografie komt uit 1CHO en bestaat
+    alleen voor ingeschreven studenten (``GROEP_INGESCHREVEN``).
+    """
+    kolom = dim["kolom"]
+    ingeschr = df[df["groep"].isin(GROEP_INGESCHREVEN)].copy()
+    if kolom not in ingeschr.columns:
+        return None
+    ingeschr = ingeschr[ingeschr[kolom].notna()]
+    if ingeschr.empty:
+        return None
+    scores = scores_df.merge(
+        ingeschr[["studentnummer", kolom]].drop_duplicates(),
+        on="studentnummer",
+        how="inner",
+    )
+    if scores.empty:
+        return None
+    scores["item_kort"] = scores["item"].apply(shorten_item)
+    return scores
+
+
+def eta_sterkte(eps2: float) -> str:
+    """Magnitudelabel voor epsilon-kwadraat (Cohen-achtige grenzen voor eta2:
+    0.01 / 0.06 / 0.14)."""
+    if eps2 < 0.01:
+        return "verwaarloosbaar"
+    if eps2 < 0.06:
+        return "zwak"
+    if eps2 < 0.14:
+        return "matig"
+    return "sterk"
+
+
+def toets_verschil_per_item(
+    scores: pd.DataFrame,
+    groep_kolom: str,
+    item_kolom: str = "item_kort",
+    min_per_groep: int = 5,
+) -> pd.DataFrame:
+    """Toets per item of de selectiescores verschillen tussen groepen.
+
+    Bedoeld voor demografische analyses: splits de ingeschreven studenten per
+    item op de waarden van ``groep_kolom`` (bijv. geslacht of vooropleiding) en
+    toets met een Kruskal-Wallis of de groepen anders scoren. Die toets werkt
+    voor twee of meer groepen en past bij de ordinale, scheve schalen van
+    selectie-items. De effectgrootte is epsilon-kwadraat (``H / (n - 1)``,
+    bereik 0-1). De richting volgt uit de mediaan per groep.
+
+    Groepen met minder dan ``min_per_groep`` waarnemingen vallen weg, zodat een
+    enkeling geen toets stuurt. Returnt een frame met de displaykolommen uit
+    ``VERSCHIL_KOLOMMEN`` plus numerieke hulpkolommen (``_eps2``, ``_p``) voor
+    de conclusietekst, gesorteerd op aflopende effectgrootte.
+    """
+    from scipy.stats import kruskal
+
+    rijen = []
+    for item, deel in scores.groupby(item_kolom, observed=True):
+        sub = deel[[groep_kolom, "score"]].copy()
+        sub["score"] = pd.to_numeric(sub["score"], errors="coerce")
+        sub = sub.dropna(subset=[groep_kolom, "score"])
+        groepen = {
+            str(naam): groep["score"].to_numpy()
+            for naam, groep in sub.groupby(groep_kolom, observed=True)
+            if len(groep) >= min_per_groep
+        }
+        n_tot = sum(len(v) for v in groepen.values())
+
+        rij = {
+            "Item": item,
+            "n": n_tot,
+            "Verschil": "-",
+            "Effectgrootte": "-",
+            "Sterkte": "-",
+            "p": "-",
+            "_eps2": float("nan"),  # NaN = niet getoetst; sorteert vanzelf onderaan
+            "_p": float("nan"),
+        }
+        if len(groepen) < 2:
+            rij["Sterkte"] = "te weinig data"
+            rijen.append(rij)
+            continue
+
+        try:
+            h, p = kruskal(*groepen.values())
+        except ValueError:  # alle waarden identiek: niets te rangschikken
+            rij["Sterkte"] = "geen variatie"
+            rijen.append(rij)
+            continue
+
+        eps2 = float(h) / (n_tot - 1)
+        medianen = {naam: float(pd.Series(v).median()) for naam, v in groepen.items()}
+        hoog = max(medianen, key=medianen.get)
+        laag = min(medianen, key=medianen.get)
+        if medianen[hoog] == medianen[laag]:
+            verschil = "vergelijkbaar"
+        elif len(groepen) == 2:
+            verschil = f"{hoog} > {laag}"
+        else:
+            verschil = f"{hoog} hoogst, {laag} laagst"
+
+        rij.update(
+            {
+                "Verschil": verschil,
+                "Effectgrootte": f"{eps2:.3f}",
+                "Sterkte": eta_sterkte(eps2),
+                "p": f"{fmt_p(p)} {sig_sym(p)}",
+                "_eps2": eps2,
+                "_p": float(p),
+            }
+        )
+        rijen.append(rij)
+
+    tabel = pd.DataFrame(rijen)
+    if tabel.empty:
+        return tabel
+    return tabel.sort_values("_eps2", ascending=False).reset_index(drop=True)
+
+
+def _sorteer_abs(serie: pd.Series) -> pd.Series:
+    return serie.abs()
+
+
+def genereer_bevindingen(
+    succes_tabel: pd.DataFrame,
+    demo_tabellen: dict[str, pd.DataFrame],
+    top: int = 3,
+) -> dict[str, list[str]]:
+    """Vat de toetsuitkomsten samen tot datagedreven bevindingen.
+
+    Voedt zowel het 'wat valt op'-overzicht in het dashboard als de
+    conclusiesectie van het rapport. Elke regel is een feit dat rechtstreeks uit
+    een effectgrootte of p-waarde volgt; er wordt niets bijbedacht. ``succes_tabel``
+    komt van ``vergelijk_succes_per_item`` (met _r/_p), ``demo_tabellen`` is per
+    demografische dimensie een ``toets_verschil_per_item`` frame (met _eps2/_p).
+    Returnt drie lijsten: een korte samenvatting, validiteitsbevindingen (welke
+    items voorspellen succes) en fairnessbevindingen (demografische verschillen).
+    """
+    samenvatting: list[str] = []
+    validiteit: list[str] = []
+    fairness: list[str] = []
+
+    if (
+        succes_tabel is not None
+        and not succes_tabel.empty
+        and "_r" in succes_tabel.columns
+    ):
+        getoetst = succes_tabel[succes_tabel["_r"].notna()]
+        sig = getoetst[getoetst["_p"] < 0.05]
+        if len(getoetst):
+            samenvatting.append(
+                f"Van de {len(getoetst)} getoetste items tonen er {len(sig)} een "
+                "significant verband met studiesucces (doorstroom of diploma)."
+            )
+        gesorteerd = sig.sort_values("_r", key=_sorteer_abs, ascending=False)
+        for _, r in gesorteerd.head(top).iterrows():
+            if r["_r"] > 0:
+                validiteit.append(
+                    f"{r['Item']}: geslaagde studenten scoorden hoger "
+                    f"(effect {r['Effect (r)']}, p = {fmt_p(r['_p'])}). Dit item heeft "
+                    "voorspellende waarde."
+                )
+            else:
+                validiteit.append(
+                    f"{r['Item']}: juist de uitvallers scoorden hoger "
+                    f"(effect {r['Effect (r)']}, p = {fmt_p(r['_p'])}). Onverwacht en de "
+                    "moeite waard om nader te bekijken."
+                )
+        if len(getoetst) and sig.empty:
+            sterkste = getoetst.sort_values(
+                "_r", key=_sorteer_abs, ascending=False
+            ).iloc[0]
+            validiteit.append(
+                "Geen enkel item verschilt significant tussen geslaagden en uitvallers. "
+                f"Het sterkste (niet-significante) signaal is {sterkste['Item']} "
+                f"(effect {sterkste['Effect (r)']}). Bij kleine groepen is dat niet "
+                "ongebruikelijk."
+            )
+
+    for label, tab in demo_tabellen.items():
+        if tab is None or tab.empty or "_eps2" not in tab.columns:
+            continue
+        getoetst = tab[tab["_eps2"].notna()]
+        if not len(getoetst):
+            continue
+        sig = getoetst[getoetst["_p"] < 0.05]
+        if sig.empty:
+            fairness.append(
+                f"{label}: geen significante verschillen tussen de groepen op de "
+                "selectie-items."
+            )
+            continue
+        for _, r in sig.head(top).iterrows():
+            fairness.append(
+                f"{label}: op {r['Item']} verschillen de groepen significant "
+                f"({r['Verschil']}, effectgrootte {r['Effectgrootte']}, "
+                f"p = {fmt_p(r['_p'])}). Beoordeel of dit een terecht onderscheid is."
+            )
+
+    return {
+        "samenvatting": samenvatting,
+        "validiteit": validiteit,
+        "fairness": fairness,
+    }

@@ -33,6 +33,11 @@ from shared import (
     fmt_p,
     vergelijk_succes_per_item,
     VERGELIJKING_KOLOMMEN,
+    toets_verschil_per_item,
+    VERSCHIL_KOLOMMEN,
+    genereer_bevindingen,
+    DEMO_DIMENSIES,
+    demografie_scores,
 )
 
 log = logging.getLogger(__name__)
@@ -141,7 +146,19 @@ class RapportPDF(FPDF):
             new_y="NEXT",
         )
 
-        self.ln(20)
+        self.ln(6)
+        self.set_font("Helvetica", "I", 11)
+        self.set_text_color(*GRAY)
+        self.cell(
+            0,
+            7,
+            "Ontwikkeld in samenwerking met CEDA (Centre of Educational Data Analytics)",
+            align="C",
+            new_x="LMARGIN",
+            new_y="NEXT",
+        )
+
+        self.ln(14)
         self.set_font("Helvetica", "", 11)
         self.set_text_color(*DARK)
         total = sum(n_per_groep.values())
@@ -344,39 +361,6 @@ def _build_figures(
     except Exception:
         log.warning("Heatmap kon niet worden gemaakt", exc_info=True)
 
-    try:
-        agg_verdeling = (
-            df.groupby(["selectiejaar", "groep"], observed=True)
-            .size()
-            .reset_index(name="n")
-        )
-        agg_verdeling["pct"] = (
-            agg_verdeling["n"]
-            / agg_verdeling.groupby("selectiejaar")["n"].transform("sum")
-            * 100
-        ).round(1)
-        fig_verdeling = px.bar(
-            agg_verdeling,
-            x="selectiejaar",
-            y="pct",
-            color="groep",
-            barmode="stack",
-            color_discrete_map=GROEP_KLEUREN,
-            category_orders={"groep": GROEP_VOLGORDE},
-            labels={"selectiejaar": "Cohort", "pct": "%", "groep": ""},
-            text="n",
-        )
-        fig_verdeling.update_traces(texttemplate="%{text}", textposition="inside")
-        fig_verdeling.update_layout(
-            height=400,
-            legend=dict(orientation="h", y=-0.15),
-            yaxis_range=[0, 115],
-            **CHART_BASE,
-        )
-        figures["verdeling"] = (fig_verdeling, 800, 400)
-    except Exception:
-        log.warning("Verdelingsdiagram kon niet worden gemaakt", exc_info=True)
-
     has_vo = "gem_eindcijfer_vo" in df.columns and df["gem_eindcijfer_vo"].notna().any()
     if has_vo:
         try:
@@ -397,8 +381,9 @@ def _build_figures(
                     },
                     opacity=0.55,
                     height=450,
+                    trendline="ols",  # regressielijn per groep
                 )
-                fig_vo.update_traces(marker=dict(size=6))
+                fig_vo.update_traces(marker=dict(size=6), selector=dict(mode="markers"))
                 fig_vo.update_layout(
                     legend=dict(orientation="h", y=1.08, yanchor="bottom"),
                     **CHART_BASE,
@@ -408,109 +393,6 @@ def _build_figures(
             log.warning("Scatterplot kon niet worden gemaakt", exc_info=True)
 
     return figures
-
-
-def _build_demo_figures(
-    df: pd.DataFrame,
-) -> tuple[dict[str, tuple[go.Figure, int, int]], dict[str, pd.DataFrame]]:
-    figures = {}
-    agg_data = {}
-
-    if "geslacht" in df.columns and df["geslacht"].notna().any():
-        agg_g = (
-            df.groupby(["groep", "geslacht"], observed=True)
-            .size()
-            .reset_index(name="n")
-        )
-        agg_g["pct"] = (
-            agg_g["n"] / agg_g.groupby("groep")["n"].transform("sum") * 100
-        ).round(1)
-        agg_data["geslacht"] = agg_g
-        try:
-            fig_g = px.bar(
-                agg_g,
-                x="groep",
-                y="pct",
-                color="geslacht",
-                barmode="stack",
-                labels={"groep": "", "pct": "%", "geslacht": "Geslacht"},
-                height=400,
-            )
-            fig_g.update_layout(legend=dict(orientation="h", y=-0.2), **CHART_BASE)
-            figures["geslacht"] = (fig_g, 800, 400)
-        except Exception:
-            log.warning("Geslacht chart kon niet worden gemaakt", exc_info=True)
-
-    if "herkomst" in df.columns and df["herkomst"].notna().any():
-        df_h = df[df["herkomst"].notna()].assign(
-            herkomst_kort=lambda d: d["herkomst"].map(
-                lambda x: "Nederland" if x == "Nederland" else "niet-Nederland"
-            )
-        )
-        agg_h = (
-            df_h.groupby(["groep", "herkomst_kort"], observed=True)
-            .size()
-            .reset_index(name="n")
-        )
-        agg_h["pct"] = (
-            agg_h["n"] / agg_h.groupby("groep")["n"].transform("sum") * 100
-        ).round(1)
-        agg_data["herkomst"] = agg_h
-        try:
-            fig_h = px.bar(
-                agg_h,
-                x="groep",
-                y="pct",
-                color="herkomst_kort",
-                barmode="stack",
-                color_discrete_map={
-                    "Nederland": "#3b82f6",
-                    "niet-Nederland": "#a78bfa",
-                },
-                labels={"groep": "", "pct": "%", "herkomst_kort": "Herkomst"},
-                height=400,
-            )
-            fig_h.update_layout(legend=dict(orientation="h", y=-0.2), **CHART_BASE)
-            figures["herkomst"] = (fig_h, 800, 400)
-        except Exception:
-            log.warning("Herkomst chart kon niet worden gemaakt", exc_info=True)
-
-    if (
-        "hoogste_vooropleiding" in df.columns
-        and df["hoogste_vooropleiding"].notna().any()
-    ):
-        agg_v = (
-            df.groupby(["hoogste_vooropleiding", "groep"], observed=True)
-            .size()
-            .reset_index(name="n")
-        )
-        agg_v["pct"] = (
-            agg_v["n"] / agg_v.groupby("groep")["n"].transform("sum") * 100
-        ).round(1)
-        agg_data["vooropleiding"] = agg_v
-        try:
-            fig_v = px.bar(
-                agg_v,
-                y="hoogste_vooropleiding",
-                x="pct",
-                color="groep",
-                barmode="group",
-                orientation="h",
-                color_discrete_map=GROEP_KLEUREN,
-                category_orders={"groep": GROEP_VOLGORDE},
-                labels={
-                    "groep": "",
-                    "pct": "%",
-                    "hoogste_vooropleiding": "Vooropleiding",
-                },
-                height=400,
-            )
-            fig_v.update_layout(legend=dict(orientation="h", y=-0.2), **CHART_BASE)
-            figures["vooropleiding"] = (fig_v, 800, 400)
-        except Exception:
-            log.warning("Vooropleiding chart kon niet worden gemaakt", exc_info=True)
-
-    return figures, agg_data
 
 
 def _run_regression(
@@ -725,9 +607,16 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
 
     # -- Build and render all charts --
     figures = _build_figures(df, scores_df, scores_met_groep, item_pivot, score_cols)
-    demo_figures, demo_agg = _build_demo_figures(df)
-    figures.update(demo_figures)
     images = _render_figures(figures)
+
+    # Demografische verschiltoetsen per dimensie (tabellen, geen figuren).
+    demo_toetsen = {}
+    for dim in DEMO_DIMENSIES:
+        demo_scores = demografie_scores(df, scores_df, dim)
+        if demo_scores is not None:
+            demo_toetsen[dim["label"]] = toets_verschil_per_item(
+                demo_scores, dim["kolom"]
+            )
 
     # -- Assemble PDF --
     pdf = RapportPDF(opleiding=opleiding, jaar=jaar)
@@ -1025,99 +914,41 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
             col_widths=[60, 30, 30, 35, 35],
         )
 
-    # Section 5: Demografisch profiel
+    # Section 5: Selectiescores naar achtergrond
     pdf.add_page()
-    pdf.section_title("5. Demografisch profiel")
+    pdf.section_title("5. Selectiescores naar achtergrond")
     pdf.body_text(
-        "In deze sectie bekijken we de achtergrondkenmerken van de kandidaten "
-        "per groep. Het gaat om gegevens zoals geslacht, herkomst en "
-        "vooropleiding. Deze data komt uit 1CHO (het landelijke "
-        "studentregistratiesysteem) en is daarom alleen beschikbaar voor "
-        "studenten die daadwerkelijk ingeschreven zijn geweest."
+        "In deze sectie kijken we of de selectiescores verschillen tussen "
+        "studenten met een andere achtergrond (geslacht, vooropleiding, "
+        "herkomst). Een systematisch verschil op een instrument kan wijzen op "
+        "onbedoelde vertekening: het instrument meet dan deels iets dat met de "
+        "achtergrond samenhangt in plaats van met geschiktheid."
     )
     pdf.body_text(
-        "Het doel van deze sectie is om te kijken of de selectie eerlijk "
-        "uitpakt voor verschillende groepen. Als er grote verschillen zijn "
-        "in de verdeling van achtergrondkenmerken tussen doorstromers en "
-        "uitvallers, dan kan dat aanleiding zijn om de selectieprocedure "
-        "nader te onderzoeken."
+        "De achtergrondgegevens komen uit 1CHO en zijn alleen bekend voor "
+        "ingeschreven studenten. Deze analyse vergelijkt dus binnen de "
+        "ingeschreven groep, niet onder alle sollicitanten. Per item toetsen we "
+        "met een Kruskal-Wallis of de groepen anders scoren. De effectgrootte is "
+        "epsilon-kwadraat (0-1): onder 0.01 verwaarloosbaar, 0.01-0.06 zwak, "
+        "0.06-0.14 matig, boven 0.14 sterk. De kolom 'Verschil' toont welke groep "
+        "het hoogst scoort. Een p-waarde onder 0.05 is significant. Groepen met "
+        "minder dan vijf studenten vallen weg."
     )
 
-    if images.get("verdeling"):
-        pdf.subsection_title("Verdeling per cohort")
-        pdf.body_text(
-            "Het gestapelde staafdiagram laat zien hoe de groepen verdeeld "
-            "zijn per cohort (selectiejaar). De getallen in de staven geven het "
-            "absolute aantal kandidaten weer."
-        )
-        pdf.add_image_from_bytes(images["verdeling"])
-
-    if images.get("geslacht"):
-        pdf.subsection_title("Geslacht per groep")
-        pdf.body_text(
-            "Hieronder staat de verdeling van geslacht binnen elke groep. "
-            "Grote verschillen tussen groepen kunnen erop wijzen dat de "
-            "selectie voor een bepaald geslacht anders uitpakt."
-        )
-        pdf.add_image_from_bytes(images["geslacht"])
-
-    if "geslacht" in demo_agg:
-        ges_rows = []
-        for _, r in demo_agg["geslacht"].iterrows():
-            ges_rows.append(
-                [str(r["groep"]), str(r["geslacht"]), str(r["n"]), f"{r['pct']}%"]
-            )
+    if not demo_toetsen:
+        pdf.body_text("Er zijn geen achtergrondgegevens beschikbaar om op te splitsen.")
+    for label, tabel in demo_toetsen.items():
+        pdf.subsection_title(label)
+        if tabel.empty:
+            pdf.body_text("Te weinig gegevens voor een toets.")
+            continue
+        demo_rows = [
+            [str(r[kolom]) for kolom in VERSCHIL_KOLOMMEN] for _, r in tabel.iterrows()
+        ]
         pdf.add_data_table(
-            ["Groep", "Geslacht", "n", "%"],
-            ges_rows,
-            col_widths=[70, 40, 30, 30],
-        )
-
-    if images.get("herkomst"):
-        pdf.subsection_title("Herkomst per groep")
-        pdf.body_text(
-            "De herkomst van studenten is vereenvoudigd tot twee categorieen: "
-            "Nederland en niet-Nederland. Dit geeft een eerste indruk van "
-            "diversiteit binnen de groepen."
-        )
-        pdf.add_image_from_bytes(images["herkomst"])
-
-    if "herkomst" in demo_agg:
-        h_rows = []
-        for _, r in demo_agg["herkomst"].iterrows():
-            h_rows.append(
-                [str(r["groep"]), str(r["herkomst_kort"]), str(r["n"]), f"{r['pct']}%"]
-            )
-        pdf.add_data_table(
-            ["Groep", "Herkomst", "n", "%"],
-            h_rows,
-            col_widths=[65, 55, 30, 30],
-        )
-
-    if images.get("vooropleiding"):
-        pdf.subsection_title("Vooropleiding per groep")
-        pdf.body_text(
-            "De vooropleiding geeft aan wat het hoogst behaalde diploma van "
-            "de student is voordat deze aan de opleiding begon. Denk aan "
-            "VWO, HBO-propedeuse, of een ander diploma."
-        )
-        pdf.add_image_from_bytes(images["vooropleiding"])
-
-    if "vooropleiding" in demo_agg:
-        vo_rows = []
-        for _, r in demo_agg["vooropleiding"].iterrows():
-            vo_rows.append(
-                [
-                    str(r["groep"]),
-                    str(r["hoogste_vooropleiding"]),
-                    str(r["n"]),
-                    f"{r['pct']}%",
-                ]
-            )
-        pdf.add_data_table(
-            ["Groep", "Vooropleiding", "n", "%"],
-            vo_rows,
-            col_widths=[65, 55, 30, 30],
+            ["Item", "n", "Verschil", "Effect", "Sterkte", "p"],
+            demo_rows,
+            col_widths=[50, 15, 45, 25, 30, 25],
         )
 
     # Section 6: VO-eindcijfer
@@ -1149,45 +980,68 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
         if images.get("scatter"):
             pdf.body_text(
                 "De scatterplot hieronder toont het verband tussen het "
-                "VO-eindcijfer en de totaalscore. Elk punt is een student. "
-                "Hoe meer de punten op een lijn liggen, hoe sterker het verband."
+                "VO-eindcijfer en de totaalscore. Elk punt is een student en per "
+                "groep is een regressielijn getekend. Hoe meer de punten op die "
+                "lijn liggen, hoe sterker het verband; de richting van de lijn "
+                "laat zien of een hoger VO-cijfer samengaat met een hogere of "
+                "lagere totaalscore."
             )
+            totaal_r = next(
+                (float(r[1]) for r in cor_rows if r[0] == "Totaalscore"), None
+            )
+            if totaal_r is not None:
+                if totaal_r >= 0.10:
+                    richting = (
+                        "stijgt: hoe hoger het VO-eindcijfer, hoe hoger de totaalscore"
+                    )
+                elif totaal_r <= -0.10:
+                    richting = (
+                        "daalt: hoe hoger het VO-eindcijfer, hoe lager de totaalscore"
+                    )
+                else:
+                    richting = (
+                        "is vrijwel vlak: VO-eindcijfer en totaalscore hangen "
+                        "nauwelijks samen"
+                    )
+                pdf.body_text(f"Voor de totaalscore {richting} (r = {totaal_r:.2f}).")
             pdf.add_image_from_bytes(images["scatter"])
 
-    # Samenvatting
+    # Conclusies
     section_nr = 7 if has_vo else 6
     pdf.add_page()
-    pdf.section_title(f"{section_nr}. Samenvatting")
-
+    pdf.section_title(f"{section_nr}. Conclusies")
     pdf.body_text(
-        "Hieronder staan de belangrijkste bevindingen uit dit rapport samengevat."
+        "De conclusies hieronder volgen rechtstreeks uit de toetsen in dit "
+        "rapport: er is niets toegevoegd dat niet uit een effectgrootte of "
+        "p-waarde volgt. Lees ze met de steekproefgrootte in het achterhoofd."
     )
-
-    bullets = []
 
     if total > 0:
         n_succes = n_door + n_diploma
-        bullets.append(
+        pdf.body_text(
             f"Van de {total} kandidaten zijn er {n_succes} succesvol "
             f"(doorgestroomd of diploma, {n_succes / total * 100:.0f}%), "
             f"{n_uitval} gestart maar gestopt ({n_uitval / total * 100:.0f}%), "
             f"en {n_niet} niet gestart ({n_niet / total * 100:.0f}%)."
         )
 
+    succes_tabel = vergelijk_succes_per_item(scores_met_groep)
+    bevindingen = genereer_bevindingen(succes_tabel, demo_toetsen)
+
+    pdf.subsection_title("Welke selectie-items voorspellen studiesucces?")
+    for regel in bevindingen["validiteit"]:
+        pdf.body_text(f"  {regel}")
+    if not bevindingen["validiteit"]:
+        pdf.body_text(
+            "  Geen enkel item laat per item een opvallend verschil zien tussen "
+            "geslaagde en uitgevallen studenten."
+        )
     if reg_rows:
         sig_items = [r[0] for r in reg_rows if r[4] != "ns"]
-        ns_items = [r[0] for r in reg_rows if r[4] == "ns"]
         if sig_items:
-            bullets.append(
-                f"Significante voorspellers van {uitkomst_kort}: {', '.join(sig_items)}. "
-                "Dit zijn de items die een statistisch aantoonbaar verband "
-                f"hebben met {uitkomst_kort}."
-            )
-        if ns_items:
-            bullets.append(
-                f"Geen significante bijdrage: {', '.join(ns_items)}. "
-                f"Deze items hebben geen statistisch aantoonbaar verband met "
-                f"{uitkomst_kort}, rekening houdend met de andere items."
+            pdf.body_text(
+                "  In het gezamenlijke regressiemodel (alle items tegelijk) zijn de "
+                f"significante voorspellers: {', '.join(sig_items)}."
             )
         if pseudo_r2 is not None:
             if pseudo_r2 < 0.05:
@@ -1198,41 +1052,49 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
                 kracht = "matige"
             else:
                 kracht = "substantiele"
-            bullets.append(
-                f"Het regressiemodel heeft {kracht} voorspellende kracht "
-                f"(pseudo R-kwadraat = {pseudo_r2}). Hoe hoger dit getal "
-                f"(maximaal 1.0), hoe beter de selectie-items samen "
-                f"{uitkomst_kort} voorspellen."
+            pdf.body_text(
+                f"  Het regressiemodel heeft {kracht} voorspellende kracht "
+                f"(pseudo R-kwadraat = {pseudo_r2}; hoe hoger, hoe beter de items "
+                f"samen {uitkomst_kort} voorspellen)."
             )
 
+    pdf.subsection_title("Verschillen tussen groepen (eerlijkheid)")
+    for regel in bevindingen["fairness"]:
+        pdf.body_text(f"  {regel}")
+    if not bevindingen["fairness"]:
+        pdf.body_text(
+            "  Geen achtergrondgegevens beschikbaar om groepen te vergelijken."
+        )
+
     if has_vo and cor_rows:
+        pdf.subsection_title("Samenhang met het VO-eindcijfer")
         high_r = [r for r in cor_rows if abs(float(r[1])) > 0.4]
         low_r = [r for r in cor_rows if abs(float(r[1])) < 0.15]
         if high_r:
-            bullets.append(
-                f"Sterke samenhang met VO-eindcijfer: "
+            pdf.body_text(
+                "  Sterke samenhang met het VO-eindcijfer: "
                 f"{', '.join(r[0] + ' (r=' + r[1] + ')' for r in high_r)}. "
-                f"Deze items overlappen met wat het schooldiploma al vertelt."
+                "Deze items overlappen met wat het schooldiploma al vertelt."
             )
         if low_r:
-            bullets.append(
-                f"Lage samenhang met VO-eindcijfer: "
+            pdf.body_text(
+                "  Lage samenhang met het VO-eindcijfer: "
                 f"{', '.join(r[0] + ' (r=' + r[1] + ')' for r in low_r)}. "
-                f"Deze items meten iets anders dan schoolprestaties, wat "
-                f"positief is voor de selectie."
+                "Deze items meten iets anders dan schoolprestaties, wat juist "
+                "waardevol is voor de selectie."
+            )
+        if not high_r and not low_r:
+            pdf.body_text(
+                "  De selectie-items hangen matig samen met het VO-eindcijfer."
             )
 
     n_ingeschreven = n_door + n_uitval + n_diploma
     if n_ingeschreven < 30:
-        bullets.append(
-            f"Let op: het aantal ingeschreven studenten is klein (n={n_ingeschreven}). "
-            f"Bij kleine aantallen zijn statistische analyses minder "
-            f"betrouwbaar. Wees daarom voorzichtig met het trekken van "
-            f"conclusies."
+        pdf.body_text(
+            f"  Let op: het aantal ingeschreven studenten is klein (n={n_ingeschreven}). "
+            "Bij kleine aantallen zijn statistische analyses minder betrouwbaar; "
+            "wees voorzichtig met harde conclusies."
         )
-
-    for bullet in bullets:
-        pdf.body_text(f"  {bullet}")
 
     buf = io.BytesIO()
     pdf.output(buf)
