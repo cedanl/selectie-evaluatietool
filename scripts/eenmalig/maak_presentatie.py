@@ -569,6 +569,39 @@ add_slide(
 
 
 # ============================================================
+# SLIDE 10b: Verschiltoets per item
+# ============================================================
+add_slide(
+    "Dashboard: verschiltoets per item",
+    [
+        "Onder de boxplots staat een tabel die per item formeel toetst wat het oog op de boxplot "
+        "vermoedt: scoorden de geslaagde studenten echt hoger dan de uitvallers?",
+        "",
+        "**Welke twee groepen worden vergeleken?**",
+        "- Succes: studenten die doorstroomden naar jaar 2 of hun diploma haalden",
+        "- Geen succes: studenten die wel begonnen maar uitvielen",
+        "Studenten die nooit startten blijven buiten de toets: voor hen is er geen studieresultaat.",
+        "",
+        "**Wat de tabel toont (per item)**",
+        "- Effectgrootte: hoe groot het verschil is, op een schaal van -1 tot +1, vergelijkbaar tussen "
+        "items met verschillende meetschalen",
+        "- 95%-betrouwbaarheidsinterval: hoe zeker dat verschil is",
+        "- p-waarde: is het verschil echt, of kan het toeval zijn?",
+        "",
+        "**Wat een persoon hiermee kan**",
+        "Zien welke selectie-onderdelen echt onderscheid maken tussen wie slaagt en wie uitvalt. "
+        "Items met een sterk, significant effect zijn het waard om te behouden of zwaarder te wegen. "
+        "Items met een verwaarloosbaar effect voegen weinig toe en zijn kandidaat om te schrappen, "
+        "wat de selectie korter en goedkoper maakt. Zo onderbouw je het bijstellen van de procedure "
+        "met cijfers in plaats van aannames.",
+        "",
+        "Lees de tabel samen met de regressie: de toets kijkt per item los, de regressie naar alle "
+        "items tegelijk. Bij kleine groepen blijven de uitkomsten suggestief, geen hard bewijs.",
+    ],
+)
+
+
+# ============================================================
 # SLIDE 11: Dashboard tab 2 - Samenhang
 # ============================================================
 add_slide(
@@ -912,6 +945,38 @@ add_table_slide(
 
 
 # ============================================================
+# SLIDE 19b: Waarom deze keuzes
+# ============================================================
+add_slide(
+    "Waarom deze afgeslankte tool?",
+    [
+        "Het oorspronkelijke ontwerp is een groot bouwtraject: een webapplicatie met inlog en "
+        "rollenbeheer, een aparte analyse-webservice met JSON-API, en analyses op studieresultaten "
+        "binnen de opleiding. Wij hebben bewust een kleinere, werkende tool gebouwd. Waarom?",
+        "",
+        "**Werkend boven volledig**",
+        "Een tool die nu waarde levert is meer waard dan maanden bouwen aan infrastructuur. "
+        "De kernvraag (werkt de selectie?) kun je vandaag al beantwoorden.",
+        "",
+        "**1CHO is beschikbaar en gestandaardiseerd**",
+        "Doorstroom en diploma uit 1CHO zijn voor elke opleiding op dezelfde manier af te leiden. "
+        "Studieresultaten binnen de opleiding (cijfers ingedeeld naar LOCS/HOCS, per leerjaar) vragen "
+        "veel maatwerk per instelling en zijn lang niet altijd beschikbaar.",
+        "",
+        "**Eén heldere, vergelijkbare uitkomstmaat**",
+        "Doorstroom of diploma is begrijpelijk en werkt voor zowel bachelors als masters. Dat houdt "
+        "de analyses overzichtelijk en de uitkomsten communiceerbaar naar een breed publiek.",
+        "",
+        "**Lokaal draaien omzeilt de privacyhorde**",
+        "Geen hosting, inlog of dataopslag bij derden. De gevoelige selectiedata blijft op de machine "
+        "van de analist. Dat versnelt adoptie en vermijdt het zwaarste deel van de beveiligingsopgave.",
+        "",
+        "Kortom: een MVP die de belangrijkste vraag beantwoordt, met een duidelijk pad naar uitbreiding.",
+    ],
+)
+
+
+# ============================================================
 # SLIDE 20: Volgende stappen
 # ============================================================
 add_slide(
@@ -923,8 +988,13 @@ add_slide(
         "- Tekstuele duiding toevoegen aan het PDF-rapport",
         "",
         "**Middellange termijn**",
+        "- VAKHAVW-data toevoegen: per-vak eindcijfers uit de vooropleiding (havo/vwo), zodat "
+        "selectiescores tegen concrete vakcijfers vergeleken kunnen worden in plaats van alleen "
+        "het gemiddelde eindcijfer",
+        "- Drempelanalyse: laten zien hoe de gekozen grens voor de totaalscore de demografische "
+        "samenstelling van de toegelaten groep beinvloedt. Wie valt af bij een hogere of lagere "
+        "drempel, en verschuift de man-vrouw- of herkomstverdeling daardoor?",
         "- Cohortanalyse: meerdere jaargangen vergelijken binnen een opleiding",
-        "- Effectgroottes (Cohen's d) naast p-waarden in de regressie",
         "- Interrater-analyse voor bestanden met meerdere beoordelaars",
         "- Meerdere selectiebestanden per opleiding ondersteunen",
         "",
