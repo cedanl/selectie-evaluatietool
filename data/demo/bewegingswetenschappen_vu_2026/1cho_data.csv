@@ -1,51 +1,79 @@
-studentnummer;selectiejaar;opleiding;instellingscode;groep;geslacht;herkomst;hoogste_vooropleiding;gem_eindcijfer_vo
-2006232;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;man;Nederland;VWO;5.64
-2009771;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;overig niet-westers;VWO;5.64
-2032467;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;man;overig niet-westers;VWO;7.17
-2045031;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;overig niet-westers;VWO;5.76
-2052402;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;man;Nederland;VWO;7.62
-2062173;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;man;Nederland;VWO;7.24
-2065227;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;man;Nederland;VWO;6.5
-2068744;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;man;Marokko;VWO;7.01
-2069097;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;Nederland;VWO;6.8
-2096812;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;vrouw;Nederland;HAVO + propedeuse;5.86
-2134281;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;man;overig niet-westers;VWO;5.75
-2185406;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;man;Nederland;VWO;7.88
-2205635;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;man;Nederland;VWO;7.95
-2217137;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;vrouw;Nederland;VWO;6.77
-2226951;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;vrouw;Nederland;VWO;7.17
-2245769;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;Nederland;VWO;6.59
-2258416;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;man;Marokko;VWO;6.67
-2264317;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;man;Nederland;VWO;7.22
-2327163;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;vrouw;Nederland;VWO;7.61
-2327285;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;Nederland;HAVO + propedeuse;6.63
-2347093;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;Nederland;VWO;6.67
-2394850;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;vrouw;Nederland;VWO;6.84
-2443236;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;Nederland;VWO;6.19
-2447184;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;Nederland;VWO;6.6
-2485439;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;man;Nederland;VWO;6.71
-2497075;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;man;Nederland;VWO;6.29
-2567246;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;vrouw;Nederland;VWO;6.19
-2588758;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;man;Nederland;VWO;6.52
-2603277;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;Suriname/Antillen;VWO;6.06
-2646073;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;man;Nederland;VWO;6.02
-2694478;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;vrouw;Nederland;Anders;6.93
-2713956;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;man;Nederland;VWO;6.85
-2720511;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;Nederland;VWO;7.22
-2750937;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;Nederland;VWO;6.98
-2770021;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;anders;Nederland;HAVO + propedeuse;6.13
-2815950;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;Nederland;VWO;6.8
-2838741;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;man;Nederland;HAVO + propedeuse;6.77
-2858136;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;man;Nederland;HAVO + propedeuse;6.08
-2896333;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;vrouw;Nederland;VWO;7.13
-2903466;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;Nederland;VWO;7.42
-2931332;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;Nederland;VWO;6.84
-2936407;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;vrouw;Nederland;HAVO + propedeuse;6.82
-2941851;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;man;Nederland;VWO;6.09
-2969442;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;man;westerse achtergrond;VWO;6.25
-2975408;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;man;overig niet-westers;HAVO + propedeuse;6.4
-2983737;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;man;Turkije;VWO;6.67
-2987500;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;vrouw;Nederland;HAVO + propedeuse;6.69
-2990596;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;vrouw;Nederland;VWO;7.35
-2991072;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Gestart, niet naar jaar 2;vrouw;Nederland;VWO;5.45
-2991877;2026;Bewegingswetenschappen;Vrije Universiteit Amsterdam;Doorgestroomd naar jaar 2;man;Nederland;VWO;6.57
+persoonsgebonden_nummer;inschrijvingsjaar;opleidingsvorm;eerste_jaar_aan_deze_opleiding_instelling;opleidingscode_naam_opleiding;opleiding;instellingscode;geslacht;herkomst;hoogste_vooropleiding_omschrijving_vooropleiding;gem_eindcijfer_vo
+2006232;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;5.64
+2009771;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;overig niet-westers;VWO;5.64
+2009771;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;overig niet-westers;VWO;5.64
+2032467;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;overig niet-westers;VWO;7.17
+2045031;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;overig niet-westers;VWO;5.76
+2045031;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;overig niet-westers;VWO;5.76
+2052402;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;7.62
+2062173;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;7.24
+2062173;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;7.24
+2065227;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;6.5
+2065227;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;6.5
+2068744;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Marokko;VWO;7.01
+2068744;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Marokko;VWO;7.01
+2069097;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.8
+2069097;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.8
+2096812;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;HAVO + propedeuse;5.86
+2134281;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;overig niet-westers;VWO;5.75
+2185406;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;7.88
+2185406;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;7.88
+2205635;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;7.95
+2217137;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.77
+2226951;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;7.17
+2245769;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.59
+2245769;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.59
+2258416;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Marokko;VWO;6.67
+2258416;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Marokko;VWO;6.67
+2264317;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;7.22
+2327163;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;7.61
+2327285;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;HAVO + propedeuse;6.63
+2327285;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;HAVO + propedeuse;6.63
+2347093;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.67
+2347093;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.67
+2394850;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.84
+2443236;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.19
+2443236;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.19
+2447184;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.6
+2447184;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.6
+2485439;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;6.71
+2485439;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;6.71
+2497075;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;6.29
+2567246;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.19
+2588758;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;6.52
+2588758;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;6.52
+2603277;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Suriname/Antillen;VWO;6.06
+2603277;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Suriname/Antillen;VWO;6.06
+2646073;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;6.02
+2646073;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;6.02
+2694478;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;Anders;6.93
+2713956;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;6.85
+2713956;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;6.85
+2720511;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;7.22
+2720511;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;7.22
+2750937;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.98
+2750937;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.98
+2770021;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;anders;Nederland;HAVO + propedeuse;6.13
+2770021;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;anders;Nederland;HAVO + propedeuse;6.13
+2815950;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.8
+2815950;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.8
+2838741;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;HAVO + propedeuse;6.77
+2858136;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;HAVO + propedeuse;6.08
+2858136;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;HAVO + propedeuse;6.08
+2896333;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;7.13
+2903466;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;7.42
+2903466;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;7.42
+2931332;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.84
+2931332;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;6.84
+2936407;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;HAVO + propedeuse;6.82
+2941851;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;6.09
+2969442;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;westerse achtergrond;VWO;6.25
+2975408;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;overig niet-westers;HAVO + propedeuse;6.4
+2975408;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;overig niet-westers;HAVO + propedeuse;6.4
+2983737;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Turkije;VWO;6.67
+2987500;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;HAVO + propedeuse;6.69
+2990596;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;7.35
+2990596;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;7.35
+2991072;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;vrouw;Nederland;VWO;5.45
+2991877;2026;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;6.57
+2991877;2027;voltijd;2026;Bewegingswetenschappen;Bewegingswetenschappen;Vrije Universiteit Amsterdam;man;Nederland;VWO;6.57

@@ -21,6 +21,7 @@ There are no tests. Verify changes by running the app and loading demo data.
 | `rapport.py` | ~1040 | PDF report generation. Uses fpdf2 + kaleido. Called from app.py download button. |
 | `config_wizard.py` | ~720 | Auto-detection of columns from uploaded Excel. Integrated into app.py via `registreer_callbacks`. |
 | `transformatie.py` | ~240 | File parsing, config reading, data validation, wide-to-long transformation. |
+| `cho_transform.py` | ~210 | Raw 1CHO handling. `transformeer_cho()` derives the doorstroom group from long-format enrollment rows; `bouw_ruwe_cho()` builds synthetic raw 1CHO for the data scripts. |
 | `shared.py` | ~27 | Shared constants and helpers used by both app.py and rapport.py. |
 
 ## Data flow
@@ -29,19 +30,22 @@ There are no tests. Verify changes by running the app and loading demo data.
 2. `transformatie.lees_config()` reads the config Excel (sheets: `instellingen`, `kolommen`)
 3. `transformatie.parse_selectiedata()` reads the selection Excel using config metadata (sheet name, header row)
 4. `transformatie.transformeer_naar_lang()` melts wide score columns into long format (`scores_df`)
-5. `app.koppel_data()` merges 1CHO data with pivoted scores, computes z-scores and totaalscore, assigns groups
-6. Both `df` (joined main data) and `scores_df` (long-format scores) are stored as JSON in `dcc.Store`
-7. Callbacks deserialize and filter per tab
+5. `cho_transform.transformeer_cho()` collapses the raw long-format 1CHO (one row per enrollment year) to one row per student and derives the doorstroom `groep`
+6. `app.koppel_data()` merges that derived 1CHO with pivoted scores, computes z-scores and totaalscore, and fills non-matches with "Niet gestart"
+7. Both `df` (joined main data) and `scores_df` (long-format scores) are stored as JSON in `dcc.Store`
+8. Callbacks deserialize and filter per tab
 
 ## The three groups
 
-Students are categorized based on 1CHO enrollment data:
+Raw 1CHO data has no ready-made group column. It is enrollment data in long format (one row per student per `inschrijvingsjaar`). `cho_transform.transformeer_cho()` derives the group, mirroring the no-fairness-without-awareness pipeline (`R/transform_ev_data.R`, the `any(inschrijvingsjaar == eerste_jaar_aan_deze_opleiding_instelling + 1)` retentie check):
 
-- **Niet gestart**: not in 1CHO at all. Either rejected or chose not to enroll.
-- **Gestart, niet naar jaar 2**: enrolled in year 1 but no year 2 record. Dropped out or switched.
-- **Doorgestroomd naar jaar 2**: enrolled in both year 1 and year 2. Successfully progressed.
+- **Niet gestart**: not in 1CHO at all. Either rejected or chose not to enroll. Assigned in `koppel_data()` as the fillna for non-matches, not in `transformeer_cho()`.
+- **Gestart, niet naar jaar 2**: has a first-year row but no enrollment row in `eerste_jaar + 1`.
+- **Doorgestroomd naar jaar 2**: has an enrollment row in the year after the first year.
 
 Regression and VO analyses use only the latter two groups (students who actually started), because there is no outcome data for the "niet gestart" group.
+
+The required raw 1CHO columns are `persoonsgebonden_nummer`, `inschrijvingsjaar`, and `eerste_jaar_aan_deze_opleiding_instelling` (see `cho_transform.RUWE_CHO_KOLOMMEN`). Optional passthrough columns: geslacht, herkomst, `hoogste_vooropleiding_omschrijving_vooropleiding` (shortened to VWO/HAVO/MBO/HO), gem_eindcijfer_vo.
 
 ## Dashboard tabs (app.py callbacks)
 
@@ -112,6 +116,7 @@ To test the full pipeline from a script:
 import base64, pandas as pd
 from pathlib import Path
 from transformatie import lees_config, parse_selectiedata, transformeer_naar_lang
+from cho_transform import transformeer_cho
 from app import koppel_data
 from rapport import genereer_rapport
 
@@ -119,7 +124,8 @@ demo = Path("data/demo/biomed_aumc_2026")
 uri = lambda p: f"data:application/octet-stream;base64,{base64.b64encode(p.read_bytes()).decode()}"
 config = lees_config(uri(demo / "config.xlsx"))
 scores_df = transformeer_naar_lang(parse_selectiedata(uri(demo / "selectiedata.xlsx"), config), config)
-df = koppel_data(pd.read_csv(demo / "1cho_data.csv", sep=";"), scores_df)
+cho_df = transformeer_cho(pd.read_csv(demo / "1cho_data.csv", sep=";"))
+df = koppel_data(cho_df, scores_df)
 pdf = genereer_rapport(df, scores_df)
 ```
 

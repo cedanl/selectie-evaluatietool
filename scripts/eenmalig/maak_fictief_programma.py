@@ -13,10 +13,17 @@ Draai:
     uv run python scripts/maak_fictief_programma.py
 """
 
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+# Eigen scriptmap en project root op het pad voor lokale imports.
+sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from cho_transform import bouw_ruwe_cho  # noqa: E402
+from update_configs import make_config  # noqa: E402
 
 RNG = np.random.default_rng(42)
 
@@ -402,11 +409,6 @@ with pd.ExcelWriter(xlsx_path, engine="openpyxl") as writer:
 print(f"Opgeslagen: {xlsx_path}")
 
 # ── Configuratiebestand ──────────────────────────────────────────────────────
-import sys
-
-sys.path.insert(0, str(Path(__file__).parent))
-from update_configs import make_config
-
 config_path = OUT_DIR / "config_BioMed_AUMC_2026.xlsx"
 make_config(
     str(config_path),
@@ -533,31 +535,25 @@ vooropleiding = RNG.choice(
 )
 vo_cijfers = np.clip(RNG.normal(7.2, 0.5, n_ingeschreven), 5.5, 9.5).round(1)
 
-groep = np.where(
-    doorstroomt,
-    "Doorgestroomd naar jaar 2",
-    "Gestart, niet naar jaar 2",
-)
-
-cho_df = pd.DataFrame(
-    {
-        "studentnummer": ingeschreven_ids,
-        "selectiejaar": JAAR,
-        "opleiding": OPLEIDING,
-        "instellingscode": INSTELLING,
-        "groep": groep,
-        "geslacht": geslacht,
-        "herkomst": herkomst,
-        "hoogste_vooropleiding": vooropleiding,
-        "gem_eindcijfer_vo": vo_cijfers,
-    }
+# Ruwe 1CHO in lang formaat: doorstromers krijgen een extra inschrijfrij voor
+# jaar 2. De groep wordt door de tool afgeleid, niet hier opgeslagen.
+cho_df = bouw_ruwe_cho(
+    ingeschreven_ids,
+    jaar=JAAR,
+    doorstroomt=doorstroomt,
+    opleiding=OPLEIDING,
+    instellingscode=INSTELLING,
+    geslacht=geslacht,
+    herkomst=herkomst,
+    vooropleiding_omschrijving=vooropleiding,
+    gem_eindcijfer_vo=vo_cijfers,
 )
 
 cho_path = OUT_DIR / "1cho_data_biomed_2026.csv"
 cho_df.to_csv(cho_path, index=False, sep=";")
 
 print(f"\n1CHO-data: {n_ingeschreven} ingeschreven van {N} kandidaten")
-print(f"Groepen: {dict(cho_df['groep'].value_counts())}")
+print(f"Doorgestroomd: {int(doorstroomt.sum())}, niet: {int((~doorstroomt).sum())}")
 print(f"Opgeslagen: {cho_path}")
 
 # ── Kopieer naar demo directory ──────────────────────────────────────────────

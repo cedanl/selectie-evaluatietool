@@ -26,6 +26,7 @@ from transformatie import (
     transformeer_naar_lang,
     valideer_config,
 )
+from cho_transform import ontbrekende_cho_kolommen, transformeer_cho
 from config_wizard import maak_wizard_layout, registreer_callbacks
 from rapport import genereer_rapport
 from shared import (
@@ -51,9 +52,6 @@ GROEP_XTICKLABELS = [
     "Gestart, niet<br>naar jaar 2",
     "Doorgestroomd<br>naar jaar 2",
 ]
-
-VERPLICHTE_CHO_KOLOMMEN = ["studentnummer", "selectiejaar", "groep"]
-
 
 # ── Dashboard helpers ─────────────────────────────────────────────────────────
 
@@ -500,11 +498,21 @@ app.layout = html.Div(
                                                                 ),
                                                                 html.Ul(
                                                                     [
-                                                                        html.Li("r < 0.10: verwaarloosbaar"),
-                                                                        html.Li("r = 0.10 - 0.30: zwak (items meten grotendeels iets anders)"),
-                                                                        html.Li("r = 0.30 - 0.50: matig (gedeelde variantie, maar ook unieke bijdrage)"),
-                                                                        html.Li("r = 0.50 - 0.70: sterk (substantiele overlap, vraag of beide items nodig zijn)"),
-                                                                        html.Li("r > 0.70: zeer sterk (items meten vrijwel hetzelfde construct)"),
+                                                                        html.Li(
+                                                                            "r < 0.10: verwaarloosbaar"
+                                                                        ),
+                                                                        html.Li(
+                                                                            "r = 0.10 - 0.30: zwak (items meten grotendeels iets anders)"
+                                                                        ),
+                                                                        html.Li(
+                                                                            "r = 0.30 - 0.50: matig (gedeelde variantie, maar ook unieke bijdrage)"
+                                                                        ),
+                                                                        html.Li(
+                                                                            "r = 0.50 - 0.70: sterk (substantiele overlap, vraag of beide items nodig zijn)"
+                                                                        ),
+                                                                        html.Li(
+                                                                            "r > 0.70: zeer sterk (items meten vrijwel hetzelfde construct)"
+                                                                        ),
                                                                     ],
                                                                     className="small text-muted mb-1",
                                                                 ),
@@ -983,10 +991,8 @@ def valideer_uploads(
                 scores_df = transformeer_naar_lang(
                     parse_selectiedata(sel, config), config
                 )
-                cho_df = parse_csv_or_excel(cho, cho_fn or "data.csv")
-                missing = [
-                    c for c in VERPLICHTE_CHO_KOLOMMEN if c not in cho_df.columns
-                ]
+                cho_ruw = parse_csv_or_excel(cho, cho_fn or "data.csv")
+                missing = ontbrekende_cho_kolommen(cho_ruw)
                 if missing:
                     cho_status = dbc.Alert(
                         f"Ontbrekende kolommen in 1CHO: {', '.join(missing)}",
@@ -994,6 +1000,8 @@ def valideer_uploads(
                         className="small py-1",
                     )
                     return sel_status, cfg_status, validatie, cho_status, True
+
+                cho_df = transformeer_cho(cho_ruw)
 
                 sel_ids = set(scores_df["studentnummer"].dropna().unique())
                 cho_ids = set(cho_df["studentnummer"].dropna().unique())
@@ -1078,7 +1086,9 @@ def laad_dashboard(
         scores_df = transformeer_naar_lang(
             parse_selectiedata(sel_contents, config), config
         )
-        cho_df = parse_csv_or_excel(cho_contents, cho_fn or "data.csv")
+        cho_df = transformeer_cho(
+            parse_csv_or_excel(cho_contents, cho_fn or "data.csv")
+        )
         joined = koppel_data(cho_df, scores_df)
         return (
             joined.to_json(orient="split", date_format="iso"),
@@ -1109,7 +1119,7 @@ def _laad_demodata(dataset_name=None):
     sel_contents = _file_to_data_uri(sel_path)
     sel_df = parse_selectiedata(sel_contents, config)
     scores_df = transformeer_naar_lang(sel_df, config)
-    cho_df = pd.read_csv(cho_path, sep=";")
+    cho_df = transformeer_cho(pd.read_csv(cho_path, sep=";"))
 
     joined = koppel_data(cho_df, scores_df)
 
@@ -1144,13 +1154,19 @@ def update_filters_on_data_change(store_data, scores_store):
     if df.empty:
         empty_opts = [{"label": "Alle", "value": "Alle"}]
         return (
-            empty_opts, "Alle",  # cohort
-            empty_opts, "Alle",  # geslacht
-            empty_opts, "Alle",  # vooropleiding
-            empty_opts, "Alle",  # samenhang-instrument
-            empty_opts, "Alle",  # samenhang-criterium
-            [], "totaalscore",   # vo-score
-            "",                  # subtitle
+            empty_opts,
+            "Alle",  # cohort
+            empty_opts,
+            "Alle",  # geslacht
+            empty_opts,
+            "Alle",  # vooropleiding
+            empty_opts,
+            "Alle",  # samenhang-instrument
+            empty_opts,
+            "Alle",  # samenhang-criterium
+            [],
+            "totaalscore",  # vo-score
+            "",  # subtitle
         )
 
     jaren = (
@@ -1274,8 +1290,14 @@ def update_score_filters(instrument_val, criterium_val, item_val, scores_store):
         if it in beschikbare_items
     ]
 
-    inst_valid = instrument_val if any(o["value"] == instrument_val for o in inst_opts) else "Alle"
-    crit_valid = criterium_val if any(o["value"] == criterium_val for o in crit_opts) else "Alle"
+    inst_valid = (
+        instrument_val
+        if any(o["value"] == instrument_val for o in inst_opts)
+        else "Alle"
+    )
+    crit_valid = (
+        criterium_val if any(o["value"] == criterium_val for o in crit_opts) else "Alle"
+    )
     item_valid = item_val if any(o["value"] == item_val for o in item_opts) else "Alle"
 
     return inst_opts, inst_valid, crit_opts, crit_valid, item_opts, item_valid
@@ -1904,8 +1926,16 @@ def update_samenhang_tab(
 
     # Verwijder kolommen waar >30% NaN is (optionele velden zoals keuzevakken)
     nan_pct = item_pivot_inschr.isna().mean()
-    verwijderd_nan = [c for c in all_score_cols if c in item_pivot_inschr.columns and nan_pct.get(c, 1) > 0.3]
-    bruikbare_cols = [c for c in all_score_cols if c in item_pivot_inschr.columns and nan_pct.get(c, 1) <= 0.3]
+    verwijderd_nan = [
+        c
+        for c in all_score_cols
+        if c in item_pivot_inschr.columns and nan_pct.get(c, 1) > 0.3
+    ]
+    bruikbare_cols = [
+        c
+        for c in all_score_cols
+        if c in item_pivot_inschr.columns and nan_pct.get(c, 1) <= 0.3
+    ]
 
     if len(bruikbare_cols) < 2:
         regressie_msg = dbc.Alert(
@@ -1936,6 +1966,7 @@ def update_samenhang_tab(
 
     # Verwijder kolommen met (bijna-)perfecte multicollineariteit
     from numpy.linalg import matrix_rank
+
     verwijderd_collinear = []
     while len(X.columns) > 1:
         rank = matrix_rank(X.values)
@@ -1955,12 +1986,15 @@ def update_samenhang_tab(
     verwijderd_epv = []
     if len(bruikbare_cols) > max_predictoren:
         import statsmodels.api as sm
+
         univariate_p = {}
         for col in bruikbare_cols:
             x_col = X[[col]].astype(float)
             x_col = (x_col - x_col.mean()) / x_col.std().replace(0, 1)
             try:
-                m = sm.Logit(y.astype(float), sm.add_constant(x_col)).fit(disp=0, maxiter=50)
+                m = sm.Logit(y.astype(float), sm.add_constant(x_col)).fit(
+                    disp=0, maxiter=50
+                )
                 univariate_p[col] = m.pvalues.iloc[-1]
             except Exception:
                 univariate_p[col] = 1.0
@@ -1990,23 +2024,29 @@ def update_samenhang_tab(
         ]
         if verwijderd_nan:
             msg_parts.append(html.Br())
-            msg_parts.append(html.Span(
-                f"Items niet meegenomen (>30% ontbrekend): {', '.join(verwijderd_nan)}",
-                className="small text-muted",
-            ))
+            msg_parts.append(
+                html.Span(
+                    f"Items niet meegenomen (>30% ontbrekend): {', '.join(verwijderd_nan)}",
+                    className="small text-muted",
+                )
+            )
         if verwijderd_collinear:
             msg_parts.append(html.Br())
-            msg_parts.append(html.Span(
-                f"Items niet meegenomen (overlap met andere items): {', '.join(verwijderd_collinear)}",
-                className="small text-muted",
-            ))
+            msg_parts.append(
+                html.Span(
+                    f"Items niet meegenomen (overlap met andere items): {', '.join(verwijderd_collinear)}",
+                    className="small text-muted",
+                )
+            )
         if verwijderd_epv:
             msg_parts.append(html.Br())
-            msg_parts.append(html.Span(
-                f"Items niet meegenomen (te weinig studenten voor {len(bruikbare_cols) + len(verwijderd_epv)} "
-                f"predictoren, beperkt tot {len(bruikbare_cols)} sterkste): {', '.join(verwijderd_epv)}",
-                className="small text-muted",
-            ))
+            msg_parts.append(
+                html.Span(
+                    f"Items niet meegenomen (te weinig studenten voor {len(bruikbare_cols) + len(verwijderd_epv)} "
+                    f"predictoren, beperkt tot {len(bruikbare_cols)} sterkste): {', '.join(verwijderd_epv)}",
+                    className="small text-muted",
+                )
+            )
         regressie_msg = html.Div(msg_parts)
 
         for item_naam in bruikbare_cols:

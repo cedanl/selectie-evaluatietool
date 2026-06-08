@@ -21,6 +21,10 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent))
 from update_configs import make_config
 
+# Project root op het pad zodat het gedeelde cho_transform-module importeert.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from cho_transform import bouw_ruwe_cho  # noqa: E402
+
 RNG = np.random.default_rng(7777)
 
 OUT_DIR = Path("data/fictief")
@@ -49,13 +53,22 @@ kernvakken = {
 }
 
 keuzevakken_pool = [
-    "Nederlands", "Engels", "Natuurkunde", "Aardrijkskunde",
-    "Economie", "Geschiedenis", "Maatschappijleer",
-    "Lichamelijke Opvoeding", "Informatica", "Frans",
+    "Nederlands",
+    "Engels",
+    "Natuurkunde",
+    "Aardrijkskunde",
+    "Economie",
+    "Geschiedenis",
+    "Maatschappijleer",
+    "Lichamelijke Opvoeding",
+    "Informatica",
+    "Frans",
 ]
+
 
 def cijfer_naar_punten(cijfer):
     return clip_round((cijfer - 4.0) / 1.2, 0, 5)
+
 
 kolommen = {}
 kolom_volgorde = []
@@ -68,9 +81,9 @@ for vak, params in kernvakken.items():
     kolommen[f"{afk} SCORE"] = punten
     kolom_volgorde.extend([f"{afk} CIJF", f"{afk} SCORE"])
 
-kern_scores = np.column_stack([
-    kolommen[f"{vak[:3].upper()} SCORE"] for vak in kernvakken
-])
+kern_scores = np.column_stack(
+    [kolommen[f"{vak[:3].upper()} SCORE"] for vak in kernvakken]
+)
 kolommen["BIO+SCH+WIS (0-5)"] = kern_scores.mean(axis=1).round(2)
 kolom_volgorde.append("BIO+SCH+WIS (0-5)")
 
@@ -139,9 +152,9 @@ sport_totaal = ((sport_coordinatie + sport_uithoudingsvermogen) / 2).round(2)
 kolommen["Coordinatie (1-10)"] = sport_coordinatie
 kolommen["Uithoudingsvermogen (1-10)"] = sport_uithoudingsvermogen
 kolommen["Sport totaal (1-10)"] = sport_totaal
-kolom_volgorde.extend([
-    "Coordinatie (1-10)", "Uithoudingsvermogen (1-10)", "Sport totaal (1-10)"
-])
+kolom_volgorde.extend(
+    ["Coordinatie (1-10)", "Uithoudingsvermogen (1-10)", "Sport totaal (1-10)"]
+)
 
 # ── Deelscores en totaalscore ────────────────────────────────────────────────
 diploma_pct = (kolommen["BIO+SCH+WIS (0-5)"] / 5 * 100).round(1)
@@ -229,9 +242,19 @@ make_config(
     ],
     [
         ["BIO SCORE", "Schooldiploma", "Biologie puntenscore", "Vakkennis biologie"],
-        ["SCH SCORE", "Schooldiploma", "Scheikunde puntenscore", "Vakkennis scheikunde"],
+        [
+            "SCH SCORE",
+            "Schooldiploma",
+            "Scheikunde puntenscore",
+            "Vakkennis scheikunde",
+        ],
         ["WIS SCORE", "Schooldiploma", "Wiskunde A puntenscore", "Vakkennis wiskunde"],
-        ["BIO+SCH+WIS (0-5)", "Schooldiploma", "Gemiddelde kernvakken (0-5)", "Profielsterkheid"],
+        [
+            "BIO+SCH+WIS (0-5)",
+            "Schooldiploma",
+            "Gemiddelde kernvakken (0-5)",
+            "Profielsterkheid",
+        ],
         ["K1 SCORE", "Schooldiploma keuzevak", "Keuzevak 1 puntenscore", ""],
         ["K2 SCORE", "Schooldiploma keuzevak", "Keuzevak 2 puntenscore", ""],
         ["K3 SCORE", "Schooldiploma keuzevak", "Keuzevak 3 puntenscore", ""],
@@ -239,9 +262,24 @@ make_config(
         ["K5 SCORE", "Schooldiploma keuzevak", "Keuzevak 5 puntenscore", ""],
         ["K6 SCORE", "Schooldiploma keuzevak", "Keuzevak 6 puntenscore", ""],
         ["Keuzevakken gem (0-5)", "Deelscore", "Gemiddelde keuzevakken (0-5)", ""],
-        ["Motivatie score (1-5)", "Motivatievragenlijst", "Motivatiescore (1-5)", "Studiemotivatie"],
-        ["Coordinatie (1-10)", "Sportvaardigheden", "Coordinatie (1-10)", "Motorische vaardigheden"],
-        ["Uithoudingsvermogen (1-10)", "Sportvaardigheden", "Uithoudingsvermogen (1-10)", "Fysieke fitheid"],
+        [
+            "Motivatie score (1-5)",
+            "Motivatievragenlijst",
+            "Motivatiescore (1-5)",
+            "Studiemotivatie",
+        ],
+        [
+            "Coordinatie (1-10)",
+            "Sportvaardigheden",
+            "Coordinatie (1-10)",
+            "Motorische vaardigheden",
+        ],
+        [
+            "Uithoudingsvermogen (1-10)",
+            "Sportvaardigheden",
+            "Uithoudingsvermogen (1-10)",
+            "Fysieke fitheid",
+        ],
         ["Sport totaal (1-10)", "Sportvaardigheden", "Sport totaal (1-10)", ""],
         ["Diploma %", "Deelscore", "Diploma percentage", ""],
         ["Motivatie %", "Deelscore", "Motivatie percentage", ""],
@@ -256,7 +294,7 @@ ingeschreven_ids = studentnummers[ingeschreven_mask]
 ingeschreven_totaal = totaal_pct[ingeschreven_mask]
 n_ingeschreven = len(ingeschreven_ids)
 
-totaal_z = (ingeschreven_totaal - ingeschreven_totaal.mean())
+totaal_z = ingeschreven_totaal - ingeschreven_totaal.mean()
 if ingeschreven_totaal.std() > 0:
     totaal_z = totaal_z / ingeschreven_totaal.std()
 else:
@@ -265,10 +303,18 @@ else:
 doorstroom_kans = 1 / (1 + np.exp(-(0.1 + 0.5 * totaal_z)))
 doorstroomt = RNG.random(n_ingeschreven) < doorstroom_kans
 
-geslacht = RNG.choice(["vrouw", "man", "anders"], size=n_ingeschreven, p=[0.55, 0.42, 0.03])
+geslacht = RNG.choice(
+    ["vrouw", "man", "anders"], size=n_ingeschreven, p=[0.55, 0.42, 0.03]
+)
 herkomst = RNG.choice(
-    ["Nederland", "westerse achtergrond", "Marokko", "Turkije",
-     "Suriname/Antillen", "overig niet-westers"],
+    [
+        "Nederland",
+        "westerse achtergrond",
+        "Marokko",
+        "Turkije",
+        "Suriname/Antillen",
+        "overig niet-westers",
+    ],
     size=n_ingeschreven,
     p=[0.74, 0.07, 0.04, 0.03, 0.05, 0.07],
 )
@@ -279,25 +325,25 @@ vooropleiding = RNG.choice(
 )
 vo_cijfers = clip_round(RNG.normal(6.7, 0.55, n_ingeschreven), 5.0, 9.5)
 
-groep = np.where(doorstroomt, "Doorgestroomd naar jaar 2", "Gestart, niet naar jaar 2")
-
-cho_df = pd.DataFrame({
-    "studentnummer": ingeschreven_ids,
-    "selectiejaar": JAAR,
-    "opleiding": OPLEIDING,
-    "instellingscode": INSTELLING,
-    "groep": groep,
-    "geslacht": geslacht,
-    "herkomst": herkomst,
-    "hoogste_vooropleiding": vooropleiding,
-    "gem_eindcijfer_vo": vo_cijfers,
-})
+# Ruwe 1CHO in lang formaat: doorstromers krijgen een extra inschrijfrij voor
+# jaar 2. De groep wordt door de tool afgeleid, niet hier opgeslagen.
+cho_df = bouw_ruwe_cho(
+    ingeschreven_ids,
+    jaar=JAAR,
+    doorstroomt=doorstroomt,
+    opleiding=OPLEIDING,
+    instellingscode=INSTELLING,
+    geslacht=geslacht,
+    herkomst=herkomst,
+    vooropleiding_omschrijving=vooropleiding,
+    gem_eindcijfer_vo=vo_cijfers,
+)
 
 cho_path = OUT_DIR / "1cho_data_bewegingswetenschappen_2026.csv"
 cho_df.to_csv(cho_path, index=False, sep=";")
 
 print(f"\n1CHO-data: {n_ingeschreven} ingeschreven van {N} kandidaten")
-print(f"Groepen: {dict(cho_df['groep'].value_counts())}")
+print(f"Doorgestroomd: {int(doorstroomt.sum())}, niet: {int((~doorstroomt).sum())}")
 
 # ── Kopieer naar demo ────────────────────────────────────────────────────────
 demo_subdir = Path("data/demo/bewegingswetenschappen_vu_2026")

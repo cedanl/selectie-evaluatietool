@@ -11,10 +11,15 @@ Draai eenmalig:
 """
 
 import shutil
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+# Project root op het pad zodat het gedeelde cho_transform-module importeert.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from cho_transform import bouw_ruwe_cho  # noqa: E402
 
 RNG = np.random.default_rng(2026)
 
@@ -146,27 +151,19 @@ def genereer_1cho(dataset_cfg, studentnummers, totaalscores):
     doorstroom_kans = logistic(-0.2 + 0.5 * totaal_z)
     doorstroomt = RNG.random(n) < doorstroom_kans
 
-    groep = np.where(
-        doorstroomt,
-        "Doorgestroomd naar jaar 2",
-        "Gestart, niet naar jaar 2",
+    # Lever ruwe 1CHO-inschrijvingen in lang formaat: de doorstroomgroep zit
+    # niet als kolom in de data maar wordt later afgeleid uit de inschrijfjaren.
+    return bouw_ruwe_cho(
+        studentnummers,
+        jaar=dataset_cfg["jaar"],
+        doorstroomt=doorstroomt,
+        opleiding=dataset_cfg["opleiding"],
+        instellingscode=dataset_cfg["instellingscode"],
+        geslacht=geslacht,
+        herkomst=herkomst,
+        vooropleiding_omschrijving=vooropl,
+        gem_eindcijfer_vo=vo_cijfers,
     )
-
-    studie_df = pd.DataFrame(
-        {
-            "studentnummer": studentnummers,
-            "selectiejaar": dataset_cfg["jaar"],
-            "opleiding": dataset_cfg["opleiding"],
-            "instellingscode": dataset_cfg["instellingscode"],
-            "groep": groep,
-            "geslacht": geslacht,
-            "herkomst": herkomst,
-            "hoogste_vooropleiding": vooropl,
-            "gem_eindcijfer_vo": vo_cijfers,
-        }
-    )
-
-    return studie_df
 
 
 def verwerk_dataset(cfg):
@@ -230,8 +227,12 @@ def verwerk_dataset(cfg):
 
     studie_df.to_csv(demo_subdir / "1cho_data.csv", index=False, sep=";")
 
+    n_doorgestroomd = int((studie_df["inschrijvingsjaar"] == cfg["jaar"] + 1).sum())
     print(f"  {naam}: {n_total} kandidaten, {n_ingeschreven} in 1CHO")
-    print(f"    Groepen: {studie_df['groep'].value_counts().to_dict()}")
+    print(
+        f"    Doorgestroomd: {n_doorgestroomd}, "
+        f"niet doorgestroomd: {n_ingeschreven - n_doorgestroomd}"
+    )
     print(f"    Bestanden in {demo_subdir}/")
 
 
