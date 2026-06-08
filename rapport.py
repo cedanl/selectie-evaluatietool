@@ -27,6 +27,7 @@ from shared import (
     shorten_item,
     schaal_grenzen,
     bucket_per_item,
+    meta_per_item,
     grenzen_van_label,
     sig_sym,
     fmt_p,
@@ -44,6 +45,12 @@ GRAY = (120, 120, 120)
 LIGHT_BG = (245, 245, 245)
 WHITE = (255, 255, 255)
 ACCENT = (41, 128, 185)
+
+
+def _hex_to_rgb(hex_kleur: str) -> tuple[int, int, int]:
+    """Zet een '#rrggbb' kleur om naar een (r, g, b)-tuple voor fpdf."""
+    h = hex_kleur.lstrip("#")
+    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
 
 
 def _fig_to_bytes(fig, width=900, height=500) -> bytes:
@@ -182,6 +189,25 @@ class RapportPDF(FPDF):
         self.set_text_color(*DARK)
         self.multi_cell(0, 5, text)
         self.ln(2)
+
+    def groep_header(self, groep: str, n: int) -> None:
+        """Gekleurde kop boven een groepstabel, met het kandidaataantal erbij.
+
+        Het kleurvlakje gebruikt dezelfde groepskleur als de grafieken, zodat
+        de tabellen visueel aansluiten op de boxplots. Houdt de kop bij elkaar
+        met de eerste tabelregels door bij weinig ruimte een pagina te breken.
+        """
+        if self.get_y() > 225:
+            self.add_page()
+        self.ln(2)
+        y = self.get_y()
+        self.set_fill_color(*_hex_to_rgb(GROEP_KLEUREN.get(groep, "#94a3b8")))
+        self.rect(10, y + 0.5, 4, 5, style="F")
+        self.set_xy(16, y)
+        self.set_font("Helvetica", "B", 11)
+        self.set_text_color(*DARK)
+        self.cell(0, 6, f"{groep} ({n} kandidaten):", new_x="LMARGIN", new_y="NEXT")
+        self.ln(1)
 
     def add_image_from_bytes(self, img_bytes: bytes, w=180):
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
@@ -657,9 +683,11 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
 
     gem_tabel = (
         scores_met_groep.groupby(["groep", "item_kort"], observed=True)["score"]
-        .agg(["mean", "std", "count"])
+        .agg(["mean", "std"])
         .round(2)
         .reset_index()
+        .merge(meta_per_item(scores_met_groep), on="item_kort", how="left")
+        .sort_values(["groep", "instrument", "criterium", "item_kort"])
     )
 
     reg_rows, pseudo_r2, reg_text = _run_regression(df, item_pivot, score_cols)
@@ -748,13 +776,20 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
             f"en hebben in het cohortjaar hun diploma gehaald. Dat geldt als succes."
         )
 
-    pdf.subsection_title("Waarom kijken we soms alleen naar twee groepen?")
+    succes_omschrijving = (
+        "studenten met een positieve uitkomst (doorgestroomd naar jaar 2 of "
+        "diploma gehaald)"
+        if n_diploma > 0
+        else "studenten die doorstroomden naar jaar 2"
+    )
+    pdf.subsection_title("Waarom kijken we soms alleen naar gestarte studenten?")
     pdf.body_text(
-        "Bij sommige analyses in dit rapport (zoals de regressie en het "
-        "VO-eindcijfer) gebruiken we alleen de studenten die daadwerkelijk "
-        "begonnen zijn aan de opleiding. We vergelijken dan alleen groep 2 "
-        "(gestart, niet naar jaar 2) met groep 3 (doorgestroomd naar jaar 2). "
-        "Groep 1 (niet gestart) laten we in die gevallen buiten beschouwing."
+        "Bij sommige analyses in dit rapport (zoals de verschiltoets, de "
+        "regressie en het VO-eindcijfer) gebruiken we alleen de studenten die "
+        "daadwerkelijk begonnen zijn aan de opleiding. We vergelijken dan twee "
+        f"groepen: {succes_omschrijving} tegenover studenten die wel begonnen "
+        "maar zijn uitgevallen (gestart, niet naar jaar 2). De niet-gestarte "
+        "kandidaten laten we in die gevallen buiten beschouwing."
     )
     pdf.body_text(
         "De reden is dat we voor de niet-gestarte kandidaten geen "
@@ -766,7 +801,7 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
     )
     pdf.body_text(
         "Bij de selectiescores (boxplots) en demografische gegevens laten we "
-        "alle drie de groepen wel zien, zodat je het volledige plaatje hebt."
+        "alle groepen wel zien, zodat je het volledige plaatje hebt."
     )
 
     # Section 2: Dataset overview
@@ -842,27 +877,32 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
 
     pdf.subsection_title("Gemiddelden per groep")
     pdf.body_text(
-        "De tabel hieronder toont het gemiddelde (Gem.), de standaarddeviatie "
-        "(SD) en het aantal kandidaten (n) per groep per item. De "
-        "standaarddeviatie geeft aan hoe verspreid de scores zijn: een hoge SD "
-        "betekent dat de scores ver uit elkaar liggen."
+        "Per groep staat hieronder het gemiddelde (Gem.) en de standaarddeviatie "
+        "(SD) per item, met het instrument en criterium waar het item bij hoort. "
+        "De standaarddeviatie geeft aan hoe verspreid de scores zijn: een hoge SD "
+        "betekent dat de scores ver uit elkaar liggen. Het aantal kandidaten "
+        "staat bij de groepsnaam."
     )
-    gem_rows = []
-    for _, r in gem_tabel.iterrows():
-        gem_rows.append(
+    for groep in GROEP_VOLGORDE:
+        sub = gem_tabel[gem_tabel["groep"] == groep]
+        if sub.empty:
+            continue
+        pdf.groep_header(groep, n_per_groep[groep])
+        groep_rows = [
             [
-                str(r["groep"]),
+                str(r["instrument"]),
+                str(r["criterium"]),
                 str(r["item_kort"]),
                 str(r["mean"]),
                 str(r["std"]) if pd.notna(r["std"]) else "-",
-                str(int(r["count"])),
             ]
+            for _, r in sub.iterrows()
+        ]
+        pdf.add_data_table(
+            ["Instrument", "Criterium", "Item", "Gem.", "SD"],
+            groep_rows,
+            col_widths=[55, 50, 45, 20, 20],
         )
-    pdf.add_data_table(
-        ["Groep", "Item", "Gem.", "SD", "n"],
-        gem_rows,
-        col_widths=[65, 55, 25, 25, 20],
-    )
 
     pdf.subsection_title("Verschiltoets: scoren succesvolle studenten hoger?")
     pdf.body_text(
@@ -933,22 +973,28 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
     else:
         pdf.body_text("[Correlatiematrix kon niet worden gegenereerd]")
 
+    uitkomst_label = (
+        "studiesucces (doorstroom naar jaar 2 of diploma)"
+        if n_diploma > 0
+        else "doorstroom naar jaar 2"
+    )
+    uitkomst_kort = "studiesucces" if n_diploma > 0 else "doorstroom"
     pdf.subsection_title("Logistische regressie")
     pdf.body_text(
-        "Met logistische regressie kijken we welke selectie-items de "
-        "doorstroom naar jaar 2 het beste voorspellen. De analyse houdt "
+        f"Met logistische regressie kijken we welke selectie-items {uitkomst_label} "
+        "het beste voorspellen. De analyse houdt "
         "rekening met alle items tegelijk, zodat je kunt zien welk item een "
         "eigen bijdrage levert bovenop de andere items."
     )
     pdf.body_text(
         "Let op: voor deze analyse gebruiken we alleen de studenten die "
-        "daadwerkelijk begonnen zijn (groep 2 en 3). De niet-gestarte "
-        "kandidaten (groep 1) zitten hier niet in, omdat we voor hen geen "
+        "daadwerkelijk begonnen zijn aan de opleiding. De niet-gestarte "
+        "kandidaten zitten hier niet in, omdat we voor hen geen "
         "studiesuccesgegevens hebben."
     )
     pdf.body_text(
         "In de tabel hieronder staat per item de coefficient (hoe sterk het "
-        "effect is), de odds ratio (hoeveel keer groter de kans op doorstroom "
+        f"effect is), de odds ratio (hoeveel keer groter de kans op {uitkomst_kort} "
         "wordt per standaarddeviatie stijging), de p-waarde (hoe zeker we zijn "
         "dat het effect echt is) en de significantie. Een p-waarde kleiner dan "
         "0.05 geldt als statistisch significant. Drie sterretjes (***) betekent "
@@ -960,14 +1006,14 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
         "zijn de coefficienten en odds ratios vergelijkbaar tussen items met "
         "verschillende schalen. Een odds ratio van 2.0 betekent: als de score "
         "op dit item een standaarddeviatie hoger is, verdubbelt de kans op "
-        "doorstroom."
+        f"{uitkomst_kort}."
     )
     pdf.body_text(
         "Bij weinig studenten kan het model niet alle items tegelijk betrouwbaar "
         "schatten. Als vuistregel zijn er minimaal 5 studenten in de kleinste "
         "groep nodig per item in het model. Bij minder selecteert de tool "
         "automatisch de items die individueel het sterkst samenhangen met "
-        "doorstroom. De overige items worden niet meegenomen en staan vermeld "
+        f"{uitkomst_kort}. De overige items worden niet meegenomen en staan vermeld "
         "in de samenvatting hieronder."
     )
     if reg_text:
@@ -1133,15 +1179,15 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
         ns_items = [r[0] for r in reg_rows if r[4] == "ns"]
         if sig_items:
             bullets.append(
-                f"Significante voorspellers van doorstroom: {', '.join(sig_items)}. "
-                f"Dit zijn de items die een statistisch aantoonbaar verband "
-                f"hebben met doorstroom naar jaar 2."
+                f"Significante voorspellers van {uitkomst_kort}: {', '.join(sig_items)}. "
+                "Dit zijn de items die een statistisch aantoonbaar verband "
+                f"hebben met {uitkomst_kort}."
             )
         if ns_items:
             bullets.append(
                 f"Geen significante bijdrage: {', '.join(ns_items)}. "
                 f"Deze items hebben geen statistisch aantoonbaar verband met "
-                f"doorstroom, rekening houdend met de andere items."
+                f"{uitkomst_kort}, rekening houdend met de andere items."
             )
         if pseudo_r2 is not None:
             if pseudo_r2 < 0.05:
@@ -1155,8 +1201,8 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
             bullets.append(
                 f"Het regressiemodel heeft {kracht} voorspellende kracht "
                 f"(pseudo R-kwadraat = {pseudo_r2}). Hoe hoger dit getal "
-                f"(maximaal 1.0), hoe beter de selectie-items samen de "
-                f"doorstroom voorspellen."
+                f"(maximaal 1.0), hoe beter de selectie-items samen "
+                f"{uitkomst_kort} voorspellen."
             )
 
     if has_vo and cor_rows:

@@ -98,6 +98,18 @@ def grenzen_van_label(label: str) -> tuple[float, float] | None:
         return None
 
 
+def meta_per_item(scores_df: pd.DataFrame) -> pd.DataFrame:
+    """Eén rij per item met het bijbehorende instrument en criterium.
+
+    Eén bron voor zowel het dashboard als het PDF-rapport, zodat de
+    instrument/criterium-labels bij een item niet tussen beide uiteen lopen.
+    Verwacht de verkorte itemnaam in de kolom ``item_kort``.
+    """
+    return scores_df.drop_duplicates("item_kort")[
+        ["item_kort", "instrument", "criterium"]
+    ]
+
+
 def bucket_per_item(scores_df: pd.DataFrame) -> pd.Series:
     """Schaal-label per item, afgeleid uit de volledige score-verdeling.
 

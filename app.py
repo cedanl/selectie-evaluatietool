@@ -38,6 +38,7 @@ from shared import (
     shorten_item,
     schaal_grenzen,
     bucket_per_item,
+    meta_per_item,
     grenzen_van_label,
     sig_sym,
     fmt_p,
@@ -1643,26 +1644,29 @@ def update_scores_tab(
         if grenzen is not None:
             fig.update_yaxes(range=list(grenzen))
 
-    criterium_map = dict(
-        scores.drop_duplicates("item_kort")[["item_kort", "criterium"]].values
-    )
     tabel_pivot = (
         scores.groupby(["groep", "item_kort"], observed=True)["score"]
         .agg(["mean", "std"])
         .round(2)
         .reset_index()
+        .merge(meta_per_item(scores), on="item_kort", how="left")
     )
-    tabel_pivot["criterium"] = tabel_pivot["item_kort"].map(criterium_map).fillna("")
+    tabel_pivot[["instrument", "criterium"]] = tabel_pivot[
+        ["instrument", "criterium"]
+    ].fillna("")
     tabel_pivot = tabel_pivot.rename(
         columns={
             "item_kort": "Item",
             "mean": "Gem.",
             "std": "SD",
             "groep": "Groep",
+            "instrument": "Instrument",
             "criterium": "Criterium",
         }
     )
-    tabel_pivot = tabel_pivot[["Groep", "Item", "Criterium", "Gem.", "SD"]]
+    tabel_pivot = tabel_pivot[
+        ["Groep", "Instrument", "Criterium", "Item", "Gem.", "SD"]
+    ]
     gem_data = tabel_pivot.to_dict("records")
     gem_cols = [{"name": c, "id": c} for c in tabel_pivot.columns]
 
