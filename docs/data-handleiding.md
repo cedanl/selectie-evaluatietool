@@ -122,6 +122,7 @@ hieronder).
 | `herkomst` | Etnische of culturele achtergrond | Nederlands |
 | `hoogste_vooropleiding_omschrijving_vooropleiding` | Vooropleiding voor de studie (1CHO-omschrijving) | vwo profiel natuur/gezondheid |
 | `gem_eindcijfer_vo` | Gemiddeld eindexamencijfer | 7.3 |
+| `diploma_behaald` | Of de student in het cohortjaar een diploma haalde (voor eenjarige opleidingen) | True |
 
 Deze kolommen zijn niet verplicht, maar als ze aanwezig zijn kun je in het
 dashboard filteren op geslacht en vooropleiding, en zie je extra grafieken
@@ -135,10 +136,18 @@ van drie groepen in:
 
 - `Doorgestroomd naar jaar 2` - er is een inschrijfrij in het jaar na het
   eerste studiejaar (`eerste_jaar_aan_deze_opleiding_instelling + 1`).
+- `Gestart, diploma gehaald` - er is geen vervolgjaar, maar de student haalde
+  in het cohortjaar wel een diploma (kolom `diploma_behaald`). Dit is bedoeld
+  voor eenjarige opleidingen zoals een master, waar geen jaar 2 bestaat en
+  succes dus het diploma is.
 - `Gestart, niet naar jaar 2` - wel een rij in het eerste jaar, maar geen
-  vervolgrij in jaar 2.
+  vervolgrij in jaar 2 en geen diploma.
 - `Niet gestart` - de kandidaat staat wel in de selectiedata maar komt niet
   voor in de 1CHO-data.
+
+Doorstroom naar jaar 2 weegt het zwaarst, daarna telt een diploma in het
+eerste jaar als succes. Bevat je 1CHO-data geen `diploma_behaald`-kolom, dan
+ontstaan alleen de groepen rond doorstroom naar jaar 2.
 
 Een voorbeeld. Hieronder staan drie kandidaten:
 

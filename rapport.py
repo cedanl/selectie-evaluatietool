@@ -20,6 +20,9 @@ from fpdf import FPDF
 from shared import (
     GROEP_VOLGORDE,
     GROEP_KLEUREN,
+    GROEP_INGESCHREVEN,
+    GROEP_SUCCES,
+    GROEP_DIPLOMA,
     CHART_BASE,
     shorten_item,
     sig_sym,
@@ -328,11 +331,7 @@ def _build_figures(
     if has_vo:
         try:
             df_vo = df[df["gem_eindcijfer_vo"].notna()]
-            inschr_vo = df_vo[
-                df_vo["groep"].isin(
-                    ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]
-                )
-            ]
+            inschr_vo = df_vo[df_vo["groep"].isin(GROEP_INGESCHREVEN)]
             if "totaalscore" in inschr_vo.columns and len(inschr_vo) >= 5:
                 fig_vo = px.scatter(
                     inschr_vo,
@@ -467,9 +466,7 @@ def _build_demo_figures(
 def _run_regression(
     df: pd.DataFrame, item_pivot: pd.DataFrame, score_cols: list[str]
 ) -> tuple[list[list[str]], float | None, str | None]:
-    ingeschreven = df[
-        df["groep"].isin(["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"])
-    ].copy()
+    ingeschreven = df[df["groep"].isin(GROEP_INGESCHREVEN)].copy()
 
     reg_rows = []
     pseudo_r2 = None
@@ -481,9 +478,7 @@ def _run_regression(
         )
         return reg_rows, pseudo_r2, reg_text
 
-    ingeschreven["doorgestroomd"] = (
-        ingeschreven["groep"] == "Doorgestroomd naar jaar 2"
-    ).astype(int)
+    ingeschreven["doorgestroomd"] = ingeschreven["groep"].isin(GROEP_SUCCES).astype(int)
 
     item_pivot_inschr = item_pivot.loc[
         item_pivot.index.isin(ingeschreven["studentnummer"])
@@ -514,6 +509,7 @@ def _run_regression(
     X = item_pivot_inschr[bruikbare_cols]
 
     from numpy.linalg import matrix_rank
+
     verwijderd_collinear = []
     while len(X.columns) > 1:
         rank = matrix_rank(X.values)
@@ -532,12 +528,15 @@ def _run_regression(
     verwijderd_epv = []
     if len(bruikbare_cols) > max_predictoren:
         import statsmodels.api as sm
+
         univariate_p = {}
         for col in bruikbare_cols:
             x_col = X[[col]].astype(float)
             x_col = (x_col - x_col.mean()) / x_col.std().replace(0, 1)
             try:
-                m = sm.Logit(y.astype(float), sm.add_constant(x_col)).fit(disp=0, maxiter=50)
+                m = sm.Logit(y.astype(float), sm.add_constant(x_col)).fit(
+                    disp=0, maxiter=50
+                )
                 univariate_p[col] = m.pvalues.iloc[-1]
             except Exception:
                 univariate_p[col] = 1.0
@@ -563,9 +562,7 @@ def _run_regression(
             f"Pseudo R-kwadraat = {pseudo_r2}."
         )
         if verwijderd_nan:
-            reg_text += (
-                f" Items niet meegenomen (>30% ontbrekend): {', '.join(verwijderd_nan)}."
-            )
+            reg_text += f" Items niet meegenomen (>30% ontbrekend): {', '.join(verwijderd_nan)}."
         if verwijderd_collinear:
             reg_text += (
                 f" Items niet meegenomen (overlap met andere items): "
@@ -692,17 +689,18 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
     n_door = n_per_groep.get("Doorgestroomd naar jaar 2", 0)
     n_uitval = n_per_groep.get("Gestart, niet naar jaar 2", 0)
     n_niet = n_per_groep.get("Niet gestart", 0)
+    n_diploma = n_per_groep.get(GROEP_DIPLOMA, 0)
     total = len(df)
 
     pdf.body_text(
         f"Dit rapport evalueert de selectieprocedure van {opleiding} "
         f"voor selectiejaar {jaar}. Het doel is om te bekijken of de selectie "
         f"goed voorspelt welke studenten het eerste jaar succesvol afronden. "
-        f"Met andere woorden: scoren studenten die uiteindelijk doorstromen "
+        f"Met andere woorden: scoren studenten die uiteindelijk slagen "
         f"ook hoger bij de selectie dan studenten die stoppen?"
     )
 
-    pdf.body_text(f"De data bevat {total} kandidaten, verdeeld over drie groepen:")
+    pdf.body_text(f"De data bevat {total} kandidaten, verdeeld over deze groepen:")
 
     pdf.body_text(
         f"  1. Niet gestart ({n_niet} kandidaten): deze personen staan niet in "
@@ -719,6 +717,12 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
         f"zijn begonnen en hebben het eerste jaar succesvol doorlopen. Ze hebben "
         f"zowel een jaar 1 als een jaar 2 inschrijving in 1CHO."
     )
+    if n_diploma > 0:
+        pdf.body_text(
+            f"  4. Gestart, diploma gehaald ({n_diploma} studenten): bij een "
+            f"eenjarige opleiding is er geen jaar 2. Deze studenten zijn begonnen "
+            f"en hebben in het cohortjaar hun diploma gehaald. Dat geldt als succes."
+        )
 
     pdf.subsection_title("Waarom kijken we soms alleen naar twee groepen?")
     pdf.body_text(
@@ -1050,11 +1054,12 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
     bullets = []
 
     if total > 0:
+        n_succes = n_door + n_diploma
         bullets.append(
-            f"Van de {total} kandidaten zijn er {n_door} doorgestroomd naar jaar 2 "
-            f"({n_door / total * 100:.0f}%), {n_uitval} gestart maar niet doorgestroomd "
-            f"({n_uitval / total * 100:.0f}%), en {n_niet} niet gestart "
-            f"({n_niet / total * 100:.0f}%)."
+            f"Van de {total} kandidaten zijn er {n_succes} succesvol "
+            f"(doorgestroomd of diploma, {n_succes / total * 100:.0f}%), "
+            f"{n_uitval} gestart maar gestopt ({n_uitval / total * 100:.0f}%), "
+            f"en {n_niet} niet gestart ({n_niet / total * 100:.0f}%)."
         )
 
     if reg_rows:
@@ -1105,7 +1110,7 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
                 f"positief is voor de selectie."
             )
 
-    n_ingeschreven = n_door + n_uitval
+    n_ingeschreven = n_door + n_uitval + n_diploma
     if n_ingeschreven < 30:
         bullets.append(
             f"Let op: het aantal ingeschreven studenten is klein (n={n_ingeschreven}). "

@@ -148,15 +148,18 @@ def genereer_1cho(dataset_cfg, studentnummers, totaalscores):
         totaal_z = (totaal_arr - totaal_arr.mean()) / totaal_arr.std()
     else:
         totaal_z = np.zeros(n)
-    doorstroom_kans = logistic(-0.2 + 0.5 * totaal_z)
-    doorstroomt = RNG.random(n) < doorstroom_kans
+    succes_kans = logistic(-0.2 + 0.5 * totaal_z)
+    succes = RNG.random(n) < succes_kans
 
-    # Lever ruwe 1CHO-inschrijvingen in lang formaat: de doorstroomgroep zit
-    # niet als kolom in de data maar wordt later afgeleid uit de inschrijfjaren.
+    # Bij een master (eenjarig) is succes het diploma in het cohortjaar; bij een
+    # bachelor de doorstroom naar jaar 2. De uitkomstgroep zit niet als kolom in
+    # de data maar wordt later afgeleid uit de inschrijfjaren.
+    is_master = dataset_cfg.get("opleidingsfase") == "M"
     return bouw_ruwe_cho(
         studentnummers,
         jaar=dataset_cfg["jaar"],
-        doorstroomt=doorstroomt,
+        doorstroomt=None if is_master else succes,
+        diploma_behaald=succes if is_master else None,
         opleiding=dataset_cfg["opleiding"],
         instellingscode=dataset_cfg["instellingscode"],
         geslacht=geslacht,
@@ -227,12 +230,14 @@ def verwerk_dataset(cfg):
 
     studie_df.to_csv(demo_subdir / "1cho_data.csv", index=False, sep=";")
 
-    n_doorgestroomd = int((studie_df["inschrijvingsjaar"] == cfg["jaar"] + 1).sum())
+    if "diploma_behaald" in studie_df.columns:
+        n_succes = int(studie_df["diploma_behaald"].sum())
+        label = "Diploma gehaald"
+    else:
+        n_succes = int((studie_df["inschrijvingsjaar"] == cfg["jaar"] + 1).sum())
+        label = "Doorgestroomd"
     print(f"  {naam}: {n_total} kandidaten, {n_ingeschreven} in 1CHO")
-    print(
-        f"    Doorgestroomd: {n_doorgestroomd}, "
-        f"niet doorgestroomd: {n_ingeschreven - n_doorgestroomd}"
-    )
+    print(f"    {label}: {n_succes}, overig gestart: {n_ingeschreven - n_succes}")
     print(f"    Bestanden in {demo_subdir}/")
 
 

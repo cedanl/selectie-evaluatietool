@@ -497,15 +497,16 @@ ingeschreven_ids = studentnummers[ingeschreven_mask]
 ingeschreven_scores = totaalscore[ingeschreven_mask]
 n_ingeschreven = len(ingeschreven_ids)
 
-# Doorstroom correlates with selection score
+# BioMed is een eenjarige master: succes is het diploma in het cohortjaar,
+# niet doorstroom naar jaar 2. De kans correleert met de selectiescore.
 ingeschreven_z = ingeschreven_scores - ingeschreven_scores.mean()
 if ingeschreven_scores.std() > 0:
     ingeschreven_z = ingeschreven_z / ingeschreven_scores.std()
 else:
     ingeschreven_z = np.zeros(n_ingeschreven)
 
-doorstroom_kans = 1 / (1 + np.exp(-(-0.1 + 0.6 * ingeschreven_z)))
-doorstroomt = RNG.random(n_ingeschreven) < doorstroom_kans
+diploma_kans = 1 / (1 + np.exp(-(-0.1 + 0.6 * ingeschreven_z)))
+diploma_behaald = RNG.random(n_ingeschreven) < diploma_kans
 
 geslacht = RNG.choice(
     ["vrouw", "man", "anders"], size=n_ingeschreven, p=[0.65, 0.32, 0.03]
@@ -535,12 +536,12 @@ vooropleiding = RNG.choice(
 )
 vo_cijfers = np.clip(RNG.normal(7.2, 0.5, n_ingeschreven), 5.5, 9.5).round(1)
 
-# Ruwe 1CHO in lang formaat: doorstromers krijgen een extra inschrijfrij voor
-# jaar 2. De groep wordt door de tool afgeleid, niet hier opgeslagen.
+# Ruwe 1CHO in lang formaat. Bij een master is er geen jaar 2; wie slaagt
+# krijgt diploma_behaald=True. De groep wordt door de tool afgeleid.
 cho_df = bouw_ruwe_cho(
     ingeschreven_ids,
     jaar=JAAR,
-    doorstroomt=doorstroomt,
+    diploma_behaald=diploma_behaald,
     opleiding=OPLEIDING,
     instellingscode=INSTELLING,
     geslacht=geslacht,
@@ -553,7 +554,9 @@ cho_path = OUT_DIR / "1cho_data_biomed_2026.csv"
 cho_df.to_csv(cho_path, index=False, sep=";")
 
 print(f"\n1CHO-data: {n_ingeschreven} ingeschreven van {N} kandidaten")
-print(f"Doorgestroomd: {int(doorstroomt.sum())}, niet: {int((~doorstroomt).sum())}")
+print(
+    f"Diploma gehaald: {int(diploma_behaald.sum())}, niet: {int((~diploma_behaald).sum())}"
+)
 print(f"Opgeslagen: {cho_path}")
 
 # ── Kopieer naar demo directory ──────────────────────────────────────────────
@@ -571,6 +574,6 @@ print(f"  Kolommen in selectiebestand: {df.shape[1]}")
 print("  Kolommen in config: 10")
 print(f"  Kandidaten: {N}")
 print(f"  Ingeschreven: {n_ingeschreven}")
-print(f"  Doorgestroomd: {int(doorstroomt.sum())}")
-print(f"  Niet doorgestroomd: {int(n_ingeschreven - doorstroomt.sum())}")
+print(f"  Diploma gehaald: {int(diploma_behaald.sum())}")
+print(f"  Gestart, geen diploma: {int(n_ingeschreven - diploma_behaald.sum())}")
 print(f"  Niet gestart: {N - n_ingeschreven}")

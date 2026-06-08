@@ -35,17 +35,20 @@ There are no tests. Verify changes by running the app and loading demo data.
 7. Both `df` (joined main data) and `scores_df` (long-format scores) are stored as JSON in `dcc.Store`
 8. Callbacks deserialize and filter per tab
 
-## The three groups
+## The four groups
 
-Raw 1CHO data has no ready-made group column. It is enrollment data in long format (one row per student per `inschrijvingsjaar`). `cho_transform.transformeer_cho()` derives the group, mirroring the no-fairness-without-awareness pipeline (`R/transform_ev_data.R`, the `any(inschrijvingsjaar == eerste_jaar_aan_deze_opleiding_instelling + 1)` retentie check):
+Raw 1CHO data has no ready-made group column. It is enrollment data in long format (one row per student per `inschrijvingsjaar`). `cho_transform.transformeer_cho()` derives the group, mirroring the no-fairness-without-awareness pipeline (`R/transform_ev_data.R`, the `any(inschrijvingsjaar == eerste_jaar_aan_deze_opleiding_instelling + 1)` retentie check). Group derivation is per spell (studentnummer + opleiding + eerste_jaar), so a student with two programmes gets a separate outcome per programme. Priority: year-2 enrollment > diploma in cohort year > dropout.
 
 - **Niet gestart**: not in 1CHO at all. Either rejected or chose not to enroll. Assigned in `koppel_data()` as the fillna for non-matches, not in `transformeer_cho()`.
-- **Gestart, niet naar jaar 2**: has a first-year row but no enrollment row in `eerste_jaar + 1`.
+- **Gestart, niet naar jaar 2**: has a first-year row but no `eerste_jaar + 1` row and no diploma.
 - **Doorgestroomd naar jaar 2**: has an enrollment row in the year after the first year.
+- **Gestart, diploma gehaald**: no year-2 row, but `diploma_behaald` is true in the cohort year. For one-year programmes (masters) where success means a diploma, not progression to year 2.
 
-Regression and VO analyses use only the latter two groups (students who actually started), because there is no outcome data for the "niet gestart" group.
+The group labels and the helper lists `GROEP_INGESCHREVEN` (all started) and `GROEP_SUCCES` (doorstroom or diploma) live in `shared.py`. Regression and VO analyses use `GROEP_INGESCHREVEN` (students who actually started) and treat `GROEP_SUCCES` as the positive outcome, so they work for both multi-year and one-year programmes.
 
-The required raw 1CHO columns are `persoonsgebonden_nummer`, `inschrijvingsjaar`, and `eerste_jaar_aan_deze_opleiding_instelling` (see `cho_transform.RUWE_CHO_KOLOMMEN`). Optional passthrough columns: geslacht, herkomst, `hoogste_vooropleiding_omschrijving_vooropleiding` (shortened to VWO/HAVO/MBO/HO), gem_eindcijfer_vo.
+The required raw 1CHO columns are `persoonsgebonden_nummer`, `inschrijvingsjaar`, and `eerste_jaar_aan_deze_opleiding_instelling` (see `cho_transform.RUWE_CHO_KOLOMMEN`). Optional passthrough columns: geslacht, herkomst, `hoogste_vooropleiding_omschrijving_vooropleiding` (shortened to VWO/HAVO/MBO/HO), gem_eindcijfer_vo, `diploma_behaald`.
+
+The data scripts choose the outcome by `opleidingsfase`: masters (`"M"`, e.g. biomed demo) generate `diploma_behaald`; bachelors (`"B"`, e.g. bewegingswetenschappen demo) generate year-2 doorstroom.
 
 ## Dashboard tabs (app.py callbacks)
 

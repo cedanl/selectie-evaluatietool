@@ -23,7 +23,11 @@ import numpy as np
 import pandas as pd
 from numpy.typing import ArrayLike
 
-from shared import GROEP_VOLGORDE
+from shared import (
+    GROEP_DIPLOMA,
+    GROEP_DOORGESTROOMD,
+    GROEP_GESTART_GEEN_VERVOLG,
+)
 
 # Kolommen die een ruw 1CHO-bestand minimaal moet bevatten om de
 # doorstroomgroep te kunnen afleiden.
@@ -39,12 +43,12 @@ _DEMO_KOLOMMEN = ["geslacht", "herkomst", "gem_eindcijfer_vo"]
 # Optionele passthrough-kolommen die de rest van de tool nog kan gebruiken.
 _META_KOLOMMEN = ["opleiding", "instellingscode"]
 
-# Labels uit shared.GROEP_VOLGORDE zodat de afgeleide groep gegarandeerd
-# overeenkomt met de categorieen die koppel_data en de grafieken gebruiken.
-_GROEP_GESTART = GROEP_VOLGORDE[1]
-_GROEP_DOORGESTROOMD = GROEP_VOLGORDE[2]
-
 _VOOROPL_OMSCHRIJVING_KOLOM = "hoogste_vooropleiding_omschrijving_vooropleiding"
+
+# Optionele kolom die aangeeft of de student in het cohortjaar een diploma
+# haalde. Aanwezig bij eenjarige opleidingen (masters) waar succes 'diploma'
+# is in plaats van doorstroom naar jaar 2.
+_DIPLOMA_KOLOM = "diploma_behaald"
 
 
 def ontbrekende_cho_kolommen(df: pd.DataFrame) -> list[str]:
@@ -80,6 +84,11 @@ def transformeer_cho(ruwe_df: pd.DataFrame) -> pd.DataFrame:
     rij per student met de afgeleide kolom `groep` plus `studentnummer`,
     `selectiejaar` en de demografische/meta-kolommen die aanwezig zijn.
 
+    De groep is 'Doorgestroomd naar jaar 2' bij een vervolginschrijving, anders
+    'Gestart, diploma gehaald' als er een diploma in het cohortjaar is (kolom
+    `diploma_behaald`, voor eenjarige opleidingen), en anders 'Gestart, niet
+    naar jaar 2'. Zonder diploma-kolom ontstaan alleen de eerste en laatste.
+
     Studenten die helemaal niet in 1CHO voorkomen worden hier niet
     aangeraakt; die krijgen later in `koppel_data()` de groep 'Niet gestart'.
     """
@@ -113,6 +122,13 @@ def transformeer_cho(ruwe_df: pd.DataFrame) -> pd.DataFrame:
     )
     df["_retentie"] = df.groupby(spell_sleutel)["_is_jaar2"].transform("any")
 
+    # Diploma in het cohortjaar (eenjarige opleidingen). Per spell: heeft een
+    # van de rijen een diploma?
+    heeft_diploma_kolom = _DIPLOMA_KOLOM in df.columns
+    if heeft_diploma_kolom:
+        df["_diploma_bool"] = df[_DIPLOMA_KOLOM].fillna(False).astype(bool)
+        df["_diploma"] = df.groupby(spell_sleutel)["_diploma_bool"].transform("any")
+
     # Houd alleen de eerstejaars-rij per spell over.
     eerstejaars = (
         df[df["inschrijvingsjaar"] == df["eerste_jaar_aan_deze_opleiding_instelling"]]
@@ -120,11 +136,24 @@ def transformeer_cho(ruwe_df: pd.DataFrame) -> pd.DataFrame:
         .copy()
     )
 
-    eerstejaars["groep"] = np.where(
-        eerstejaars["_retentie"],
-        _GROEP_DOORGESTROOMD,
-        _GROEP_GESTART,
-    )
+    # Doorstroom naar jaar 2 weegt het zwaarst; daarna telt een diploma in het
+    # eerste jaar als succes; anders is de student gestopt.
+    if heeft_diploma_kolom:
+        eerstejaars["groep"] = np.where(
+            eerstejaars["_retentie"],
+            GROEP_DOORGESTROOMD,
+            np.where(
+                eerstejaars["_diploma"],
+                GROEP_DIPLOMA,
+                GROEP_GESTART_GEEN_VERVOLG,
+            ),
+        )
+    else:
+        eerstejaars["groep"] = np.where(
+            eerstejaars["_retentie"],
+            GROEP_DOORGESTROOMD,
+            GROEP_GESTART_GEEN_VERVOLG,
+        )
     eerstejaars["selectiejaar"] = eerstejaars[
         "eerste_jaar_aan_deze_opleiding_instelling"
     ].astype("Int64")
@@ -146,7 +175,8 @@ def bouw_ruwe_cho(
     studentnummers: ArrayLike,
     *,
     jaar: int,
-    doorstroomt: ArrayLike,
+    doorstroomt: ArrayLike | None = None,
+    diploma_behaald: ArrayLike | None = None,
     opleiding: str | None = None,
     instellingscode: str | None = None,
     geslacht: ArrayLike | None = None,
@@ -156,18 +186,23 @@ def bouw_ruwe_cho(
 ) -> pd.DataFrame:
     """Bouw synthetische ruwe 1CHO-data in lang formaat.
 
-    Elke ingeschreven student krijgt een eerstejaars-rij; doorstromers
-    krijgen daarnaast een rij voor jaar 2. De doorstroomgroep zit dus NIET
-    als kolom in de data maar wordt afgeleid uit de inschrijfjaren, net als
-    bij echte 1CHO-data. Het resultaat is bedoeld om door `transformeer_cho()`
-    te worden verwerkt.
+    Elke ingeschreven student krijgt een eerstejaars-rij. Bij een meerjarige
+    opleiding krijgen doorstromers (`doorstroomt=True`) daarnaast een rij voor
+    jaar 2. Bij een eenjarige opleiding (master) zet je in plaats daarvan
+    `diploma_behaald=True` voor wie het diploma haalde; dat wordt een kolom in
+    de data. De uitkomstgroep zit dus NIET kant-en-klaar in de data maar wordt
+    afgeleid door `transformeer_cho()`, net als bij echte 1CHO-data.
 
-    `studentnummers`, `doorstroomt` en de optionele demografie-arrays moeten
+    `studentnummers` en de meegegeven indicator- en demografie-arrays moeten
     allemaal dezelfde lengte hebben (een waarde per ingeschreven student).
     """
     studentnummers = np.asarray(studentnummers)
-    doorstroomt = np.asarray(doorstroomt, dtype=bool)
     n = len(studentnummers)
+
+    if doorstroomt is None:
+        doorstroomt = np.zeros(n, dtype=bool)
+    else:
+        doorstroomt = np.asarray(doorstroomt, dtype=bool)
     if len(doorstroomt) != n:
         raise ValueError("doorstroomt moet even lang zijn als studentnummers")
 
@@ -192,6 +227,11 @@ def bouw_ruwe_cho(
         jaar1[_VOOROPL_OMSCHRIJVING_KOLOM] = np.asarray(vooropleiding_omschrijving)
     if gem_eindcijfer_vo is not None:
         jaar1["gem_eindcijfer_vo"] = np.asarray(gem_eindcijfer_vo)
+    if diploma_behaald is not None:
+        diploma_behaald = np.asarray(diploma_behaald, dtype=bool)
+        if len(diploma_behaald) != n:
+            raise ValueError("diploma_behaald moet even lang zijn als studentnummers")
+        jaar1[_DIPLOMA_KOLOM] = diploma_behaald
 
     jaar2 = jaar1[doorstroomt].copy()
     jaar2["inschrijvingsjaar"] = jaar + 1

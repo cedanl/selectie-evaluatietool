@@ -1,66 +1,45 @@
-persoonsgebonden_nummer;inschrijvingsjaar;opleidingsvorm;eerste_jaar_aan_deze_opleiding_instelling;opleidingscode_naam_opleiding;opleiding;instellingscode;geslacht;herkomst;hoogste_vooropleiding_omschrijving_vooropleiding;gem_eindcijfer_vo
-133535;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biologie;7.9
-157430;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;overig niet-westers;Geneeskunde bachelor;7.9
-180315;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;overig niet-westers;Scheikunde;6.8
-182914;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;7.2
-182914;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;7.2
-225774;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Scheikunde;7.2
-225774;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Scheikunde;7.2
-264276;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biologie;6.7
-264276;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biologie;6.7
-270514;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;westerse achtergrond;Biologie;7.2
-275161;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;7.2
-275161;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;7.2
-279913;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biologie;7.8
-279913;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biologie;7.8
-315596;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Anders;7.8
-315596;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Anders;7.8
-349406;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;7.0
-349406;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;7.0
-359488;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biologie;7.1
-359488;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biologie;7.1
-381119;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biologie;7.5
-427490;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Suriname/Antillen;Geneeskunde bachelor;6.9
-427490;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Suriname/Antillen;Geneeskunde bachelor;6.9
-433681;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Marokko;Scheikunde;7.5
-462135;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biomedische wetenschappen bachelor;7.2
-489663;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;anders;westerse achtergrond;Geneeskunde bachelor;6.7
-489663;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;anders;westerse achtergrond;Geneeskunde bachelor;6.7
-499032;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;6.7
-505301;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;7.9
-516624;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biologie;7.1
-520017;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Turkije;Biomedische wetenschappen bachelor;8.0
-547979;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Marokko;Biomedische wetenschappen bachelor;6.9
-550266;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Suriname/Antillen;Biomedische wetenschappen bachelor;7.3
-600077;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Suriname/Antillen;Geneeskunde bachelor;8.4
-666765;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;overig niet-westers;Biologie;6.7
-666765;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;overig niet-westers;Biologie;6.7
-668446;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Scheikunde;6.3
-702805;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;overig niet-westers;Biomedische wetenschappen bachelor;7.8
-702805;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;overig niet-westers;Biomedische wetenschappen bachelor;7.8
-710078;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;6.8
-727552;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Geneeskunde bachelor;7.2
-762097;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;6.9
-762097;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;6.9
-782219;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;7.3
-784944;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;6.7
-803335;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;7.1
-803335;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;7.1
-824264;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;7.4
-824264;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;7.4
-824394;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;6.7
-824394;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;6.7
-840408;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Suriname/Antillen;Geneeskunde bachelor;6.8
-844799;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biologie;7.0
-844799;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biologie;7.0
-857499;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biologie;6.5
-903743;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biomedische wetenschappen bachelor;7.0
-903743;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biomedische wetenschappen bachelor;7.0
-908255;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biologie;7.3
-908255;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biologie;7.3
-930219;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Scheikunde;7.0
-930219;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Scheikunde;7.0
-933998;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Marokko;Biomedische wetenschappen bachelor;7.1
-946237;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Geneeskunde bachelor;7.2
-970703;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;6.9
-970703;2027;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;6.9
+persoonsgebonden_nummer;inschrijvingsjaar;opleidingsvorm;eerste_jaar_aan_deze_opleiding_instelling;opleidingscode_naam_opleiding;opleiding;instellingscode;geslacht;herkomst;hoogste_vooropleiding_omschrijving_vooropleiding;gem_eindcijfer_vo;diploma_behaald
+133535;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biologie;7.9;False
+157430;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;overig niet-westers;Geneeskunde bachelor;7.9;False
+180315;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;overig niet-westers;Scheikunde;6.8;False
+182914;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;7.2;True
+225774;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Scheikunde;7.2;True
+264276;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biologie;6.7;True
+270514;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;westerse achtergrond;Biologie;7.2;False
+275161;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;7.2;True
+279913;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biologie;7.8;True
+315596;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Anders;7.8;True
+349406;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;7.0;True
+359488;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biologie;7.1;True
+381119;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biologie;7.5;False
+427490;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Suriname/Antillen;Geneeskunde bachelor;6.9;True
+433681;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Marokko;Scheikunde;7.5;False
+462135;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biomedische wetenschappen bachelor;7.2;False
+489663;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;anders;westerse achtergrond;Geneeskunde bachelor;6.7;True
+499032;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;6.7;False
+505301;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;7.9;False
+516624;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biologie;7.1;False
+520017;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Turkije;Biomedische wetenschappen bachelor;8.0;False
+547979;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Marokko;Biomedische wetenschappen bachelor;6.9;False
+550266;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Suriname/Antillen;Biomedische wetenschappen bachelor;7.3;False
+600077;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Suriname/Antillen;Geneeskunde bachelor;8.4;False
+666765;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;overig niet-westers;Biologie;6.7;True
+668446;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Scheikunde;6.3;False
+702805;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;overig niet-westers;Biomedische wetenschappen bachelor;7.8;True
+710078;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;6.8;False
+727552;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Geneeskunde bachelor;7.2;False
+762097;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;6.9;True
+782219;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;7.3;False
+784944;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;6.7;False
+803335;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;7.1;True
+824264;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;7.4;True
+824394;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Geneeskunde bachelor;6.7;True
+840408;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Suriname/Antillen;Geneeskunde bachelor;6.8;False
+844799;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biologie;7.0;True
+857499;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biologie;6.5;False
+903743;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biomedische wetenschappen bachelor;7.0;True
+908255;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Biologie;7.3;True
+930219;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Scheikunde;7.0;True
+933998;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Marokko;Biomedische wetenschappen bachelor;7.1;False
+946237;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;man;Nederland;Geneeskunde bachelor;7.2;False
+970703;2026;voltijd;2026;Biomedische Wetenschappen;Biomedische Wetenschappen;AUMC;vrouw;Nederland;Biomedische wetenschappen bachelor;6.9;True

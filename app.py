@@ -32,6 +32,8 @@ from rapport import genereer_rapport
 from shared import (
     GROEP_VOLGORDE,
     GROEP_KLEUREN,
+    GROEP_INGESCHREVEN,
+    GROEP_SUCCES,
     CHART_BASE,
     shorten_item,
     sig_sym,
@@ -51,6 +53,7 @@ GROEP_XTICKLABELS = [
     "Niet<br>gestart",
     "Gestart, niet<br>naar jaar 2",
     "Doorgestroomd<br>naar jaar 2",
+    "Gestart,<br>diploma gehaald",
 ]
 
 # ── Dashboard helpers ─────────────────────────────────────────────────────────
@@ -1379,6 +1382,7 @@ GROEP_TABEL_KLEUREN = {
     "Niet gestart": {"backgroundColor": "#f1f5f9", "color": "#475569"},
     "Gestart, niet naar jaar 2": {"backgroundColor": "#fff7ed", "color": "#9a3412"},
     "Doorgestroomd naar jaar 2": {"backgroundColor": "#f0fdf4", "color": "#166534"},
+    "Gestart, diploma gehaald": {"backgroundColor": "#eff6ff", "color": "#1e40af"},
 }
 
 
@@ -1710,11 +1714,7 @@ def update_vo_tab(
     else:
         return leeg, [], [], []
 
-    ingeschreven = plot_df[
-        plot_df["groep"].isin(
-            ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]
-        )
-    ]
+    ingeschreven = plot_df[plot_df["groep"].isin(GROEP_INGESCHREVEN)]
 
     fig = px.scatter(
         ingeschreven,
@@ -1732,7 +1732,7 @@ def update_vo_tab(
         height=500,
     )
     fig.update_traces(marker=dict(size=6))
-    for groep in ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]:
+    for groep in GROEP_INGESCHREVEN:
         sub = ingeschreven[ingeschreven["groep"] == groep][
             ["gem_eindcijfer_vo", "score_val"]
         ].dropna()
@@ -1901,11 +1901,7 @@ def update_samenhang_tab(
     # Items in de huidige filterselectie (voor markering in de tabel)
     gefilterde_items = set(shorten_item(i) for i in scores["item"].unique())
 
-    ingeschreven = df_filtered[
-        df_filtered["groep"].isin(
-            ["Gestart, niet naar jaar 2", "Doorgestroomd naar jaar 2"]
-        )
-    ].copy()
+    ingeschreven = df_filtered[df_filtered["groep"].isin(GROEP_INGESCHREVEN)].copy()
 
     if len(ingeschreven) < 10:
         regressie_msg = dbc.Alert(
@@ -1916,9 +1912,7 @@ def update_samenhang_tab(
         )
         return fig, regressie_msg, reg_data, reg_cols, reg_style
 
-    ingeschreven["doorgestroomd"] = (
-        ingeschreven["groep"] == "Doorgestroomd naar jaar 2"
-    ).astype(int)
+    ingeschreven["doorgestroomd"] = ingeschreven["groep"].isin(GROEP_SUCCES).astype(int)
 
     item_pivot_inschr = all_item_pivot.loc[
         all_item_pivot.index.isin(ingeschreven["studentnummer"])
