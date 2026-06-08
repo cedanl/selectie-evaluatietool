@@ -3,7 +3,7 @@
 Een dashboard dat laat zien hoe goed een selectieprocedure werkt. Het
 vergelijkt de scores die studenten bij de selectie haalden met hoe het
 daarna ging in hun studie: zijn ze gestart, zijn ze na jaar 1 gestopt,
-of zijn ze doorgestroomd naar jaar 2?
+zijn ze doorgestroomd naar jaar 2, of hebben ze hun diploma gehaald?
 
 
 ## Hoe werkt het?
@@ -80,7 +80,7 @@ Elke cel in het template heeft een toelichting die uitlegt wat je moet invullen.
 
 Het dashboard heeft vier tabbladen:
 
-**Selectiescores** - Boxplots die laten zien hoe de drie groepen scoren
+**Selectiescores** - Boxplots die laten zien hoe de groepen scoren
 op elk onderdeel van de selectie. Als doorstromers structureel hoger
 scoren dan uitvallers, dan heeft dat onderdeel voorspellende waarde.
 
@@ -97,9 +97,10 @@ Een lage samenhang betekent dat het selectie-onderdeel iets anders meet
 dan schoolprestaties.
 
 
-## De drie groepen
+## De groepen
 
-Het dashboard deelt kandidaten in drie groepen in:
+Het dashboard deelt kandidaten in op basis van hoe het ze verging na de
+selectie:
 
 - **Niet gestart** - de kandidaat komt niet voor in de studiedata. Niet
   toegelaten, of wel geselecteerd maar nooit begonnen.
@@ -107,15 +108,29 @@ Het dashboard deelt kandidaten in drie groepen in:
   tweede jaar. Gestopt of overgestapt na het eerste jaar.
 - **Doorgestroomd naar jaar 2** - de student heeft zowel jaar 1 als jaar 2
   afgerond.
+- **Gestart, diploma gehaald** - de student haalde in het cohortjaar een
+  diploma zonder door te stromen naar jaar 2. Dit is de succesmaat voor
+  eenjarige opleidingen (zoals masters), waar succes een diploma is in
+  plaats van doorstroom naar jaar 2.
+
+Welke groepen voorkomen hangt af van de opleiding. Bij meerjarige
+bacheloropleidingen draait het om doorstroom naar jaar 2; bij eenjarige
+masters om het behalen van het diploma. De analyses gebruiken alle gestarte
+studenten en behandelen zowel doorstroom als diploma als positieve uitkomst,
+zodat ze voor beide soorten opleidingen werken.
 
 
 ## Nieuwe opleiding toevoegen
 
 1. Upload je selectiebestand en gebruik de config wizard om een configuratie
    te genereren (of maak er handmatig een).
-2. Maak een 1CHO-bestand met minstens de kolommen `studentnummer`,
-   `selectiejaar` en `groep`. Optioneel kun je ook `geslacht`, `herkomst`,
-   `hoogste_vooropleiding` en `gem_eindcijfer_vo` toevoegen.
+2. Maak een 1CHO-bestand met minstens de kolommen `persoonsgebonden_nummer`,
+   `inschrijvingsjaar` en `eerste_jaar_aan_deze_opleiding_instelling`. De tool
+   leidt hier zelf de groep uit af. Optioneel kun je ook `geslacht`,
+   `herkomst`, `hoogste_vooropleiding_omschrijving_vooropleiding`,
+   `gem_eindcijfer_vo` en `diploma_behaald` toevoegen. Voeg `diploma_behaald`
+   toe als het om een eenjarige opleiding gaat waar succes het diploma is in
+   plaats van doorstroom naar jaar 2.
 3. Upload alle drie de bestanden in het dashboard.
 
 
