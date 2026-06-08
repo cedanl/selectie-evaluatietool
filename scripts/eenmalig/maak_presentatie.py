@@ -289,8 +289,9 @@ add_slide(
         "Kan automatisch gegenereerd worden met de ingebouwde config wizard.",
         "",
         "**3. 1CHO-data (studiesuccesdata)**",
-        "Bevat de groepindeling per student: niet gestart, gestart maar niet doorgestroomd, "
-        "of doorgestroomd naar jaar 2.",
+        "De inschrijvingsdata zoals DUO die levert: een rij per student per inschrijvingsjaar. "
+        "De tool leidt zelf af in welke uitkomstgroep een student valt (niet gestart, gestart maar "
+        "niet doorgestroomd, doorgestroomd naar jaar 2, of diploma gehaald).",
         "",
         "Het dashboard opent zodra alle drie bestanden geladen zijn. "
         "Na de analyse kun je een PDF-rapport downloaden.",
@@ -338,9 +339,10 @@ add_slide(
         "Dat project heeft een preset voor de selectietool die precies de juiste kolommen selecteert.",
         "",
         "**Filteren op opleiding**",
-        "Filter de 1CHO-data op de opleiding die je analyseert. Het resultaat bevat per student: "
-        "studentnummer, selectiejaar, en de groepsindeling (niet gestart, uitval, of doorgestroomd). "
-        "Optioneel ook geslacht, herkomst, vooropleiding en VO-eindcijfer.",
+        "Filter de 1CHO-data op de opleiding die je analyseert. Het resultaat is inschrijvingsdata in "
+        "lang formaat met per rij minstens persoonsgebonden_nummer, inschrijvingsjaar en het eerste "
+        "studiejaar. De tool leidt de uitkomstgroep daar zelf uit af. Optioneel ook geslacht, herkomst, "
+        "vooropleiding, VO-eindcijfer en diploma_behaald (voor eenjarige opleidingen).",
         "",
         "**Studentnummer checken**",
         "Controleer dat het studentnummer in hetzelfde formaat staat als in het selectiebestand. "
@@ -365,7 +367,7 @@ add_slide(
         "",
         "**Handmatig via het templatebestand**",
         "Een Excel-spreadsheet met twee tabbladen: Instellingen (studentnummer, headerrij, totaalscore) "
-        "en Kolommen (per scorekolom een instrument, item, criterium en score-type).",
+        "en Kolommen (per scorekolom een instrument, item en criterium).",
         "",
         "De tool schrijft niks voor. De analist kiest zelf de namen voor instrumenten, items en criteria. "
         "Dat maakt het flexibel genoeg om voor elke opleiding te werken.",
@@ -378,35 +380,31 @@ add_slide(
 # ============================================================
 add_table_slide(
     "Voorbeeld: kolommen-tabblad (Farmacie 2026)",
-    ["kolom_naam", "instrument", "item", "criterium", "score_type"],
+    ["kolom_naam", "instrument", "item", "criterium"],
     [
         [
             "ctb_reflecteren_Schaalscore",
             "Competentietest",
             "Reflecteren schaalscore",
             "Reflectievermogen",
-            "schaalscore",
         ],
         [
             "ctb_stressbestendigheid_Schaalscore",
             "Competentietest",
             "Stressbestendigheid schaalscore",
             "Stressbestendigheid",
-            "schaalscore",
         ],
         [
             "Beoordeling_reflectievermogen...",
             "Open vraag",
             "Beoordeling reflectie (1-2-3)",
             "Reflectievermogen",
-            "schaal 1-3",
         ],
         [
             "sjts_totaal_Schaalscore",
             "SIT-S",
             "Totaalscore sociale intelligentie",
             "Sociale intelligentie",
-            "schaalscore",
         ],
     ],
     intro="Dit bestand heeft 97 kolommen. De config selecteert er 12 en geeft ze leesbare namen.",
@@ -419,42 +417,37 @@ add_table_slide(
 # ============================================================
 add_table_slide(
     "Ander voorbeeld: kolommen-tabblad (Psychologie 2026-2027)",
-    ["kolom_naam", "instrument", "item", "criterium", "score_type"],
+    ["kolom_naam", "instrument", "item", "criterium"],
     [
         [
             "WI SCORE",
             "Schooldiploma",
             "Wiskunde puntenscore",
             "Vakkennis wiskunde",
-            "punten (0-5)",
         ],
         [
             "EN SCORE",
             "Schooldiploma",
             "Engels puntenscore",
             "Vakkennis Engels",
-            "punten (0-5)",
         ],
         [
             "V1 SCORE",
             "Schooldiploma keuzevak",
             "Keuzevak 1 puntenscore",
             "Vakkennis keuzevak",
-            "punten (0-5)",
         ],
         [
             "Matching Score (1-3)",
             "Matchingsvragenlijst",
             "Matchingscore (1-3)",
             "Studiemotivatie",
-            "schaal 1-3",
         ],
         [
             "Vragenlijst %",
             "Deelscore",
             "Vragenlijst score percentage",
             "",
-            "percentage",
         ],
     ],
     intro="Compleet andere structuur: schoolcijfers, keuzevakken en matchingscore. Dezelfde config-structuur werkt.",
@@ -523,25 +516,28 @@ add_table_slide(
 # SLIDE 9: Drie groepen
 # ============================================================
 add_slide(
-    "Drie groepen: de kern van de analyse",
+    "Uitkomstgroepen: de kern van de analyse",
     [
-        "De tool vergelijkt selectiescores tussen drie groepen kandidaten. De groepindeling komt uit "
-        "de 1CHO-studiesuccesdata.",
+        "De tool vergelijkt selectiescores tussen uitkomstgroepen. De tool leidt die groepen zelf af "
+        "uit de 1CHO-inschrijvingsdata.",
         "",
         "**Niet gestart**",
-        "Kandidaten die niet in 1CHO staan. Ze zijn niet toegelaten, of zijn wel geselecteerd maar "
-        "nooit gestart met de opleiding.",
+        "Kandidaten die niet in 1CHO staan. Niet toegelaten, of wel geselecteerd maar nooit gestart.",
         "",
         "**Gestart, niet naar jaar 2**",
-        "Studenten die wel zijn gestart maar niet zijn doorgestroomd naar het tweede jaar. "
-        "Uitval of overstap na het eerste jaar.",
+        "Studenten die wel zijn gestart maar niet zijn doorgestroomd naar het tweede jaar en geen "
+        "diploma haalden. Uitval of overstap na het eerste jaar.",
         "",
         "**Doorgestroomd naar jaar 2**",
-        "Studenten die het eerste jaar hebben volbracht en doorgaan.",
+        "Studenten die het eerste jaar hebben volbracht en doorgaan. De succesmaat voor "
+        "meerjarige bacheloropleidingen.",
         "",
-        "Per selectie-item kun je dan zien: scoren de drie groepen anders? "
-        "Als de doorstromers hoger scoren dan de uitvallers, heeft het selectie-instrument "
-        "voorspellende waarde.",
+        "**Gestart, diploma gehaald**",
+        "Studenten die geen jaar 2 hebben maar wel een diploma haalden in het cohortjaar. "
+        "De succesmaat voor eenjarige opleidingen zoals masters, waar geen jaar 2 bestaat.",
+        "",
+        "De analyses behandelen doorstroom en diploma allebei als positieve uitkomst, zodat ze "
+        "voor zowel meerjarige als eenjarige opleidingen werken.",
     ],
 )
 
@@ -552,7 +548,7 @@ add_slide(
 add_slide(
     "Dashboard: Selectiescores per groep",
     [
-        "Het eerste tabblad toont per selectie-item een boxplot met de drie groepen naast elkaar.",
+        "Het eerste tabblad toont per selectie-item een boxplot met de uitkomstgroepen naast elkaar.",
         "",
         "**Wat je hier ziet**",
         "- Mediaan, spreiding en individuele scores per groep",
@@ -587,8 +583,9 @@ add_slide(
         "informatie toe aan de selectie.",
         "",
         "**Logistische regressie**",
-        "Een model dat voorspelt wie doorstroomt naar jaar 2, op basis van alle selectie-items. "
-        "Per item krijg je een coefficient, odds ratio en p-waarde.",
+        "Een model dat voorspelt wie de opleiding succesvol vervolgt (doorstroom naar jaar 2 of "
+        "diploma), op basis van alle selectie-items. Per item krijg je een coefficient, odds ratio "
+        "en p-waarde.",
         "",
         "Een significant item (p < 0.05) voegt voorspellende waarde toe, ook als je de andere items "
         "al meeneemt. Een niet-significant item voegt weinig toe boven wat de andere items al verklaren.",
@@ -856,12 +853,17 @@ add_table_slide(
         [
             "Dashboard met groepsvergelijking",
             "Gedaan",
-            "Boxplots per item, drie groepen",
+            "Boxplots per item, uitkomstgroepen",
         ],
         [
             "Koppeling met 1CHO-studiesuccesdata",
             "Gedaan",
-            "Via studentnummer, automatische groepindeling",
+            "Via studentnummer, groep afgeleid uit inschrijvingen",
+        ],
+        [
+            "Studieresultaten in de opleiding (LOCS/HOCS, per leerjaar)",
+            "Anders ingevuld",
+            "Vervangen door doorstroom/diploma uit 1CHO als uitkomstmaat",
         ],
         [
             "Beschrijvende statistiek per item",
