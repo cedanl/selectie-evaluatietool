@@ -2,6 +2,8 @@
 name = "evaluatietool-voorbeeld"
 version = "0.1.0"
 description = "Evaluatietool: selectiedata koppelen aan 1CHO voor studiesucces analyse"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 
 dependencies = [
