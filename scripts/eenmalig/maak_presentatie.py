@@ -686,26 +686,58 @@ add_slide(
 
 
 # ============================================================
-# SLIDE 14: Dashboard tab 3 - Demografisch
+# SLIDE 14: Dashboard - groeperen en verschiltoets
 # ============================================================
 add_slide(
-    "Dashboard: Demografisch profiel",
+    "Dashboard: groeperen op achtergrond",
     [
-        "Het derde tabblad toont de verdeling van achtergrondkenmerken per groep.",
+        "In plaats van losse demografische tabbladen kun je op de Selectiescores- en de "
+        "Verschiltoets-tab kiezen waarop je groepeert: uitkomstgroep, geslacht of vooropleiding.",
         "",
-        "**Verdeling per cohort**",
-        "Een gestapeld staafdiagram per selectiejaar: hoeveel procent valt in elke groep? "
-        "Hiermee zie je of het selectieproces van jaar tot jaar verandert.",
+        "**Selectiescores: 'Groepeer op'**",
+        "De boxplots en de gemiddeldentabel splitsen op de gekozen groep. Standaard de "
+        "uitkomstgroepen; kies geslacht of vooropleiding om te zien of een achtergrondgroep "
+        "structureel hoger of lager scoort. De scores blijven ruw, met de schalen-filter erbij.",
         "",
-        "**Geslacht, herkomst en vooropleiding**",
-        "Per groep: hoe ziet de samenstelling eruit? Zijn er systematische verschillen in wie "
-        "doorstroomt en wie uitvalt?",
+        "**Aparte Verschiltoets-tab**",
+        "Toetst per item of de scores significant verschillen, met dezelfde keuze van niveau. Tussen "
+        "uitkomstgroepen: een Mann-Whitney U met effectgrootte (voorspelt het item succes?). Tussen "
+        "demografische groepen: een Kruskal-Wallis met epsilon-kwadraat (maakt het item onbedoeld "
+        "onderscheid?).",
         "",
-        "De achtergrondkenmerken komen uit de 1CHO-data en zijn alleen beschikbaar voor studenten "
-        "die daadwerkelijk ingeschreven zijn geweest.",
+        "**Belangrijke beperking**",
+        "De achtergrond komt uit 1CHO en bestaat alleen voor ingeschreven studenten. De demografische "
+        "toets vergelijkt dus binnen de ingeschreven groep, niet onder alle sollicitanten.",
         "",
-        "Dit is geen fairness-analyse. Het toont patronen, maar trekt geen conclusies over "
-        "of de selectie eerlijk verloopt. Dat vraagt om aanvullende methodiek.",
+        "**Eén cohortjaar per keer**",
+        "We leveren de analyse per selectiejaar, niet over meerdere jaren samen: selectiedata kan "
+        "tussen jaargangen sterk verschillen (andere instrumenten, andere schalen), waardoor "
+        "samenvoegen zou vertekenen. De oude jaar-op-jaar verdelingsgrafiek is daarom vervallen.",
+    ],
+)
+
+
+# ============================================================
+# SLIDE 14b: Dashboard - Wat valt op
+# ============================================================
+add_slide(
+    "Dashboard: Wat valt op",
+    [
+        "Een overzichtstabblad vat automatisch de opvallendste bevindingen samen, rechtstreeks uit "
+        "de toetsen op de geladen data. Het is het eerste dat je ziet bij het openen van het "
+        "dashboard.",
+        "",
+        "**Datagedreven, geen verzinsels**",
+        "Elke regel volgt uit een effectgrootte of p-waarde. Er wordt niets bijbedacht.",
+        "",
+        "**Twee invalshoeken**",
+        "- Wat voorspelt studiesucces: welke selectie-items onderscheiden geslaagde van uitgevallen "
+        "studenten, met effectgrootte en significantie.",
+        "- Verschillen tussen groepen: op welke items verschillen demografische groepen significant, "
+        "als signaal voor mogelijke vertekening.",
+        "",
+        "Dezelfde bevindingen vormen ook de conclusiesectie van het PDF-rapport, zodat dashboard en "
+        "rapport hetzelfde verhaal vertellen.",
     ],
 )
 
@@ -848,9 +880,10 @@ add_slide(
         "Schaalscores, percentages en 1-2-3-beoordelingen zijn niet vergelijkbaar. "
         "We vergelijken alleen binnen een item, niet tussen items.",
         "",
-        "**Geen fairness-analyse**",
-        "De demografische tab toont patronen, maar de tool trekt geen conclusies over eerlijkheid. "
-        "Dat vraagt om aanvullende methodiek en zorgvuldige interpretatie.",
+        "**Beperkte fairness-analyse**",
+        "De tool toetst wel of scores tussen achtergrondgroepen verschillen, maar dat is een eerste "
+        "signaal, geen volledige fairness-beoordeling. Een gevalideerde aanpak (zoals of de selectie "
+        "even goed voorspelt voor elke groep) vraagt om aanvullende methodiek en zorgvuldige interpretatie.",
         "",
         "**Geen kwalitatieve items**",
         "De tool werkt alleen met numerieke scores. Tekstvelden, categorische beoordelingen "
@@ -909,14 +942,19 @@ add_table_slide(
             "Correlatiematrix + logistische regressie",
         ],
         [
-            "Demografisch profiel per groep",
+            "Scoreverschillen naar achtergrond",
             "Gedaan",
-            "Geslacht, herkomst, vooropleiding uit 1CHO",
+            "Kruskal-Wallis-toets per item voor geslacht en vooropleiding",
         ],
         [
             "VO-eindcijfer vs selectiescores",
             "Gedaan",
             "Pearson r en scatterplots",
+        ],
+        [
+            "Automatische, datagedreven conclusies",
+            "Gedaan",
+            "'Wat valt op'-tab en conclusiesectie in het PDF-rapport",
         ],
         [
             "Config wizard (auto-detectie kolommen)",
@@ -930,8 +968,8 @@ add_table_slide(
         ],
         [
             "Fairness-analyse",
-            "Niet gedaan",
-            "Patronen zichtbaar, geen conclusies",
+            "Deels",
+            "Groepsverschiltoetsen wel; gevalideerde methodiek nog niet",
         ],
         [
             "Webapplicatie met authenticatie",
