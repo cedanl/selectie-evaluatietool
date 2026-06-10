@@ -109,8 +109,8 @@ The config Excel has two sheets:
 ## Demo data
 
 Two datasets in `data/demo/`:
-- `biomed_aumc_2026/` (120 candidates, 10 items across 4 instruments)
-- `bewegingswetenschappen_vu_2026/` (80 candidates)
+- `gezondheidskunde_univ_noordstad_2026/` (120 candidates, 10 items across 4 instruments)
+- `sportkunde_hs_westland_2026/` (80 candidates)
 
 Each contains: `selectiedata.xlsx`, `config.xlsx`, `1cho_data.csv`
 
@@ -123,7 +123,7 @@ from cho_transform import transformeer_cho
 from app import koppel_data
 from rapport import genereer_rapport
 
-demo = Path("data/demo/biomed_aumc_2026")
+demo = Path("data/demo/gezondheidskunde_univ_noordstad_2026")
 uri = lambda p: f"data:application/octet-stream;base64,{base64.b64encode(p.read_bytes()).decode()}"
 config = lees_config(uri(demo / "config.xlsx"))
 scores_df = transformeer_naar_lang(parse_selectiedata(uri(demo / "selectiedata.xlsx"), config), config)
@@ -150,8 +150,8 @@ docs/
 
 data/
   demo/                  # shipped with repo, loaded by demo picker
-    biomed_aumc_2026/
-    bewegingswetenschappen_vu_2026/
+    gezondheidskunde_univ_noordstad_2026/
+    sportkunde_hs_westland_2026/
   configs/               # gitignored, opleiding-specific configs for maak_data.py
   fictief/               # gitignored, intermediate output from fictief scripts
 ```
@@ -229,7 +229,7 @@ This session did the bulk of the multi-programme work:
 - **Samenhang tab filters**: own instrument/criterium dropdowns. Filters only affect the correlation matrix, not the regression.
 - **Regression robustness**: items with >30% missing data excluded, multicollinear items auto-removed (matrix rank check). Both dashboard and PDF report show which items were dropped and why.
 - **Toelichtingen**: all explanatory text rewritten for a broad audience. Collapsible interpretation guides for correlation (Cohen 1988), regression table, and VO-cijfer. Demographic tab explains 1CHO data origin and how doorstroom is determined.
-- **Fictive demo data**: BioMed AUMC 2026 (master, 120 candidates, 90 columns) and Bewegingswetenschappen VU 2026 (bachelor, 80 candidates, 37 columns, header_rij=3). Demo picker shows only fictive data.
+- **Fictive demo data**: Gezondheidskunde Univ Noordstad 2026 (master, 120 candidates, 90 columns) and Sportkunde HS Westland 2026 (bachelor, 80 candidates, 37 columns, header_rij=3). Demo picker shows only fictive data.
 - **Pitch created**: [#14](https://github.com/cedanl/evaluatietool-voorbeeld/issues/14) Diploma as alternative outcome measure for 1-year masters.
 
 ## Recent changes (2026-06-05, audit session)

@@ -1,5 +1,5 @@
 """
-Genereer een fictief selectiebestand voor Bewegingswetenschappen (bachelor).
+Genereer een fictief selectiebestand voor Sportkunde (bachelor).
 
 Structuur gebaseerd op het Psychologie 2026-2027 format: schoolcijfers,
 keuzevakken en een matchingsvragenlijst. Simpeler dan het BioMed-bestand,
@@ -31,8 +31,8 @@ OUT_DIR = Path("data/fictief")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 N = 80
-OPLEIDING = "Bewegingswetenschappen"
-INSTELLING = "Vrije Universiteit Amsterdam"
+OPLEIDING = "Sportkunde"
+INSTELLING = "Hogeschool Westland"
 JAAR = 2026
 BLAD_NAAM = "Selectiescores 2026"
 
@@ -228,7 +228,7 @@ wb.save(xlsx_path)
 print(f"Opgeslagen: {xlsx_path}")
 
 # ── Configuratiebestand ──────────────────────────────────────────────────────
-config_path = OUT_DIR / "config_Bewegingswetenschappen_VU_2026.xlsx"
+config_path = OUT_DIR / "config_Sportkunde_VU_2026.xlsx"
 make_config(
     str(config_path),
     [
@@ -346,7 +346,7 @@ print(f"\n1CHO-data: {n_ingeschreven} ingeschreven van {N} kandidaten")
 print(f"Doorgestroomd: {int(doorstroomt.sum())}, niet: {int((~doorstroomt).sum())}")
 
 # ── Kopieer naar demo ────────────────────────────────────────────────────────
-demo_subdir = Path("data/demo/bewegingswetenschappen_vu_2026")
+demo_subdir = Path("data/demo/sportkunde_hs_westland_2026")
 demo_subdir.mkdir(parents=True, exist_ok=True)
 shutil.copy2(xlsx_path, demo_subdir / "selectiedata.xlsx")
 shutil.copy2(config_path, demo_subdir / "config.xlsx")

@@ -1,5 +1,5 @@
 """
-Genereer een fictief selectiebestand voor Biomedische Wetenschappen (AUMC).
+Genereer een fictief selectiebestand voor Gezondheidskunde (AUMC).
 
 Structuur gebaseerd op het FAR Leiden 2026 format maar met andere
 instrumentnamen, scoreschalen en kandidaataantallen. Niet 1-op-1
@@ -31,10 +31,10 @@ OUT_DIR = Path("data/fictief")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 N = 120
-OPLEIDING = "Biomedische Wetenschappen"
-INSTELLING = "AUMC"
+OPLEIDING = "Gezondheidskunde"
+INSTELLING = "Universiteit Noordstad"
 JAAR = 2026
-BLAD_NAAM = "2026 AUMC BioMed"
+BLAD_NAAM = "2026 Noordstad Gezondh"
 
 
 def generate_correlated_scores(n, means, stds, corr_strength=0.3):
@@ -192,7 +192,7 @@ master_premaster = RNG.choice(["master", "premaster"], size=N, p=[0.85, 0.15])
 random_rang = RNG.permutation(N) + 1
 
 # ── Proceskolommen (realistisch maar fictief) ────────────────────────────────
-bedrijf = ["AUMC"] * N
+bedrijf = ["Universiteit Noordstad"] * N
 processet = ["Selectie BioMed 2026-2027"] * N
 proces = ["Selectieprocedure BioMed Master"] * N
 gebruikersnaam = [f"kandidaat_{s}" for s in studentnummers]
@@ -331,15 +331,15 @@ df = pd.DataFrame(
         "avt_numeriekevaardigheden_Schaalscore": avt_scores[:, 5],
         "avt_numeriekevaardigheden_Normscore": avt_norm[:, 5],
         # Instrument 2: Reflectie-opdracht
-        "AUMCBioMedReflectieopdracht": [np.nan] * N,
-        "AUMCBioMedReflectieopdracht_Teststartdatum": [
+        "NoordstadGezondhReflectieopdracht": [np.nan] * N,
+        "NoordstadGezondhReflectieopdracht_Teststartdatum": [
             (d + pd.Timedelta(hours=2)).strftime("%Y-%m-%d %H:%M") for d in avt_start
         ],
-        "AUMCBioMedReflectieopdracht_Testvoltooiddatum": [
+        "NoordstadGezondhReflectieopdracht_Testvoltooiddatum": [
             (d + pd.Timedelta(hours=3)).strftime("%Y-%m-%d %H:%M") for d in avt_start
         ],
-        "AUMCBioMedReflectieopdracht_Testvoltooid": ["Ja"] * N,
-        "AUMC_BioMed_Reflectie001_BeschrijfEenSituatie": reflectie_tekst,
+        "NoordstadGezondhReflectieopdracht_Testvoltooid": ["Ja"] * N,
+        "Noordstad_Gezondh_Reflectie001_BeschrijfEenSituatie": reflectie_tekst,
         "Aantalwoordenongeveer": woordenaantal,
         "Beoordeling analytisch denken": reflectie_analytisch_tekst,
         "Beoordeling communicatieve vaardigheden": reflectie_communicatief_tekst,
@@ -409,7 +409,7 @@ with pd.ExcelWriter(xlsx_path, engine="openpyxl") as writer:
 print(f"Opgeslagen: {xlsx_path}")
 
 # ── Configuratiebestand ──────────────────────────────────────────────────────
-config_path = OUT_DIR / "config_BioMed_AUMC_2026.xlsx"
+config_path = OUT_DIR / "config_Gezondheidskunde_Noordstad_2026.xlsx"
 make_config(
     str(config_path),
     [
@@ -562,7 +562,7 @@ print(f"Opgeslagen: {cho_path}")
 # ── Kopieer naar demo directory ──────────────────────────────────────────────
 import shutil
 
-demo_subdir = Path("data/demo/biomed_aumc_2026")
+demo_subdir = Path("data/demo/gezondheidskunde_univ_noordstad_2026")
 demo_subdir.mkdir(parents=True, exist_ok=True)
 shutil.copy2(xlsx_path, demo_subdir / "selectiedata.xlsx")
 shutil.copy2(config_path, demo_subdir / "config.xlsx")
