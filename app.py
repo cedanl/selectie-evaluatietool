@@ -749,6 +749,32 @@ app.layout = html.Div(
                                                     id="regressie-samenvatting",
                                                     className="mb-3",
                                                 ),
+                                                html.H6(
+                                                    "Univariaat per item",
+                                                    className="mt-3",
+                                                ),
+                                                html.P(
+                                                    "Elk item afzonderlijk getoetst tegen studiesucces. Hier valt "
+                                                    "niets weg: elk item krijgt een eigen model. Zo zie je welke "
+                                                    "items op zichzelf voorspellend zijn, los van overlap.",
+                                                    className="text-muted small",
+                                                ),
+                                                dash_table.DataTable(
+                                                    id="tabel-univariaat",
+                                                    style_table={"overflowX": "auto"},
+                                                    **TABLE_STYLE,
+                                                ),
+                                                html.H6(
+                                                    "Gezamenlijk model",
+                                                    className="mt-4",
+                                                ),
+                                                html.P(
+                                                    "Alle items tegelijk in een model. Items kunnen hier "
+                                                    "niet-significant worden doordat een ander item dezelfde "
+                                                    "informatie al bevat. Bij te weinig studenten per item worden "
+                                                    "de zwakste items automatisch weggelaten.",
+                                                    className="text-muted small",
+                                                ),
                                                 dash_table.DataTable(
                                                     id="tabel-regressie",
                                                     style_table={"overflowX": "auto"},
@@ -1914,6 +1940,9 @@ def update_vo_tab(score_keuze, store_data, scores_store):
 @app.callback(
     Output("fig-correlatie", "figure"),
     Output("regressie-samenvatting", "children"),
+    Output("tabel-univariaat", "data"),
+    Output("tabel-univariaat", "columns"),
+    Output("tabel-univariaat", "style_data_conditional"),
     Output("tabel-regressie", "data"),
     Output("tabel-regressie", "columns"),
     Output("tabel-regressie", "style_data_conditional"),
@@ -1931,7 +1960,7 @@ def update_samenhang_tab(
     leeg = go.Figure().update_layout(**CHART_BASE)
     df = df_from_store(store_data)
     if df.empty or not scores_store:
-        return leeg, "", [], [], []
+        return leeg, "", [], [], [], [], [], []
 
     scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
     scores = scores_df
@@ -1973,30 +2002,40 @@ def update_samenhang_tab(
     )
 
     regressie_msg = ""
+    uni_data = []
+    uni_cols = []
+    uni_style = []
     reg_data = []
     reg_cols = []
     reg_style = []
 
-    # Regressie draait altijd op alle items, niet op de instrument-subset
     all_item_pivot = scores_df.pivot_table(
         index="studentnummer", columns="item", values="score", aggfunc="mean"
     )
     all_item_pivot.columns = [shorten_item(c) for c in all_item_pivot.columns]
     all_score_cols = list(all_item_pivot.columns)
 
-    # Items in de huidige filterselectie (voor markering in de tabel)
     gefilterde_items = set(shorten_item(i) for i in scores["item"].unique())
 
     ingeschreven = df[df["groep"].isin(GROEP_INGESCHREVEN)].copy()
 
     if len(ingeschreven) < 10:
         regressie_msg = dbc.Alert(
-            f"Te weinig ingeschreven studenten ({len(ingeschreven)}) voor betrouwbare regressie. "
+            f"Te weinig ingeschreven studenten ({len(ingeschreven)}) voor regressie. "
             "Minimaal 10 nodig.",
             color="warning",
             className="small",
         )
-        return fig, regressie_msg, reg_data, reg_cols, reg_style
+        return (
+            fig,
+            regressie_msg,
+            uni_data,
+            uni_cols,
+            uni_style,
+            reg_data,
+            reg_cols,
+            reg_style,
+        )
 
     ingeschreven["doorgestroomd"] = ingeschreven["groep"].isin(GROEP_SUCCES).astype(int)
 
@@ -2004,7 +2043,6 @@ def update_samenhang_tab(
         all_item_pivot.index.isin(ingeschreven["studentnummer"])
     ].copy()
 
-    # Verwijder kolommen waar >30% NaN is (optionele velden zoals keuzevakken)
     nan_pct = item_pivot_inschr.isna().mean()
     verwijderd_nan = [
         c
@@ -2017,15 +2055,23 @@ def update_samenhang_tab(
         if c in item_pivot_inschr.columns and nan_pct.get(c, 1) <= 0.3
     ]
 
-    if len(bruikbare_cols) < 2:
+    if len(bruikbare_cols) < 1:
         regressie_msg = dbc.Alert(
             "Te weinig bruikbare items voor regressie.",
             color="warning",
             className="small",
         )
-        return fig, regressie_msg, reg_data, reg_cols, reg_style
+        return (
+            fig,
+            regressie_msg,
+            uni_data,
+            uni_cols,
+            uni_style,
+            reg_data,
+            reg_cols,
+            reg_style,
+        )
 
-    # Vul resterende NaN's met kolomgemiddelde
     item_pivot_inschr[bruikbare_cols] = item_pivot_inschr[bruikbare_cols].fillna(
         item_pivot_inschr[bruikbare_cols].mean()
     )
@@ -2037,14 +2083,77 @@ def update_samenhang_tab(
             color="warning",
             className="small",
         )
-        return fig, regressie_msg, reg_data, reg_cols, reg_style
+        return (
+            fig,
+            regressie_msg,
+            uni_data,
+            uni_cols,
+            uni_style,
+            reg_data,
+            reg_cols,
+            reg_style,
+        )
 
     y = ingeschreven.set_index("studentnummer").loc[
         item_pivot_inschr.index, "doorgestroomd"
     ]
-    X = item_pivot_inschr[bruikbare_cols]
+    X_all = item_pivot_inschr[bruikbare_cols]
 
-    # Verwijder kolommen met (bijna-)perfecte multicollineariteit
+    # Univariate regressie per item: elk item apart
+    import statsmodels.api as sm
+
+    for col in bruikbare_cols:
+        x_col = X_all[[col]].astype(float)
+        std = x_col.iloc[:, 0].std()
+        if std > 0:
+            x_z = (x_col - x_col.mean()) / std
+        else:
+            x_z = x_col * 0
+        try:
+            m = sm.Logit(y.astype(float), sm.add_constant(x_z)).fit(disp=0, maxiter=50)
+            coef = round(float(m.params.iloc[-1]), 3)
+            odds = round(float(np.exp(m.params.iloc[-1])), 2)
+            p = float(m.pvalues.iloc[-1])
+            uni_data.append(
+                {
+                    "Item": col,
+                    "Coefficient": coef,
+                    "Odds ratio": odds,
+                    "p-waarde": fmt_p(p),
+                    "Sig.": sig_sym(p),
+                }
+            )
+        except Exception:
+            uni_data.append(
+                {
+                    "Item": col,
+                    "Coefficient": "-",
+                    "Odds ratio": "-",
+                    "p-waarde": "-",
+                    "Sig.": "-",
+                }
+            )
+
+    uni_cols = [
+        {"name": c, "id": c}
+        for c in ["Item", "Coefficient", "Odds ratio", "p-waarde", "Sig."]
+    ]
+    for i, row in enumerate(uni_data):
+        if row["Sig."] not in ("-", "ns"):
+            uni_style.append(
+                {
+                    "if": {"row_index": i, "column_id": "Sig."},
+                    "backgroundColor": "#bbf7d0",
+                    "color": "#166534",
+                    "fontWeight": "600",
+                }
+            )
+        if row["Item"] not in gefilterde_items:
+            uni_style.append({"if": {"row_index": i}, "opacity": "0.4"})
+
+    # Gezamenlijk model
+    X = X_all.copy()
+
     from numpy.linalg import matrix_rank
 
     verwijderd_collinear = []
@@ -2058,36 +2167,29 @@ def update_samenhang_tab(
         _, col_idx = divmod(flat_idx, corr_vals.shape[1])
         verwijderd_collinear.append(X.columns[col_idx])
         X = X.drop(columns=[X.columns[col_idx]])
-    bruikbare_cols = list(X.columns)
+    joint_cols = list(X.columns)
 
-    # Beperk predictoren als er te weinig events per variabele zijn
     n_events = min(int(y.sum()), int(len(y) - y.sum()))
     max_predictoren = max(2, n_events // 5)
     verwijderd_epv = []
-    if len(bruikbare_cols) > max_predictoren:
-        import statsmodels.api as sm
-
-        univariate_p = {}
-        for col in bruikbare_cols:
-            x_col = X[[col]].astype(float)
-            x_col = (x_col - x_col.mean()) / x_col.std().replace(0, 1)
-            try:
-                m = sm.Logit(y.astype(float), sm.add_constant(x_col)).fit(
-                    disp=0, maxiter=50
-                )
-                univariate_p[col] = m.pvalues.iloc[-1]
-            except Exception:
-                univariate_p[col] = 1.0
-        gesorteerd = sorted(bruikbare_cols, key=lambda c: univariate_p[c])
+    if len(joint_cols) > max_predictoren:
+        uni_p = {
+            row["Item"]: (
+                0.0001 if row["p-waarde"] == "< 0.001" else float(row["p-waarde"])
+            )
+            for row in uni_data
+            if row["p-waarde"] not in ("-",)
+        }
+        gesorteerd = sorted(joint_cols, key=lambda c: uni_p.get(c, 1.0))
         verwijderd_epv = gesorteerd[max_predictoren:]
-        bruikbare_cols = gesorteerd[:max_predictoren]
-        X = X[bruikbare_cols]
+        joint_cols = gesorteerd[:max_predictoren]
+        X = X[joint_cols]
 
     try:
-        import statsmodels.api as sm
-
         X_z = X.astype(float).apply(
-            lambda s: (s - s.mean()) / s.std() if s.std() > 0 else 0
+            lambda s: (
+                (s - s.mean()) / s.std() if s.std() > 0 else pd.Series(0, index=s.index)
+            )
         )
         X_const = sm.add_constant(X_z)
         model = sm.Logit(y.astype(float), X_const).fit(disp=0, maxiter=100)
@@ -2114,7 +2216,7 @@ def update_samenhang_tab(
             msg_parts.append(html.Br())
             msg_parts.append(
                 html.Span(
-                    f"Items niet meegenomen (overlap met andere items): {', '.join(verwijderd_collinear)}",
+                    f"Items niet meegenomen (overlap): {', '.join(verwijderd_collinear)}",
                     className="small text-muted",
                 )
             )
@@ -2122,14 +2224,14 @@ def update_samenhang_tab(
             msg_parts.append(html.Br())
             msg_parts.append(
                 html.Span(
-                    f"Items niet meegenomen (te weinig studenten voor {len(bruikbare_cols) + len(verwijderd_epv)} "
-                    f"predictoren, beperkt tot {len(bruikbare_cols)} sterkste): {', '.join(verwijderd_epv)}",
+                    f"Items niet meegenomen (EPV-beperking, top {len(joint_cols)} behouden): "
+                    f"{', '.join(verwijderd_epv)}",
                     className="small text-muted",
                 )
             )
         regressie_msg = html.Div(msg_parts)
 
-        for item_naam in bruikbare_cols:
+        for item_naam in joint_cols:
             if item_naam not in model.params.index:
                 continue
             coef = round(float(model.params[item_naam]), 3)
@@ -2163,12 +2265,7 @@ def update_samenhang_tab(
                     }
                 )
             if row["Item"] not in gefilterde_items:
-                reg_style.append(
-                    {
-                        "if": {"row_index": i},
-                        "opacity": "0.4",
-                    }
-                )
+                reg_style.append({"if": {"row_index": i}, "opacity": "0.4"})
 
     except Exception as e:
         regressie_msg = dbc.Alert(
@@ -2177,7 +2274,16 @@ def update_samenhang_tab(
             className="small",
         )
 
-    return fig, regressie_msg, reg_data, reg_cols, reg_style
+    return (
+        fig,
+        regressie_msg,
+        uni_data,
+        uni_cols,
+        uni_style,
+        reg_data,
+        reg_cols,
+        reg_style,
+    )
 
 
 if __name__ == "__main__":
