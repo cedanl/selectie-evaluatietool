@@ -550,8 +550,8 @@ app.layout = html.Div(
                                     ],
                                 ),
                                 dbc.Tab(
-                                    label="Samenhang items",
-                                    tab_id="tab-samenhang",
+                                    label="Correlatie",
+                                    tab_id="tab-correlatie",
                                     children=[
                                         html.Div(
                                             [
@@ -661,15 +661,24 @@ app.layout = html.Div(
                                                     dcc.Graph(id="fig-correlatie"),
                                                     type="dot",
                                                 ),
-                                                html.Hr(),
+                                            ],
+                                            className="tab-body",
+                                        ),
+                                    ],
+                                ),
+                                dbc.Tab(
+                                    label="Regressie",
+                                    tab_id="tab-regressie",
+                                    children=[
+                                        html.Div(
+                                            [
                                                 html.H5(
                                                     "Regressie-analyse: voorspelling studiesucces"
                                                 ),
                                                 html.P(
                                                     "Welke onderdelen van de selectie voorspellen het beste of een student "
                                                     "de opleiding succesvol vervolgt (doorstroom naar jaar 2, of een diploma "
-                                                    "bij eenjarige opleidingen)? Dit model kijkt naar alle items tegelijk en "
-                                                    "bepaalt per item hoeveel het bijdraagt aan de voorspelling.",
+                                                    "bij eenjarige opleidingen)?",
                                                     className="text-muted small",
                                                 ),
                                                 html.Details(
@@ -682,61 +691,35 @@ app.layout = html.Div(
                                                         html.Div(
                                                             [
                                                                 html.P(
-                                                                    "De tabel toont per item vier waarden:",
+                                                                    "De tabellen tonen per item vier waarden:",
                                                                     className="small text-muted mb-1",
                                                                 ),
                                                                 html.Ul(
                                                                     [
                                                                         html.Li(
-                                                                            "Coefficient: de richting en sterkte van het effect. "
-                                                                            "Positief = hogere score hangt samen met hogere kans op doorstroom. "
-                                                                            "Negatief = hogere score hangt samen met lagere kans. "
-                                                                            "Scores zijn genormaliseerd (z-scores), dus de coefficienten zijn "
-                                                                            "vergelijkbaar tussen items met verschillende schalen."
+                                                                            "Coefficient: richting en sterkte. Positief = hogere score, hogere "
+                                                                            "kans op doorstroom. Genormaliseerd (z-scores), dus vergelijkbaar."
                                                                         ),
                                                                         html.Li(
-                                                                            "Odds ratio: hoeveel keer groter de kans op doorstroom wordt per "
-                                                                            "standaarddeviatie stijging. OR = 1.5 betekent 50% hogere kans als "
-                                                                            "de score 1 SD stijgt. OR < 1 betekent lagere kans."
+                                                                            "Odds ratio: kansverhouding per SD stijging. OR 1.5 = 50% hogere "
+                                                                            "kans. OR < 1 = lagere kans."
                                                                         ),
                                                                         html.Li(
-                                                                            "p-waarde: hoe waarschijnlijk is dit resultaat als het item in werkelijkheid "
-                                                                            "geen effect heeft? p < 0.05 geldt als statistisch significant."
+                                                                            "p-waarde: kans op dit resultaat als het item geen effect heeft. "
+                                                                            "p < 0.05 is significant."
                                                                         ),
                                                                         html.Li(
-                                                                            "Sig.: samenvatting van de p-waarde. "
-                                                                            "* = p < 0.05, ** = p < 0.01, *** = p < 0.001, ns = niet significant."
+                                                                            "Sig.: * = p < 0.05, ** < 0.01, *** < 0.001, ns = niet significant."
                                                                         ),
                                                                     ],
                                                                     className="small text-muted mb-1",
                                                                 ),
                                                                 html.P(
-                                                                    "Pseudo R-kwadraat (boven de tabel) geeft aan hoeveel van de variatie in "
-                                                                    "doorstroom het model als geheel verklaart. Waarden rond 0.10-0.20 zijn "
-                                                                    "gebruikelijk bij selectiedata. Een item kan significant zijn zonder dat "
-                                                                    "het model als geheel sterk voorspelt.",
-                                                                    className="small text-muted mb-1",
-                                                                ),
-                                                                html.P(
-                                                                    "Let op: elk item wordt beoordeeld rekening houdend met alle andere items "
-                                                                    "in het model. Een item dat op zichzelf voorspellend is, kan niet-significant "
-                                                                    "zijn als een ander item dezelfde informatie al bevat. Dat is geen fout, "
-                                                                    "maar overlap.",
-                                                                    className="small text-muted mb-1",
-                                                                ),
-                                                                html.P(
-                                                                    "Scores worden genormaliseerd (z-scores) voor de regressie. Daardoor zijn "
-                                                                    "de coefficienten en odds ratios vergelijkbaar tussen items met verschillende "
-                                                                    "schalen. Een odds ratio van 2.0 betekent: per standaarddeviatie hoger scoren "
-                                                                    "verdubbelt de kans op doorstroom.",
-                                                                    className="small text-muted mb-1",
-                                                                ),
-                                                                html.P(
-                                                                    "Bij weinig studenten kan het model niet alle items tegelijk meenemen. "
-                                                                    "Als vuistregel heb je minimaal 5 studenten in de kleinste groep per item "
-                                                                    "nodig. Bij minder selecteert de tool automatisch de items die individueel "
-                                                                    "het sterkst samenhangen met doorstroom. De overige items worden niet "
-                                                                    "meegenomen en staan vermeld boven de tabel.",
+                                                                    "Het univariate model toetst elk item afzonderlijk. Het gezamenlijke "
+                                                                    "model zet alle items tegelijk in en laat zien welk item bovenop de "
+                                                                    "andere items nog een eigen bijdrage levert. Bij weinig studenten "
+                                                                    "worden de zwakste items automatisch weggelaten (EPV-regel: minimaal "
+                                                                    "5 events per predictor).",
                                                                     className="small text-muted mb-0",
                                                                 ),
                                                             ],
@@ -749,14 +732,9 @@ app.layout = html.Div(
                                                     id="regressie-samenvatting",
                                                     className="mb-3",
                                                 ),
-                                                html.H6(
-                                                    "Univariaat per item",
-                                                    className="mt-3",
-                                                ),
+                                                html.H6("Univariaat per item"),
                                                 html.P(
-                                                    "Elk item afzonderlijk getoetst tegen studiesucces. Hier valt "
-                                                    "niets weg: elk item krijgt een eigen model. Zo zie je welke "
-                                                    "items op zichzelf voorspellend zijn, los van overlap.",
+                                                    "Elk item afzonderlijk getoetst. Hier valt niets weg.",
                                                     className="text-muted small",
                                                 ),
                                                 dash_table.DataTable(
@@ -769,117 +747,13 @@ app.layout = html.Div(
                                                     className="mt-4",
                                                 ),
                                                 html.P(
-                                                    "Alle items tegelijk in een model. Items kunnen hier "
-                                                    "niet-significant worden doordat een ander item dezelfde "
-                                                    "informatie al bevat. Bij te weinig studenten per item worden "
-                                                    "de zwakste items automatisch weggelaten.",
+                                                    "Alle items tegelijk. Items kunnen niet-significant worden door "
+                                                    "overlap met andere items.",
                                                     className="text-muted small",
                                                 ),
                                                 dash_table.DataTable(
                                                     id="tabel-regressie",
                                                     style_table={"overflowX": "auto"},
-                                                    **TABLE_STYLE,
-                                                ),
-                                            ],
-                                            className="tab-body",
-                                        ),
-                                    ],
-                                ),
-                                dbc.Tab(
-                                    label="VO-cijfer",
-                                    tab_id="tab-vo",
-                                    children=[
-                                        html.Div(
-                                            [
-                                                html.H5(
-                                                    "VO-eindcijfer vs selectiescores"
-                                                ),
-                                                html.P(
-                                                    "Meet de selectie iets anders dan wat je op school al hebt laten zien? "
-                                                    "Hier vergelijken we selectiescores met het gemiddelde eindcijfer van "
-                                                    "de middelbare school (uit 1CHO).",
-                                                    className="text-muted small",
-                                                ),
-                                                html.Details(
-                                                    [
-                                                        html.Summary(
-                                                            "Waarom is dit relevant?",
-                                                            className="small text-muted",
-                                                            style={"cursor": "pointer"},
-                                                        ),
-                                                        html.Div(
-                                                            [
-                                                                html.P(
-                                                                    "Het VO-eindcijfer is een maat voor cognitieve schoolprestaties die "
-                                                                    "niet onderdeel is van de selectie. Door selectiescores hiermee te "
-                                                                    "vergelijken kun je twee dingen beoordelen:",
-                                                                    className="small text-muted mb-1",
-                                                                ),
-                                                                html.Ul(
-                                                                    [
-                                                                        html.Li(
-                                                                            "Lage correlatie (r rond 0): het selectie-item meet iets anders dan "
-                                                                            "schoolprestaties. Dat is vaak wenselijk, want de selectie voegt dan "
-                                                                            "informatie toe die het diploma niet al geeft."
-                                                                        ),
-                                                                        html.Li(
-                                                                            "Hoge correlatie (r > 0.5): het selectie-item overlapt sterk met het "
-                                                                            "VO-cijfer. De selectie herhaalt dan grotendeels wat het schooldiploma "
-                                                                            "al vertelt. Dat kan een bewuste keuze zijn, maar het is goed om te weten."
-                                                                        ),
-                                                                    ],
-                                                                    className="small text-muted mb-1",
-                                                                ),
-                                                                html.P(
-                                                                    "De scatterplot toont alleen ingeschreven studenten (niet de groep "
-                                                                    "'Niet gestart'), omdat het VO-cijfer uit 1CHO komt en alleen beschikbaar "
-                                                                    "is voor studenten die daadwerkelijk zijn ingeschreven.",
-                                                                    className="small text-muted mb-1",
-                                                                ),
-                                                                html.P(
-                                                                    "De tabel onderaan toont Pearson r per item. Vuistregels (Cohen 1988): "
-                                                                    "r < 0.10 verwaarloosbaar, 0.10-0.30 zwak, 0.30-0.50 matig, > 0.50 sterk.",
-                                                                    className="small text-muted mb-0",
-                                                                ),
-                                                            ],
-                                                            className="mt-1 mb-2",
-                                                        ),
-                                                    ],
-                                                    className="mb-3",
-                                                ),
-                                                dbc.Row(
-                                                    [
-                                                        dbc.Col(
-                                                            [
-                                                                dbc.Label(
-                                                                    "Item (y-as)"
-                                                                ),
-                                                                dcc.Dropdown(
-                                                                    id="vo-score",
-                                                                    options=[],
-                                                                    clearable=False,
-                                                                ),
-                                                            ],
-                                                            width=4,
-                                                        ),
-                                                    ],
-                                                    className="mb-3",
-                                                ),
-                                                dcc.Loading(
-                                                    dcc.Graph(id="fig-vo"), type="dot"
-                                                ),
-                                                html.Hr(),
-                                                html.P(
-                                                    "Samenhang (r) per item met het VO-eindcijfer. "
-                                                    "Hoe dichter bij 0, hoe meer het item iets anders meet dan schoolprestaties.",
-                                                    className="text-muted small",
-                                                ),
-                                                dash_table.DataTable(
-                                                    id="tabel-pearsonr",
-                                                    style_table={
-                                                        "overflowX": "auto",
-                                                        "maxWidth": "420px",
-                                                    },
                                                     **TABLE_STYLE,
                                                 ),
                                             ],
@@ -1155,8 +1029,6 @@ def _laad_demodata(dataset_name=None):
     Output("samenhang-instrument", "value"),
     Output("samenhang-criterium", "options"),
     Output("samenhang-criterium", "value"),
-    Output("vo-score", "options"),
-    Output("vo-score", "value"),
     Output("app-subtitle", "children"),
     Input("data-store", "data"),
     State("scores-store", "data"),
@@ -1170,8 +1042,6 @@ def update_filters_on_data_change(store_data, scores_store):
             "Alle",  # samenhang-instrument
             empty_opts,
             "Alle",  # samenhang-criterium
-            [],
-            "totaalscore",  # vo-score
             "",  # subtitle
         )
 
@@ -1189,7 +1059,6 @@ def update_filters_on_data_change(store_data, scores_store):
 
     instrument_opties = [{"label": "Alle instrumenten", "value": "Alle"}]
     criterium_opties = [{"label": "Alle criteria", "value": "Alle"}]
-    vo_opties = [{"label": "Totaalscore", "value": "totaalscore"}]
     if scores_store:
         scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
         for inst in sorted(scores_df["instrument"].unique()):
@@ -1198,16 +1067,12 @@ def update_filters_on_data_change(store_data, scores_store):
         criteria = [c for c in sorted(criteria) if c.strip()]
         for crit in criteria:
             criterium_opties.append({"label": crit, "value": crit})
-        for item in sorted(scores_df["item"].unique()):
-            vo_opties.append({"label": shorten_item(item), "value": item})
 
     return (
         instrument_opties,
         "Alle",
         criterium_opties,
         "Alle",
-        vo_opties,
-        "totaalscore",
         subtitle,
     )
 
@@ -1794,173 +1659,15 @@ def update_bevindingen(store_data, scores_store):
 
 
 @app.callback(
-    Output("fig-vo", "figure"),
-    Output("tabel-pearsonr", "data"),
-    Output("tabel-pearsonr", "columns"),
-    Output("tabel-pearsonr", "style_data_conditional"),
-    Input("vo-score", "value"),
-    State("data-store", "data"),
-    State("scores-store", "data"),
-)
-def update_vo_tab(score_keuze, store_data, scores_store):
-    leeg = go.Figure().update_layout(**CHART_BASE)
-    df = df_from_store(store_data)
-    if df.empty or "gem_eindcijfer_vo" not in df.columns:
-        return leeg, [], [], []
-
-    scores_df = (
-        pd.read_json(io.StringIO(scores_store), orient="split")
-        if scores_store
-        else None
-    )
-
-    df_vo = df[df["gem_eindcijfer_vo"].notna()].copy()
-    if df_vo.empty:
-        return leeg, [], [], []
-
-    if score_keuze == "totaalscore" and "totaalscore" in df_vo.columns:
-        plot_df = df_vo[
-            ["studentnummer", "groep", "gem_eindcijfer_vo", "totaalscore"]
-        ].copy()
-        plot_df["score_val"] = plot_df["totaalscore"]
-        score_label = "Totaalscore"
-    elif scores_df is not None:
-        item_scores = scores_df[scores_df["item"] == score_keuze][
-            ["studentnummer", "score"]
-        ]
-        plot_df = df_vo[["studentnummer", "groep", "gem_eindcijfer_vo"]].merge(
-            item_scores, on="studentnummer", how="inner"
-        )
-        plot_df["score_val"] = plot_df["score"]
-        score_label = shorten_item(score_keuze)
-    else:
-        return leeg, [], [], []
-
-    ingeschreven = plot_df[plot_df["groep"].isin(GROEP_INGESCHREVEN)]
-
-    fig = px.scatter(
-        ingeschreven,
-        x="gem_eindcijfer_vo",
-        y="score_val",
-        color="groep",
-        color_discrete_map=GROEP_KLEUREN,
-        category_orders={"groep": GROEP_VOLGORDE},
-        labels={
-            "gem_eindcijfer_vo": "VO-eindcijfer",
-            "score_val": score_label,
-            "groep": "",
-        },
-        opacity=0.55,
-        height=500,
-    )
-    fig.update_traces(marker=dict(size=6))
-    for groep in GROEP_INGESCHREVEN:
-        sub = ingeschreven[ingeschreven["groep"] == groep][
-            ["gem_eindcijfer_vo", "score_val"]
-        ].dropna()
-        if len(sub) >= 2:
-            m, b = np.polyfit(sub["gem_eindcijfer_vo"], sub["score_val"], 1)
-            x_line = np.linspace(
-                sub["gem_eindcijfer_vo"].min(), sub["gem_eindcijfer_vo"].max(), 50
-            )
-            fig.add_trace(
-                go.Scatter(
-                    x=x_line,
-                    y=m * x_line + b,
-                    mode="lines",
-                    line=dict(color=GROEP_KLEUREN[groep], width=2, dash="dot"),
-                    showlegend=False,
-                    hoverinfo="skip",
-                )
-            )
-    fig.update_layout(
-        legend=dict(orientation="h", y=1.05, yanchor="bottom"), **CHART_BASE
-    )
-
-    cor_rijen = []
-    if scores_df is not None:
-        all_items = sorted(scores_df["item"].unique())
-        score_names = [("Totaalscore", "totaalscore")] + [
-            (shorten_item(it), it) for it in all_items
-        ]
-        for label, item_name in score_names:
-            if item_name == "totaalscore" and "totaalscore" in df_vo.columns:
-                sub = df_vo[["gem_eindcijfer_vo", "totaalscore"]].dropna()
-                r = (
-                    float(sub["gem_eindcijfer_vo"].corr(sub["totaalscore"]))
-                    if len(sub) >= 2
-                    else None
-                )
-            else:
-                item_scores = scores_df[scores_df["item"] == item_name][
-                    ["studentnummer", "score"]
-                ]
-                merged = df_vo[["studentnummer", "gem_eindcijfer_vo"]].merge(
-                    item_scores, on="studentnummer"
-                )
-                r = (
-                    float(merged["gem_eindcijfer_vo"].corr(merged["score"]))
-                    if len(merged) >= 2
-                    else None
-                )
-            cor_rijen.append(
-                {
-                    "Item": label,
-                    "r (Pearson)": round(r, 3)
-                    if r is not None and not np.isnan(r)
-                    else None,
-                }
-            )
-
-    style_cond = []
-    for i, row in enumerate(cor_rijen):
-        r = row["r (Pearson)"]
-        if r is None:
-            continue
-        if r < -0.2:
-            bg, fg = "#fed7aa", "#7c2d12"
-        elif r < 0.3:
-            bg, fg = "#bbf7d0", "#14532d"
-        elif r < 0.5:
-            bg, fg = "#fef08a", "#713f12"
-        else:
-            bg, fg = "#fecaca", "#7f1d1d"
-        style_cond.append(
-            {
-                "if": {"row_index": i, "column_id": "r (Pearson)"},
-                "backgroundColor": bg,
-                "color": fg,
-            }
-        )
-
-    pearson_cols = [{"name": c, "id": c} for c in ["Item", "r (Pearson)"]]
-    return fig, cor_rijen, pearson_cols, style_cond
-
-
-@app.callback(
     Output("fig-correlatie", "figure"),
-    Output("regressie-samenvatting", "children"),
-    Output("tabel-univariaat", "data"),
-    Output("tabel-univariaat", "columns"),
-    Output("tabel-univariaat", "style_data_conditional"),
-    Output("tabel-regressie", "data"),
-    Output("tabel-regressie", "columns"),
-    Output("tabel-regressie", "style_data_conditional"),
     Input("samenhang-instrument", "value"),
     Input("samenhang-criterium", "value"),
-    State("data-store", "data"),
     State("scores-store", "data"),
 )
-def update_samenhang_tab(
-    sh_instrument,
-    sh_criterium,
-    store_data,
-    scores_store,
-):
+def update_correlatie_tab(sh_instrument, sh_criterium, scores_store):
     leeg = go.Figure().update_layout(**CHART_BASE)
-    df = df_from_store(store_data)
-    if df.empty or not scores_store:
-        return leeg, "", [], [], [], [], [], []
+    if not scores_store:
+        return leeg
 
     scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
     scores = scores_df
@@ -1971,12 +1678,18 @@ def update_samenhang_tab(
         scores = scores[scores["criterium"] == sh_criterium]
 
     if scores.empty:
-        return leeg, "", [], [], []
+        return leeg
+
+    meta = scores.drop_duplicates(subset=["item"])[["item", "instrument"]].copy()
+    label_map = {
+        row["item"]: f"{row['instrument']} - {shorten_item(row['item'])}"
+        for _, row in meta.iterrows()
+    }
 
     item_pivot = scores.pivot_table(
         index="studentnummer", columns="item", values="score", aggfunc="mean"
     )
-    item_pivot.columns = [shorten_item(c) for c in item_pivot.columns]
+    item_pivot.columns = [label_map.get(c, shorten_item(c)) for c in item_pivot.columns]
     score_cols = list(item_pivot.columns)
     corr_matrix = item_pivot[score_cols].corr().round(3)
 
@@ -2000,6 +1713,26 @@ def update_samenhang_tab(
         **CHART_BASE,
         margin=dict(t=20, b=10),
     )
+    return fig
+
+
+@app.callback(
+    Output("regressie-samenvatting", "children"),
+    Output("tabel-univariaat", "data"),
+    Output("tabel-univariaat", "columns"),
+    Output("tabel-univariaat", "style_data_conditional"),
+    Output("tabel-regressie", "data"),
+    Output("tabel-regressie", "columns"),
+    Output("tabel-regressie", "style_data_conditional"),
+    Input("data-store", "data"),
+    State("scores-store", "data"),
+)
+def update_regressie_tab(store_data, scores_store):
+    df = df_from_store(store_data)
+    if df.empty or not scores_store:
+        return "", [], [], [], [], [], []
+
+    scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
 
     regressie_msg = ""
     uni_data = []
@@ -2009,13 +1742,11 @@ def update_samenhang_tab(
     reg_cols = []
     reg_style = []
 
-    all_item_pivot = scores_df.pivot_table(
+    item_pivot = scores_df.pivot_table(
         index="studentnummer", columns="item", values="score", aggfunc="mean"
     )
-    all_item_pivot.columns = [shorten_item(c) for c in all_item_pivot.columns]
-    all_score_cols = list(all_item_pivot.columns)
-
-    gefilterde_items = set(shorten_item(i) for i in scores["item"].unique())
+    item_pivot.columns = [shorten_item(c) for c in item_pivot.columns]
+    all_score_cols = list(item_pivot.columns)
 
     ingeschreven = df[df["groep"].isin(GROEP_INGESCHREVEN)].copy()
 
@@ -2027,7 +1758,6 @@ def update_samenhang_tab(
             className="small",
         )
         return (
-            fig,
             regressie_msg,
             uni_data,
             uni_cols,
@@ -2039,8 +1769,8 @@ def update_samenhang_tab(
 
     ingeschreven["doorgestroomd"] = ingeschreven["groep"].isin(GROEP_SUCCES).astype(int)
 
-    item_pivot_inschr = all_item_pivot.loc[
-        all_item_pivot.index.isin(ingeschreven["studentnummer"])
+    item_pivot_inschr = item_pivot.loc[
+        item_pivot.index.isin(ingeschreven["studentnummer"])
     ].copy()
 
     nan_pct = item_pivot_inschr.isna().mean()
@@ -2062,7 +1792,6 @@ def update_samenhang_tab(
             className="small",
         )
         return (
-            fig,
             regressie_msg,
             uni_data,
             uni_cols,
@@ -2084,7 +1813,6 @@ def update_samenhang_tab(
             className="small",
         )
         return (
-            fig,
             regressie_msg,
             uni_data,
             uni_cols,
@@ -2099,7 +1827,6 @@ def update_samenhang_tab(
     ]
     X_all = item_pivot_inschr[bruikbare_cols]
 
-    # Univariate regressie per item: elk item apart
     import statsmodels.api as sm
 
     for col in bruikbare_cols:
@@ -2148,10 +1875,7 @@ def update_samenhang_tab(
                     "fontWeight": "600",
                 }
             )
-        if row["Item"] not in gefilterde_items:
-            uni_style.append({"if": {"row_index": i}, "opacity": "0.4"})
 
-    # Gezamenlijk model
     X = X_all.copy()
 
     from numpy.linalg import matrix_rank
@@ -2264,8 +1988,6 @@ def update_samenhang_tab(
                         "fontWeight": "600",
                     }
                 )
-            if row["Item"] not in gefilterde_items:
-                reg_style.append({"if": {"row_index": i}, "opacity": "0.4"})
 
     except Exception as e:
         regressie_msg = dbc.Alert(
@@ -2274,16 +1996,7 @@ def update_samenhang_tab(
             className="small",
         )
 
-    return (
-        fig,
-        regressie_msg,
-        uni_data,
-        uni_cols,
-        uni_style,
-        reg_data,
-        reg_cols,
-        reg_style,
-    )
+    return regressie_msg, uni_data, uni_cols, uni_style, reg_data, reg_cols, reg_style
 
 
 if __name__ == "__main__":

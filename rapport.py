@@ -361,37 +361,6 @@ def _build_figures(
     except Exception:
         log.warning("Heatmap kon niet worden gemaakt", exc_info=True)
 
-    has_vo = "gem_eindcijfer_vo" in df.columns and df["gem_eindcijfer_vo"].notna().any()
-    if has_vo:
-        try:
-            df_vo = df[df["gem_eindcijfer_vo"].notna()]
-            inschr_vo = df_vo[df_vo["groep"].isin(GROEP_INGESCHREVEN)]
-            if "totaalscore" in inschr_vo.columns and len(inschr_vo) >= 5:
-                fig_vo = px.scatter(
-                    inschr_vo,
-                    x="gem_eindcijfer_vo",
-                    y="totaalscore",
-                    color="groep",
-                    color_discrete_map=GROEP_KLEUREN,
-                    category_orders={"groep": GROEP_VOLGORDE},
-                    labels={
-                        "gem_eindcijfer_vo": "VO-eindcijfer",
-                        "totaalscore": "Totaalscore",
-                        "groep": "",
-                    },
-                    opacity=0.55,
-                    height=450,
-                    trendline="ols",  # regressielijn per groep
-                )
-                fig_vo.update_traces(marker=dict(size=6), selector=dict(mode="markers"))
-                fig_vo.update_layout(
-                    legend=dict(orientation="h", y=1.08, yanchor="bottom"),
-                    **CHART_BASE,
-                )
-                figures["scatter"] = (fig_vo, 800, 450)
-        except Exception:
-            log.warning("Scatterplot kon niet worden gemaakt", exc_info=True)
-
     return figures
 
 
@@ -521,19 +490,6 @@ def _run_regression(
     return reg_rows, pseudo_r2, reg_text
 
 
-def _interpret_r(r_val: float) -> str:
-    r = abs(r_val)
-    if r < 0.10:
-        return "verwaarloosbaar"
-    if r < 0.30:
-        return "zwak"
-    if r < 0.50:
-        return "matig"
-    if r < 0.70:
-        return "sterk"
-    return "zeer sterk"
-
-
 def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
     opleiding = ""
     if "opleiding" in df.columns and df["opleiding"].notna().any():
@@ -573,37 +529,6 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
     )
 
     reg_rows, pseudo_r2, reg_text = _run_regression(df, item_pivot, score_cols)
-
-    has_vo = "gem_eindcijfer_vo" in df.columns and df["gem_eindcijfer_vo"].notna().any()
-    cor_rows = []
-    if has_vo:
-        df_vo = df[df["gem_eindcijfer_vo"].notna()].copy()
-        all_items = sorted(scores_df["item"].unique())
-        if "totaalscore" in df_vo.columns:
-            sub = df_vo[["gem_eindcijfer_vo", "totaalscore"]].dropna()
-            r_val = (
-                float(sub["gem_eindcijfer_vo"].corr(sub["totaalscore"]))
-                if len(sub) >= 2
-                else None
-            )
-            if r_val is not None and not np.isnan(r_val):
-                cor_rows.append(["Totaalscore", f"{r_val:.3f}", _interpret_r(r_val)])
-        for item_name in all_items:
-            item_scores = scores_df[scores_df["item"] == item_name][
-                ["studentnummer", "score"]
-            ]
-            merged = df_vo[["studentnummer", "gem_eindcijfer_vo"]].merge(
-                item_scores, on="studentnummer"
-            )
-            r_val = (
-                float(merged["gem_eindcijfer_vo"].corr(merged["score"]))
-                if len(merged) >= 2
-                else None
-            )
-            if r_val is not None and not np.isnan(r_val):
-                cor_rows.append(
-                    [shorten_item(item_name), f"{r_val:.3f}", _interpret_r(r_val)]
-                )
 
     # -- Build and render all charts --
     figures = _build_figures(df, scores_df, scores_met_groep, item_pivot, score_cols)
@@ -673,8 +598,8 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
     )
     pdf.subsection_title("Waarom kijken we soms alleen naar gestarte studenten?")
     pdf.body_text(
-        "Bij sommige analyses in dit rapport (zoals de verschiltoets, de "
-        "regressie en het VO-eindcijfer) gebruiken we alleen de studenten die "
+        "Bij sommige analyses in dit rapport (zoals de verschiltoets en de "
+        "regressie) gebruiken we alleen de studenten die "
         "daadwerkelijk begonnen zijn aan de opleiding. We vergelijken dan twee "
         f"groepen: {succes_omschrijving} tegenover studenten die wel begonnen "
         "maar zijn uitgevallen (gestart, niet naar jaar 2). De niet-gestarte "
@@ -951,63 +876,8 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
             col_widths=[50, 15, 45, 25, 30, 25],
         )
 
-    # Section 6: VO-eindcijfer
-    if has_vo:
-        pdf.add_page()
-        pdf.section_title("6. VO-eindcijfer vs selectiescores")
-        pdf.body_text(
-            "Het gemiddeld eindcijfer van het voortgezet onderwijs (VO) is een "
-            "onafhankelijke meting die uit 1CHO komt. Het is interessant om te "
-            "kijken of de selectiescores samenhangen met dit cijfer."
-        )
-        pdf.body_text(
-            "Een lage samenhang (r dicht bij 0) is positief: het betekent dat "
-            "het selectie-item iets anders meet dan schoolprestaties. Een hoge "
-            "samenhang kan erop wijzen dat het item vooral meet wat het "
-            "VO-diploma al vertelt, en dus weinig nieuwe informatie toevoegt."
-        )
-        pdf.body_text(
-            "Let op: voor deze analyse gebruiken we alleen de studenten die "
-            "daadwerkelijk ingeschreven zijn geweest, omdat het VO-eindcijfer "
-            "uit 1CHO komt en dus alleen beschikbaar is voor ingeschrevenen."
-        )
-        if cor_rows:
-            pdf.add_data_table(
-                ["Item", "r (Pearson)", "Sterkte"],
-                cor_rows,
-                col_widths=[100, 40, 40],
-            )
-        if images.get("scatter"):
-            pdf.body_text(
-                "De scatterplot hieronder toont het verband tussen het "
-                "VO-eindcijfer en de totaalscore. Elk punt is een student en per "
-                "groep is een regressielijn getekend. Hoe meer de punten op die "
-                "lijn liggen, hoe sterker het verband; de richting van de lijn "
-                "laat zien of een hoger VO-cijfer samengaat met een hogere of "
-                "lagere totaalscore."
-            )
-            totaal_r = next(
-                (float(r[1]) for r in cor_rows if r[0] == "Totaalscore"), None
-            )
-            if totaal_r is not None:
-                if totaal_r >= 0.10:
-                    richting = (
-                        "stijgt: hoe hoger het VO-eindcijfer, hoe hoger de totaalscore"
-                    )
-                elif totaal_r <= -0.10:
-                    richting = (
-                        "daalt: hoe hoger het VO-eindcijfer, hoe lager de totaalscore"
-                    )
-                else:
-                    richting = (
-                        "is vrijwel vlak: VO-eindcijfer en totaalscore hangen "
-                        "nauwelijks samen"
-                    )
-                pdf.body_text(f"Voor de totaalscore {richting} (r = {totaal_r:.2f}).")
-            pdf.add_image_from_bytes(images["scatter"])
-
     # Conclusies
-    section_nr = 7 if has_vo else 6
+    section_nr = 6
     pdf.add_page()
     pdf.section_title(f"{section_nr}. Conclusies")
     pdf.body_text(
@@ -1065,28 +935,6 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
         pdf.body_text(
             "  Geen achtergrondgegevens beschikbaar om groepen te vergelijken."
         )
-
-    if has_vo and cor_rows:
-        pdf.subsection_title("Samenhang met het VO-eindcijfer")
-        high_r = [r for r in cor_rows if abs(float(r[1])) > 0.4]
-        low_r = [r for r in cor_rows if abs(float(r[1])) < 0.15]
-        if high_r:
-            pdf.body_text(
-                "  Sterke samenhang met het VO-eindcijfer: "
-                f"{', '.join(r[0] + ' (r=' + r[1] + ')' for r in high_r)}. "
-                "Deze items overlappen met wat het schooldiploma al vertelt."
-            )
-        if low_r:
-            pdf.body_text(
-                "  Lage samenhang met het VO-eindcijfer: "
-                f"{', '.join(r[0] + ' (r=' + r[1] + ')' for r in low_r)}. "
-                "Deze items meten iets anders dan schoolprestaties, wat juist "
-                "waardevol is voor de selectie."
-            )
-        if not high_r and not low_r:
-            pdf.body_text(
-                "  De selectie-items hangen matig samen met het VO-eindcijfer."
-            )
 
     n_ingeschreven = n_door + n_uitval + n_diploma
     if n_ingeschreven < 30:
