@@ -465,13 +465,13 @@ def genereer_bevindingen(
         for _, r in gesorteerd.head(top).iterrows():
             if r["_r"] > 0:
                 validiteit.append(
-                    f"{r['Item']}: geslaagde studenten scoorden hoger "
+                    f"'{r['Item']}': geslaagde studenten scoorden hoger "
                     f"(effect {r['Effect (r)']}, p = {fmt_p(r['_p'])}). Dit item heeft "
                     "voorspellende waarde."
                 )
             else:
                 validiteit.append(
-                    f"{r['Item']}: juist de uitvallers scoorden hoger "
+                    f"'{r['Item']}': juist de uitvallers scoorden hoger "
                     f"(effect {r['Effect (r)']}, p = {fmt_p(r['_p'])}). Onverwacht en de "
                     "moeite waard om nader te bekijken."
                 )
@@ -481,7 +481,7 @@ def genereer_bevindingen(
             ).iloc[0]
             validiteit.append(
                 "Geen enkel item verschilt significant tussen geslaagden en uitvallers. "
-                f"Het sterkste (niet-significante) signaal is {sterkste['Item']} "
+                f"Het sterkste (niet-significante) signaal is '{sterkste['Item']}' "
                 f"(effect {sterkste['Effect (r)']}). Bij kleine groepen is dat niet "
                 "ongebruikelijk."
             )
@@ -501,7 +501,7 @@ def genereer_bevindingen(
             continue
         for _, r in sig.head(top).iterrows():
             fairness.append(
-                f"{label}: op {r['Item']} verschillen de groepen significant "
+                f"{label}: op '{r['Item']}' verschillen de groepen significant "
                 f"({r['Verschil']}, effectgrootte {r['Effectgrootte']}, "
                 f"p = {fmt_p(r['_p'])}). Beoordeel of dit een terecht onderscheid is."
             )
