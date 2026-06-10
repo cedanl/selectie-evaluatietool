@@ -1241,6 +1241,15 @@ def update_score_filters(
         "bereik": bereik_val,
     }
 
+    # Bij meer dan 8 items en alle filters op "Alle": selecteer het eerste
+    # instrument zodat de boxplot leesbaar start.
+    n_items = meta["item"].nunique()
+    alles_alle = all(v in (None, "Alle") for v in sel.values())
+    if n_items > 8 and alles_alle:
+        instrumenten = sorted(meta["instrument"].unique())
+        if instrumenten:
+            sel["instrument"] = instrumenten[0]
+
     # Levert de huidige combinatie niets op, reset dan alles naar "Alle".
     huidig = meta
     for dim, val in sel.items():
