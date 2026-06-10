@@ -34,6 +34,45 @@ GROEP_KLEUREN = {
     GROEP_DIPLOMA: "#3b82f6",
 }
 
+UITKOMST_PERSPECTIEVEN = {
+    "doorstroom": {
+        "label": "Doorstroom naar jaar 2",
+        "positief_label": "Doorgestroomd",
+        "negatief_label": "Niet doorgestroomd",
+        "positief_groepen": [GROEP_DOORGESTROOMD, GROEP_DIPLOMA],
+        "negatief_groepen": [GROEP_GESTART_GEEN_VERVOLG],
+        "populatie": GROEP_INGESCHREVEN,
+        "beschrijving": (
+            "Vergelijkt gestarte studenten die doorstroomden naar jaar 2 "
+            "(of een diploma haalden) met studenten die zijn uitgevallen."
+        ),
+    },
+    "begonnen": {
+        "label": "Begonnen met opleiding",
+        "positief_label": "Wel begonnen",
+        "negatief_label": "Niet begonnen",
+        "positief_groepen": GROEP_INGESCHREVEN,
+        "negatief_groepen": [GROEP_NIET_GESTART],
+        "populatie": GROEP_VOLGORDE,
+        "beschrijving": (
+            "Vergelijkt kandidaten die daadwerkelijk zijn begonnen met "
+            "kandidaten die niet zijn begonnen (afgewezen of zelf afgezien)."
+        ),
+    },
+    "diploma": {
+        "label": "Diploma behaald",
+        "positief_label": "Diploma",
+        "negatief_label": "Geen diploma",
+        "positief_groepen": [GROEP_DIPLOMA],
+        "negatief_groepen": [GROEP_GESTART_GEEN_VERVOLG, GROEP_DOORGESTROOMD],
+        "populatie": GROEP_INGESCHREVEN,
+        "beschrijving": (
+            "Vergelijkt gestarte studenten die een diploma haalden met "
+            "studenten zonder diploma."
+        ),
+    },
+}
+
 CHART_BASE = dict(plot_bgcolor="white", paper_bgcolor="white")
 
 
@@ -207,36 +246,35 @@ def vergelijk_succes_per_item(
     scores_met_groep: pd.DataFrame,
     item_kolom: str = "item_kort",
     min_per_groep: int = 3,
+    perspectief: dict | None = None,
 ) -> pd.DataFrame:
-    """Toets per item of succesvolle studenten anders scoren dan uitvallers.
+    """Toets per item of de positieve groep anders scoort dan de negatieve.
 
     Vergelijkt per item de scores van studenten met een positieve uitkomst
-    (``GROEP_SUCCES``: doorstroom of diploma) met die van gestarte studenten
-    zonder vervolg (``GROEP_GESTART_GEEN_VERVOLG``). De toets is een
-    Mann-Whitney U, passend bij de ordinale en scheve schalen van
+    met die uit de negatieve groep, volgens het gekozen perspectief. De toets
+    is een Mann-Whitney U, passend bij de ordinale, scheve schalen van
     selectie-items. De effectgrootte is de rank-biseriale correlatie (positief =
-    succesgroep scoort hoger) met een analytisch 95%-BI.
-
-    Returnt een tabel met de kolommen uit ``VERGELIJKING_KOLOMMEN``, gesorteerd
-    op aflopende effectgrootte zodat de sterkste signalen bovenaan staan. Items
-    met te weinig waarnemingen of zonder variatie blijven in de tabel met een
-    toelichting in plaats van een effectgrootte, zodat zichtbaar is wat niet
-    getoetst kon worden.
+    positieve groep scoort hoger) met een analytisch 95%-BI.
     """
+    if perspectief is None:
+        perspectief = UITKOMST_PERSPECTIEVEN["doorstroom"]
+    pos_groepen = perspectief["positief_groepen"]
+    neg_groepen = perspectief["negatief_groepen"]
+
     from scipy.stats import mannwhitneyu
 
     rijen = []
     for item, deel in scores_met_groep.groupby(item_kolom, observed=True):
         succes = (
             pd.to_numeric(
-                deel.loc[deel["groep"].isin(GROEP_SUCCES), "score"], errors="coerce"
+                deel.loc[deel["groep"].isin(pos_groepen), "score"], errors="coerce"
             )
             .dropna()
             .to_numpy()
         )
         geen = (
             pd.to_numeric(
-                deel.loc[deel["groep"] == GROEP_GESTART_GEEN_VERVOLG, "score"],
+                deel.loc[deel["groep"].isin(neg_groepen), "score"],
                 errors="coerce",
             )
             .dropna()
@@ -434,17 +472,18 @@ def genereer_bevindingen(
     succes_tabel: pd.DataFrame,
     demo_tabellen: dict[str, pd.DataFrame],
     top: int = 3,
+    perspectief: dict | None = None,
 ) -> dict[str, list[str]]:
     """Vat de toetsuitkomsten samen tot datagedreven bevindingen.
 
     Voedt zowel het 'wat valt op'-overzicht in het dashboard als de
     conclusiesectie van het rapport. Elke regel is een feit dat rechtstreeks uit
-    een effectgrootte of p-waarde volgt; er wordt niets bijbedacht. ``succes_tabel``
-    komt van ``vergelijk_succes_per_item`` (met _r/_p), ``demo_tabellen`` is per
-    demografische dimensie een ``toets_verschil_per_item`` frame (met _eps2/_p).
-    Returnt drie lijsten: een korte samenvatting, validiteitsbevindingen (welke
-    items voorspellen succes) en fairnessbevindingen (demografische verschillen).
+    een effectgrootte of p-waarde volgt; er wordt niets bijbedacht.
     """
+    if perspectief is None:
+        perspectief = UITKOMST_PERSPECTIEVEN["doorstroom"]
+    uitkomst_label = perspectief["label"].lower()
+
     samenvatting: list[str] = []
     validiteit: list[str] = []
     fairness: list[str] = []
@@ -459,19 +498,21 @@ def genereer_bevindingen(
         if len(getoetst):
             samenvatting.append(
                 f"Van de {len(getoetst)} getoetste items tonen er {len(sig)} een "
-                "significant verband met studiesucces (doorstroom of diploma)."
+                f"significant verband met de uitkomst ({uitkomst_label})."
             )
         gesorteerd = sig.sort_values("_r", key=_sorteer_abs, ascending=False)
+        pos_label = perspectief["positief_label"].lower()
+        neg_label = perspectief["negatief_label"].lower()
         for _, r in gesorteerd.head(top).iterrows():
             if r["_r"] > 0:
                 validiteit.append(
-                    f"'{r['Item']}': geslaagde studenten scoorden hoger "
+                    f"'{r['Item']}': de groep '{pos_label}' scoorde hoger "
                     f"(effect {r['Effect (r)']}, p = {fmt_p(r['_p'])}). Dit item heeft "
                     "voorspellende waarde."
                 )
             else:
                 validiteit.append(
-                    f"'{r['Item']}': juist de uitvallers scoorden hoger "
+                    f"'{r['Item']}': juist de groep '{neg_label}' scoorde hoger "
                     f"(effect {r['Effect (r)']}, p = {fmt_p(r['_p'])}). Onverwacht en de "
                     "moeite waard om nader te bekijken."
                 )
@@ -480,10 +521,10 @@ def genereer_bevindingen(
                 "_r", key=_sorteer_abs, ascending=False
             ).iloc[0]
             validiteit.append(
-                "Geen enkel item verschilt significant tussen geslaagden en uitvallers. "
-                f"Het sterkste (niet-significante) signaal is '{sterkste['Item']}' "
-                f"(effect {sterkste['Effect (r)']}). Bij kleine groepen is dat niet "
-                "ongebruikelijk."
+                f"Geen enkel item verschilt significant tussen '{pos_label}' en "
+                f"'{neg_label}'. Het sterkste (niet-significante) signaal is "
+                f"'{sterkste['Item']}' (effect {sterkste['Effect (r)']}). Bij kleine "
+                "groepen is dat niet ongebruikelijk."
             )
 
     for label, tab in demo_tabellen.items():

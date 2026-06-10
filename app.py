@@ -34,8 +34,8 @@ from shared import (
     GROEP_VOLGORDE,
     GROEP_KLEUREN,
     GROEP_INGESCHREVEN,
-    GROEP_SUCCES,
     CHART_BASE,
+    UITKOMST_PERSPECTIEVEN,
     shorten_item,
     schaal_grenzen,
     bucket_per_item,
@@ -246,12 +246,25 @@ UPLOAD_OVERLAY = html.Div(
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
+UITKOMST_OPTIES = [
+    {"label": p["label"], "value": k} for k, p in UITKOMST_PERSPECTIEVEN.items()
+]
+
 SIDEBAR = html.Div(
     [
         html.Img(src="/assets/nko-logo.svg", className="sidebar-logo"),
         html.P("Kandidaten per cohort", className="sidebar-label"),
         html.Div(id="cohort-stats"),
         html.Hr(className="mt-3 mb-2"),
+        html.P("Uitkomstmaat", className="sidebar-label"),
+        dcc.Dropdown(
+            id="uitkomst-selector",
+            options=UITKOMST_OPTIES,
+            value="doorstroom",
+            clearable=False,
+        ),
+        html.P(id="uitkomst-beschrijving", className="text-muted small mt-1 mb-2"),
+        html.Hr(className="mt-2 mb-2"),
         dcc.Loading(
             [
                 dbc.Button(
@@ -1025,6 +1038,15 @@ def _laad_demodata(dataset_name=None):
 
 
 @app.callback(
+    Output("uitkomst-beschrijving", "children"),
+    Input("uitkomst-selector", "value"),
+)
+def update_uitkomst_beschrijving(uitkomst_key):
+    p = UITKOMST_PERSPECTIEVEN.get(uitkomst_key or "doorstroom")
+    return p["beschrijving"]
+
+
+@app.callback(
     Output("samenhang-instrument", "options"),
     Output("samenhang-instrument", "value"),
     Output("samenhang-criterium", "options"),
@@ -1245,14 +1267,16 @@ app.clientside_callback(
     Input("btn-download-rapport", "n_clicks"),
     State("data-store", "data"),
     State("scores-store", "data"),
+    State("uitkomst-selector", "value"),
     prevent_initial_call=True,
 )
-def download_rapport(_n, store_data, scores_store):
+def download_rapport(_n, store_data, scores_store, uitkomst_key):
     df = df_from_store(store_data)
     if df.empty or not scores_store:
         return dash.no_update
     scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
-    pdf_bytes = genereer_rapport(df, scores_df)
+    perspectief = UITKOMST_PERSPECTIEVEN.get(uitkomst_key or "doorstroom")
+    pdf_bytes = genereer_rapport(df, scores_df, perspectief=perspectief)
     opleiding = ""
     if "opleiding" in df.columns and df["opleiding"].notna().any():
         opleiding = str(df["opleiding"].dropna().iloc[0]).replace(" ", "_")
@@ -1561,23 +1585,26 @@ def _uitleg_verschil_demografisch(label):
     Output("tabel-verschil", "columns"),
     Output("verschiltoets-uitleg", "children"),
     Input("verschil-niveau", "value"),
+    Input("uitkomst-selector", "value"),
     State("data-store", "data"),
     State("scores-store", "data"),
 )
-def update_verschiltoets_tab(niveau, store_data, scores_store):
+def update_verschiltoets_tab(niveau, uitkomst_key, store_data, scores_store):
     df = df_from_store(store_data)
     if df.empty or not scores_store:
         return [], [], ""
     scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+    perspectief = UITKOMST_PERSPECTIEVEN.get(uitkomst_key or "doorstroom")
 
     if niveau == "groep":
+        pop = df[df["groep"].isin(perspectief["populatie"])]
         scores = scores_df.merge(
-            df[["studentnummer", "groep"]].drop_duplicates(),
+            pop[["studentnummer", "groep"]].drop_duplicates(),
             on="studentnummer",
             how="inner",
         )
         scores["item_kort"] = scores["item"].apply(shorten_item)
-        tabel = vergelijk_succes_per_item(scores)
+        tabel = vergelijk_succes_per_item(scores, perspectief=perspectief)
         kolommen = VERGELIJKING_KOLOMMEN
         uitleg = _uitleg_verschil_uitkomst()
     else:
@@ -1609,23 +1636,26 @@ def _bevindingen_lijst(titel, items, leeg_tekst):
 @app.callback(
     Output("bevindingen-inhoud", "children"),
     Input("data-store", "data"),
+    Input("uitkomst-selector", "value"),
     State("scores-store", "data"),
 )
-def update_bevindingen(store_data, scores_store):
+def update_bevindingen(store_data, uitkomst_key, scores_store):
     df = df_from_store(store_data)
     if df.empty or not scores_store:
         return html.P(
             "Laad eerst data om de bevindingen te zien.", className="text-muted"
         )
 
+    perspectief = UITKOMST_PERSPECTIEVEN.get(uitkomst_key or "doorstroom")
     scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+    pop = df[df["groep"].isin(perspectief["populatie"])]
     scores = scores_df.merge(
-        df[["studentnummer", "groep"]].drop_duplicates(),
+        pop[["studentnummer", "groep"]].drop_duplicates(),
         on="studentnummer",
         how="inner",
     )
     scores["item_kort"] = scores["item"].apply(shorten_item)
-    succes_tabel = vergelijk_succes_per_item(scores)
+    succes_tabel = vergelijk_succes_per_item(scores, perspectief=perspectief)
 
     demo_tabellen = {}
     for dim in DEMO_DIMENSIES:
@@ -1635,7 +1665,9 @@ def update_bevindingen(store_data, scores_store):
                 demo_scores, dim["kolom"]
             )
 
-    bevindingen = genereer_bevindingen(succes_tabel, demo_tabellen)
+    bevindingen = genereer_bevindingen(
+        succes_tabel, demo_tabellen, perspectief=perspectief
+    )
     secties = []
     if bevindingen["samenvatting"]:
         secties.append(
@@ -1725,13 +1757,15 @@ def update_correlatie_tab(sh_instrument, sh_criterium, scores_store):
     Output("tabel-regressie", "columns"),
     Output("tabel-regressie", "style_data_conditional"),
     Input("data-store", "data"),
+    Input("uitkomst-selector", "value"),
     State("scores-store", "data"),
 )
-def update_regressie_tab(store_data, scores_store):
+def update_regressie_tab(store_data, uitkomst_key, scores_store):
     df = df_from_store(store_data)
     if df.empty or not scores_store:
         return "", [], [], [], [], [], []
 
+    perspectief = UITKOMST_PERSPECTIEVEN.get(uitkomst_key or "doorstroom")
     scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
 
     regressie_msg = ""
@@ -1748,11 +1782,11 @@ def update_regressie_tab(store_data, scores_store):
     item_pivot.columns = [shorten_item(c) for c in item_pivot.columns]
     all_score_cols = list(item_pivot.columns)
 
-    ingeschreven = df[df["groep"].isin(GROEP_INGESCHREVEN)].copy()
+    populatie = df[df["groep"].isin(perspectief["populatie"])].copy()
 
-    if len(ingeschreven) < 10:
+    if len(populatie) < 10:
         regressie_msg = dbc.Alert(
-            f"Te weinig ingeschreven studenten ({len(ingeschreven)}) voor regressie. "
+            f"Te weinig studenten ({len(populatie)}) voor regressie. "
             "Minimaal 10 nodig.",
             color="warning",
             className="small",
@@ -1767,22 +1801,24 @@ def update_regressie_tab(store_data, scores_store):
             reg_style,
         )
 
-    ingeschreven["doorgestroomd"] = ingeschreven["groep"].isin(GROEP_SUCCES).astype(int)
+    populatie["uitkomst"] = (
+        populatie["groep"].isin(perspectief["positief_groepen"]).astype(int)
+    )
 
-    item_pivot_inschr = item_pivot.loc[
-        item_pivot.index.isin(ingeschreven["studentnummer"])
+    item_pivot_pop = item_pivot.loc[
+        item_pivot.index.isin(populatie["studentnummer"])
     ].copy()
 
-    nan_pct = item_pivot_inschr.isna().mean()
+    nan_pct = item_pivot_pop.isna().mean()
     verwijderd_nan = [
         c
         for c in all_score_cols
-        if c in item_pivot_inschr.columns and nan_pct.get(c, 1) > 0.3
+        if c in item_pivot_pop.columns and nan_pct.get(c, 1) > 0.3
     ]
     bruikbare_cols = [
         c
         for c in all_score_cols
-        if c in item_pivot_inschr.columns and nan_pct.get(c, 1) <= 0.3
+        if c in item_pivot_pop.columns and nan_pct.get(c, 1) <= 0.3
     ]
 
     if len(bruikbare_cols) < 1:
@@ -1801,12 +1837,12 @@ def update_regressie_tab(store_data, scores_store):
             reg_style,
         )
 
-    item_pivot_inschr[bruikbare_cols] = item_pivot_inschr[bruikbare_cols].fillna(
-        item_pivot_inschr[bruikbare_cols].mean()
+    item_pivot_pop[bruikbare_cols] = item_pivot_pop[bruikbare_cols].fillna(
+        item_pivot_pop[bruikbare_cols].mean()
     )
-    item_pivot_inschr = item_pivot_inschr.dropna(subset=bruikbare_cols)
+    item_pivot_pop = item_pivot_pop.dropna(subset=bruikbare_cols)
 
-    if len(item_pivot_inschr) < 10:
+    if len(item_pivot_pop) < 10:
         regressie_msg = dbc.Alert(
             "Te weinig complete cases voor regressie.",
             color="warning",
@@ -1822,10 +1858,8 @@ def update_regressie_tab(store_data, scores_store):
             reg_style,
         )
 
-    y = ingeschreven.set_index("studentnummer").loc[
-        item_pivot_inschr.index, "doorgestroomd"
-    ]
-    X_all = item_pivot_inschr[bruikbare_cols]
+    y = populatie.set_index("studentnummer").loc[item_pivot_pop.index, "uitkomst"]
+    X_all = item_pivot_pop[bruikbare_cols]
 
     import statsmodels.api as sm
 
@@ -1918,12 +1952,14 @@ def update_regressie_tab(store_data, scores_store):
         X_const = sm.add_constant(X_z)
         model = sm.Logit(y.astype(float), X_const).fit(disp=0, maxiter=100)
 
-        n_doorgestroomd = int(y.sum())
-        n_niet = int(len(y) - y.sum())
+        n_positief = int(y.sum())
+        n_negatief = int(len(y) - y.sum())
         pseudo_r2 = round(float(model.prsquared), 3)
+        pos_label = perspectief["positief_label"].lower()
+        neg_label = perspectief["negatief_label"].lower()
         msg_parts = [
             html.Span(
-                f"n = {len(y)} (doorgestroomd: {n_doorgestroomd}, niet: {n_niet})",
+                f"n = {len(y)} ({pos_label}: {n_positief}, {neg_label}: {n_negatief})",
                 className="small text-muted me-3",
             ),
             html.Span(f"Pseudo R² = {pseudo_r2}", className="small fw-bold"),

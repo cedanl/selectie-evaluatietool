@@ -20,10 +20,9 @@ from fpdf import FPDF
 from shared import (
     GROEP_VOLGORDE,
     GROEP_KLEUREN,
-    GROEP_INGESCHREVEN,
-    GROEP_SUCCES,
     GROEP_DIPLOMA,
     CHART_BASE,
+    UITKOMST_PERSPECTIEVEN,
     shorten_item,
     schaal_grenzen,
     bucket_per_item,
@@ -365,27 +364,32 @@ def _build_figures(
 
 
 def _run_regression(
-    df: pd.DataFrame, item_pivot: pd.DataFrame, score_cols: list[str]
+    df: pd.DataFrame,
+    item_pivot: pd.DataFrame,
+    score_cols: list[str],
+    perspectief: dict | None = None,
 ) -> tuple[list[list[str]], float | None, str | None]:
-    ingeschreven = df[df["groep"].isin(GROEP_INGESCHREVEN)].copy()
+    if perspectief is None:
+        perspectief = UITKOMST_PERSPECTIEVEN["doorstroom"]
+    populatie = df[df["groep"].isin(perspectief["populatie"])].copy()
 
     reg_rows = []
     pseudo_r2 = None
     reg_text = None
 
-    if len(ingeschreven) < 10:
-        reg_text = (
-            f"Te weinig ingeschreven studenten ({len(ingeschreven)}) voor regressie."
-        )
+    if len(populatie) < 10:
+        reg_text = f"Te weinig studenten ({len(populatie)}) voor regressie."
         return reg_rows, pseudo_r2, reg_text
 
-    ingeschreven["doorgestroomd"] = ingeschreven["groep"].isin(GROEP_SUCCES).astype(int)
+    populatie["uitkomst"] = (
+        populatie["groep"].isin(perspectief["positief_groepen"]).astype(int)
+    )
 
-    item_pivot_inschr = item_pivot.loc[
-        item_pivot.index.isin(ingeschreven["studentnummer"])
+    item_pivot_pop = item_pivot.loc[
+        item_pivot.index.isin(populatie["studentnummer"])
     ].copy()
 
-    nan_pct = item_pivot_inschr.isna().mean()
+    nan_pct = item_pivot_pop.isna().mean()
     verwijderd_nan = [c for c in score_cols if nan_pct.get(c, 1) > 0.3]
     bruikbare_cols = [c for c in score_cols if nan_pct.get(c, 1) <= 0.3]
 
@@ -393,21 +397,17 @@ def _run_regression(
         reg_text = "Te weinig bruikbare items voor regressie."
         return reg_rows, pseudo_r2, reg_text
 
-    item_pivot_inschr[bruikbare_cols] = item_pivot_inschr[bruikbare_cols].fillna(
-        item_pivot_inschr[bruikbare_cols].mean()
+    item_pivot_pop[bruikbare_cols] = item_pivot_pop[bruikbare_cols].fillna(
+        item_pivot_pop[bruikbare_cols].mean()
     )
-    item_pivot_inschr = item_pivot_inschr.dropna(subset=bruikbare_cols)
+    item_pivot_pop = item_pivot_pop.dropna(subset=bruikbare_cols)
 
-    if len(item_pivot_inschr) < 10:
-        reg_text = (
-            f"Te weinig complete cases ({len(item_pivot_inschr)}) voor regressie."
-        )
+    if len(item_pivot_pop) < 10:
+        reg_text = f"Te weinig complete cases ({len(item_pivot_pop)}) voor regressie."
         return reg_rows, pseudo_r2, reg_text
 
-    y = ingeschreven.set_index("studentnummer").loc[
-        item_pivot_inschr.index, "doorgestroomd"
-    ]
-    X = item_pivot_inschr[bruikbare_cols]
+    y = populatie.set_index("studentnummer").loc[item_pivot_pop.index, "uitkomst"]
+    X = item_pivot_pop[bruikbare_cols]
 
     from numpy.linalg import matrix_rank
 
@@ -450,16 +450,20 @@ def _run_regression(
         import statsmodels.api as sm
 
         X_z = X.astype(float).apply(
-            lambda s: (s - s.mean()) / s.std() if s.std() > 0 else 0
+            lambda s: (
+                (s - s.mean()) / s.std() if s.std() > 0 else pd.Series(0, index=s.index)
+            )
         )
         X_const = sm.add_constant(X_z)
         model = sm.Logit(y.astype(float), X_const).fit(disp=0, maxiter=100)
         pseudo_r2 = round(float(model.prsquared), 3)
 
-        n_door = int(y.sum())
-        n_niet = int(len(y) - y.sum())
+        n_pos = int(y.sum())
+        n_neg = int(len(y) - y.sum())
+        pos_label = perspectief["positief_label"].lower()
+        neg_label = perspectief["negatief_label"].lower()
         reg_text = (
-            f"n = {len(y)} (doorgestroomd: {n_door}, niet doorgestroomd: {n_niet}). "
+            f"n = {len(y)} ({pos_label}: {n_pos}, {neg_label}: {n_neg}). "
             f"Pseudo R-kwadraat = {pseudo_r2}."
         )
         if verwijderd_nan:
@@ -490,7 +494,11 @@ def _run_regression(
     return reg_rows, pseudo_r2, reg_text
 
 
-def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
+def genereer_rapport(
+    df: pd.DataFrame, scores_df: pd.DataFrame, perspectief: dict | None = None
+) -> bytes:
+    if perspectief is None:
+        perspectief = UITKOMST_PERSPECTIEVEN["doorstroom"]
     opleiding = ""
     if "opleiding" in df.columns and df["opleiding"].notna().any():
         opleiding = str(df["opleiding"].dropna().iloc[0])
@@ -528,7 +536,9 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
         .sort_values(["groep", "instrument", "criterium", "item_kort"])
     )
 
-    reg_rows, pseudo_r2, reg_text = _run_regression(df, item_pivot, score_cols)
+    reg_rows, pseudo_r2, reg_text = _run_regression(
+        df, item_pivot, score_cols, perspectief=perspectief
+    )
 
     # -- Build and render all charts --
     figures = _build_figures(df, scores_df, scores_met_groep, item_pivot, score_cols)
@@ -740,7 +750,7 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
         "p-waarde onder 0.05 geldt als significant. De items staan op "
         "effectgrootte gesorteerd, de sterkste voorspellers bovenaan."
     )
-    vergelijking = vergelijk_succes_per_item(scores_met_groep)
+    vergelijking = vergelijk_succes_per_item(scores_met_groep, perspectief=perspectief)
     if vergelijking.empty:
         pdf.body_text(
             "Er zijn te weinig gestarte studenten om de groepen te vergelijken."
@@ -895,8 +905,10 @@ def genereer_rapport(df: pd.DataFrame, scores_df: pd.DataFrame) -> bytes:
             f"en {n_niet} niet gestart ({n_niet / total * 100:.0f}%)."
         )
 
-    succes_tabel = vergelijk_succes_per_item(scores_met_groep)
-    bevindingen = genereer_bevindingen(succes_tabel, demo_toetsen)
+    succes_tabel = vergelijk_succes_per_item(scores_met_groep, perspectief=perspectief)
+    bevindingen = genereer_bevindingen(
+        succes_tabel, demo_toetsen, perspectief=perspectief
+    )
 
     pdf.subsection_title("Welke selectie-items voorspellen studiesucces?")
     for regel in bevindingen["validiteit"]:
