@@ -235,6 +235,7 @@ def detecteer_score_kolommen(
 
         resultaat.append(
             {
+                "meenemen": "Ja",
                 "kolom_naam": col_str,
                 "instrument": _raad_instrument(col_str, alle_kolommen),
                 "item": _maak_item_naam(col_str),
@@ -452,10 +453,11 @@ def maak_wizard_layout() -> html.Div:
                                     dbc.Label("Scorekolommen", className="small"),
                                     html.P(
                                         "Elke rij is een kolom die de wizard als score "
-                                        "herkent. Instrument is het meetinstrument (bijv. een "
-                                        "test of beoordeling), Item is wat het meet, en "
-                                        "Criterium is een optionele groepering. Pas de teksten "
-                                        "aan of verwijder rijen die geen selectiescore zijn.",
+                                        "herkent. Zet 'Meenemen' op Nee voor kolommen die "
+                                        "geen selectiescore zijn. Instrument is het "
+                                        "meetinstrument (bijv. een test of beoordeling), "
+                                        "Item is wat het meet, en Criterium is een optionele "
+                                        "groepering. Pas de teksten aan waar nodig.",
                                         className="wiz-uitleg mb-2",
                                     ),
                                     html.P(
@@ -466,6 +468,11 @@ def maak_wizard_layout() -> html.Div:
                                     dash_table.DataTable(
                                         id="wiz-kolommen-tabel",
                                         columns=[
+                                            {
+                                                "name": "Meenemen",
+                                                "id": "meenemen",
+                                                "presentation": "dropdown",
+                                            },
                                             {
                                                 "name": "Kolom",
                                                 "id": "kolom_naam",
@@ -489,7 +496,15 @@ def maak_wizard_layout() -> html.Div:
                                         ],
                                         data=[],
                                         editable=True,
-                                        row_deletable=True,
+                                        row_deletable=False,
+                                        dropdown={
+                                            "meenemen": {
+                                                "options": [
+                                                    {"label": "Ja", "value": "Ja"},
+                                                    {"label": "Nee", "value": "Nee"},
+                                                ],
+                                            }
+                                        },
                                         style_table={
                                             "overflowX": "auto",
                                             "fontSize": "13px",
@@ -510,7 +525,13 @@ def maak_wizard_layout() -> html.Div:
                                                 "if": {"column_id": "kolom_naam"},
                                                 "backgroundColor": "#f8f9fa",
                                                 "color": "#6c757d",
-                                            }
+                                            },
+                                            {
+                                                "if": {
+                                                    "filter_query": '{meenemen} = "Nee"',
+                                                },
+                                                "opacity": "0.4",
+                                            },
                                         ],
                                     ),
                                 ],
@@ -701,6 +722,23 @@ def registreer_callbacks(app: dash.Dash) -> None:
                 {"display": "none"},
             )
 
+        actieve_kolommen = [
+            {k: v for k, v in rij.items() if k != "meenemen"}
+            for rij in tabel_data
+            if rij.get("meenemen", "Ja") == "Ja"
+        ]
+
+        if not actieve_kolommen:
+            return (
+                dash.no_update,
+                dbc.Alert(
+                    "Geen kolommen geselecteerd. Vink minimaal een kolom aan.",
+                    color="danger",
+                    className="small py-1",
+                ),
+                {"display": "none"},
+            )
+
         config = bouw_config_dict(
             blad_naam=blad,
             header_rij=header_rij or 1,
@@ -709,13 +747,15 @@ def registreer_callbacks(app: dash.Dash) -> None:
             opleiding=opleiding or "",
             instellingscode=instelling or "",
             jaar=str(jaar) if jaar else "",
-            kolommen=tabel_data,
+            kolommen=actieve_kolommen,
         )
 
+        n_totaal = len(tabel_data)
+        n_actief = len(actieve_kolommen)
         return (
             json.dumps(config),
             dbc.Alert(
-                f"Config aangemaakt ({len(tabel_data)} kolommen). "
+                f"Config aangemaakt ({n_actief} van {n_totaal} kolommen). "
                 "Upload nu 1CHO-data om het dashboard te openen.",
                 color="success",
                 className="small py-1",
