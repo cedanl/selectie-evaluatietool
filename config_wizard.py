@@ -173,40 +173,41 @@ def _moet_uitsluiten(kolom_naam: str) -> bool:
 
 
 def _raad_instrument(kolom: str, alle_kolommen: list[str]) -> str:
-    lower = kolom.lower()
-    if lower.startswith("ctb_"):
-        return "Competentietest (breed)"
-    if lower.startswith("ct_"):
-        return "Competentietest"
-    if lower.startswith("sjts_"):
-        return "SIT-S"
+    """Raad het instrument op basis van het gedeelde prefix van kolomnamen.
 
-    prefix = kolom.split("_")[0] if "_" in kolom else kolom.split(" ")[0]
-    if len(prefix) >= 2:
-        count = sum(
-            1
-            for k in alle_kolommen
-            if k.startswith(prefix + "_") or k.startswith(prefix + " ")
-        )
-        if count >= 2:
-            return prefix.title()
+    Zoekt het langste prefix voor het eerste scheidingsteken (_, spatie of -)
+    dat bij minimaal twee kolommen voorkomt. Geen hardcoded afkortingen.
+    """
+    for sep in ("_", " ", "-"):
+        if sep in kolom:
+            prefix = kolom.split(sep)[0]
+            if len(prefix) >= 2:
+                count = sum(1 for k in alle_kolommen if k.split(sep)[0] == prefix)
+                if count >= 2:
+                    return prefix.replace("_", " ").replace("-", " ").strip().title()
 
     return ""
 
 
 def _maak_item_naam(kolom: str) -> str:
+    """Leid een leesbare itemnaam af uit de kolomnaam.
+
+    Verwijdert het instrumentprefix (alles voor het eerste scheidingsteken)
+    als dat prefix bij meerdere kolommen hoort, plus suffixen als 'score'
+    en 'schaalscore'. Geen hardcoded afkortingen.
+    """
     naam = kolom
-    lower = naam.lower()
-    for prefix in ["ctb_", "ct_", "sjts_"]:
-        if lower.startswith(prefix):
-            naam = naam[len(prefix) :]
+
+    for sep in ("_", " ", "-"):
+        if sep in naam:
+            naam = naam.split(sep, 1)[1]
             break
 
     naam = re.sub(r"_?[Ss]chaalscore$", "", naam)
     naam = re.sub(r"_?SCORE$", "", naam)
     naam = re.sub(r"_?[Ss]core$", "", naam)
 
-    naam = naam.replace("_", " ").strip()
+    naam = naam.replace("_", " ").replace("-", " ").strip()
     naam = re.sub(r"([a-z])([A-Z])", r"\1 \2", naam)
 
     if naam:
