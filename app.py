@@ -32,10 +32,12 @@ from config_wizard import maak_wizard_layout, registreer_callbacks
 from rapport import genereer_rapport
 from shared import (
     GROEP_VOLGORDE,
-    GROEP_KLEUREN,
     GROEP_INGESCHREVEN,
+    GROEP_KLEUREN,
     CHART_BASE,
     UITKOMST_PERSPECTIEVEN,
+    PERSPECTIEF_DOORSTROOM,
+    binair_kleur_map,
     shorten_item,
     schaal_grenzen,
     bucket_per_item,
@@ -50,6 +52,8 @@ from shared import (
     genereer_bevindingen,
     DEMO_DIMENSIES,
     demografie_scores,
+    bereken_univariaat,
+    chi2_per_dimensie,
 )
 
 DEMO_DIR = Path("data/demo")
@@ -246,25 +250,12 @@ UPLOAD_OVERLAY = html.Div(
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
-UITKOMST_OPTIES = [
-    {"label": p["label"], "value": k} for k, p in UITKOMST_PERSPECTIEVEN.items()
-]
-
 SIDEBAR = html.Div(
     [
         html.Img(src="/assets/nko-logo.svg", className="sidebar-logo"),
         html.P("Kandidaten per cohort", className="sidebar-label"),
         html.Div(id="cohort-stats"),
         html.Hr(className="mt-3 mb-2"),
-        html.P("Uitkomstmaat", className="sidebar-label"),
-        dcc.Dropdown(
-            id="uitkomst-selector",
-            options=UITKOMST_OPTIES,
-            value="doorstroom",
-            clearable=False,
-        ),
-        html.P(id="uitkomst-beschrijving", className="text-muted small mt-1 mb-2"),
-        html.Hr(className="mt-2 mb-2"),
         dcc.Loading(
             [
                 dbc.Button(
@@ -294,10 +285,15 @@ SIDEBAR = html.Div(
 
 # ── Groeperingsopties ─────────────────────────────────────────────────────────
 # De Selectiescores- en Verschiltoets-tabs laten de gebruiker kiezen waarop te
-# groeperen: de uitkomstgroep of een demografische dimensie (uit DEMO_DIMENSIES).
-GROEPEER_OPTIES = [{"label": "Uitkomstgroep", "value": "groep"}] + [
-    {"label": d["label"], "value": d["kolom"]} for d in DEMO_DIMENSIES
-]
+# groeperen: doorstroom naar jaar 2 of een demografische dimensie (geslacht,
+# vooropleiding).
+GROEPEER_OPTIES = [
+    {"label": PERSPECTIEF_DOORSTROOM["label"], "value": "doorstroom"},
+] + [{"label": d["label"], "value": d["kolom"]} for d in DEMO_DIMENSIES]
+
+GROEPEER_OPTIES_SCORES = [
+    {"label": "Uitkomstgroep", "value": "groep"}
+] + GROEPEER_OPTIES
 
 
 # ── App layout ────────────────────────────────────────────────────────────────
@@ -367,10 +363,9 @@ app.layout = html.Div(
                                             [
                                                 html.H5("Selectiescores per groep"),
                                                 html.P(
-                                                    "Vergelijk de selectiescores per item tussen groepen. Standaard tussen de "
-                                                    "uitkomstgroepen (niet gestart, uitval, doorstroom, diploma); met 'Groepeer op' "
-                                                    "kun je ook splitsen op geslacht of vooropleiding. Scoren de groepen "
-                                                    "verschillend, dan maakt dat item onderscheid.",
+                                                    "Vergelijk de selectiescores per item tussen groepen. Kies doorstroom "
+                                                    "naar jaar 2 of een demografische dimensie (geslacht, vooropleiding). "
+                                                    "Scoren de groepen verschillend, dan maakt dat item onderscheid.",
                                                     className="text-muted small",
                                                 ),
                                                 dbc.Row(
@@ -382,8 +377,8 @@ app.layout = html.Div(
                                                             ),
                                                             dcc.Dropdown(
                                                                 id="groepeer-op",
-                                                                options=GROEPEER_OPTIES,
-                                                                value="groep",
+                                                                options=GROEPEER_OPTIES_SCORES,
+                                                                value="doorstroom",
                                                                 clearable=False,
                                                             ),
                                                         ],
@@ -393,9 +388,8 @@ app.layout = html.Div(
                                                 ),
                                                 html.H6("Aantal studenten per groep"),
                                                 html.P(
-                                                    "Bij geslacht en vooropleiding tellen alleen studenten mee die met de "
-                                                    "opleiding zijn gestart (die staan in 1CHO). Kandidaten die niet zijn "
-                                                    "begonnen hebben geen achtergrondkenmerken en vallen daar dus weg.",
+                                                    "Bij geslacht en vooropleiding tellen alleen ingeschreven studenten "
+                                                    "mee (uit 1CHO). Bij 'Begonnen' tellen alle kandidaten mee.",
                                                     className="text-muted small",
                                                 ),
                                                 dash_table.DataTable(
@@ -509,6 +503,60 @@ app.layout = html.Div(
                                     ],
                                 ),
                                 dbc.Tab(
+                                    label="Demografie",
+                                    tab_id="tab-demografie",
+                                    children=[
+                                        html.Div(
+                                            [
+                                                html.H5(
+                                                    "Achtergrond van de kandidaten"
+                                                ),
+                                                html.P(
+                                                    "Hoe verhouden geslacht en "
+                                                    "vooropleiding zich tot de "
+                                                    "studieuitkomst?",
+                                                    className="text-muted small",
+                                                ),
+                                                dbc.Row(
+                                                    dbc.Col(
+                                                        [
+                                                            dbc.Label(
+                                                                "Achtergrond",
+                                                                className="small",
+                                                            ),
+                                                            dcc.Dropdown(
+                                                                id="demo-dimensie",
+                                                                options=[
+                                                                    {
+                                                                        "label": d[
+                                                                            "label"
+                                                                        ],
+                                                                        "value": d[
+                                                                            "kolom"
+                                                                        ],
+                                                                    }
+                                                                    for d in DEMO_DIMENSIES
+                                                                ],
+                                                                value=DEMO_DIMENSIES[0][
+                                                                    "kolom"
+                                                                ],
+                                                                clearable=False,
+                                                            ),
+                                                        ],
+                                                        width=3,
+                                                    ),
+                                                    className="mb-3",
+                                                ),
+                                                dcc.Loading(
+                                                    html.Div(id="demografie-inhoud"),
+                                                    type="default",
+                                                ),
+                                            ],
+                                            className="tab-body",
+                                        ),
+                                    ],
+                                ),
+                                dbc.Tab(
                                     label="Verschiltoets",
                                     tab_id="tab-verschil",
                                     children=[
@@ -516,9 +564,9 @@ app.layout = html.Div(
                                             [
                                                 html.H5("Verschiltoets per item"),
                                                 html.P(
-                                                    "Toetst per item of de scores significant verschillen. Kies het niveau: "
-                                                    "tussen uitkomstgroepen (voorspelt het item studiesucces?) of tussen "
-                                                    "demografische groepen (maakt het item onbedoeld onderscheid?).",
+                                                    "Toetst per item of de scores significant verschillen. Kies doorstroom "
+                                                    "naar jaar 2 (voorspelt het item studiesucces?) of een demografische "
+                                                    "dimensie (maakt het item onbedoeld onderscheid?).",
                                                     className="text-muted small",
                                                 ),
                                                 dbc.Row(
@@ -531,7 +579,7 @@ app.layout = html.Div(
                                                             dcc.Dropdown(
                                                                 id="verschil-niveau",
                                                                 options=GROEPEER_OPTIES,
-                                                                value="groep",
+                                                                value="doorstroom",
                                                                 clearable=False,
                                                             ),
                                                         ],
@@ -741,33 +789,42 @@ app.layout = html.Div(
                                                     ],
                                                     className="mb-3",
                                                 ),
-                                                html.Div(
-                                                    id="regressie-samenvatting",
-                                                    className="mb-3",
-                                                ),
-                                                html.H6("Univariaat per item"),
-                                                html.P(
-                                                    "Elk item afzonderlijk getoetst. Hier valt niets weg.",
-                                                    className="text-muted small",
-                                                ),
-                                                dash_table.DataTable(
-                                                    id="tabel-univariaat",
-                                                    style_table={"overflowX": "auto"},
-                                                    **TABLE_STYLE,
-                                                ),
-                                                html.H6(
-                                                    "Gezamenlijk model",
-                                                    className="mt-4",
-                                                ),
-                                                html.P(
-                                                    "Alle items tegelijk. Items kunnen niet-significant worden door "
-                                                    "overlap met andere items.",
-                                                    className="text-muted small",
-                                                ),
-                                                dash_table.DataTable(
-                                                    id="tabel-regressie",
-                                                    style_table={"overflowX": "auto"},
-                                                    **TABLE_STYLE,
+                                                dcc.Loading(
+                                                    [
+                                                        html.Div(
+                                                            id="regressie-samenvatting",
+                                                            className="mb-3",
+                                                        ),
+                                                        html.H6("Univariaat per item"),
+                                                        html.P(
+                                                            "Elk item afzonderlijk getoetst. Hier valt niets weg.",
+                                                            className="text-muted small",
+                                                        ),
+                                                        dash_table.DataTable(
+                                                            id="tabel-univariaat",
+                                                            style_table={
+                                                                "overflowX": "auto"
+                                                            },
+                                                            **TABLE_STYLE,
+                                                        ),
+                                                        html.H6(
+                                                            "Gezamenlijk model",
+                                                            className="mt-4",
+                                                        ),
+                                                        html.P(
+                                                            "Alle items tegelijk. Items kunnen niet-significant worden door "
+                                                            "overlap met andere items.",
+                                                            className="text-muted small",
+                                                        ),
+                                                        dash_table.DataTable(
+                                                            id="tabel-regressie",
+                                                            style_table={
+                                                                "overflowX": "auto"
+                                                            },
+                                                            **TABLE_STYLE,
+                                                        ),
+                                                    ],
+                                                    type="default",
                                                 ),
                                             ],
                                             className="tab-body",
@@ -776,7 +833,7 @@ app.layout = html.Div(
                                 ),
                             ],
                             id="main-tabs",
-                            active_tab="tab-bevindingen",
+                            active_tab="tab-scores",
                         ),
                     ],
                     className="main-wrapper",
@@ -1038,15 +1095,6 @@ def _laad_demodata(dataset_name=None):
 
 
 @app.callback(
-    Output("uitkomst-beschrijving", "children"),
-    Input("uitkomst-selector", "value"),
-)
-def update_uitkomst_beschrijving(uitkomst_key):
-    p = UITKOMST_PERSPECTIEVEN.get(uitkomst_key or "doorstroom")
-    return p["beschrijving"]
-
-
-@app.callback(
     Output("samenhang-instrument", "options"),
     Output("samenhang-instrument", "value"),
     Output("samenhang-criterium", "options"),
@@ -1267,15 +1315,14 @@ app.clientside_callback(
     Input("btn-download-rapport", "n_clicks"),
     State("data-store", "data"),
     State("scores-store", "data"),
-    State("uitkomst-selector", "value"),
     prevent_initial_call=True,
 )
-def download_rapport(_n, store_data, scores_store, uitkomst_key):
+def download_rapport(_n, store_data, scores_store):
     df = df_from_store(store_data)
     if df.empty or not scores_store:
         return dash.no_update
     scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
-    perspectief = UITKOMST_PERSPECTIEVEN.get(uitkomst_key or "doorstroom")
+    perspectief = PERSPECTIEF_DOORSTROOM
     pdf_bytes = genereer_rapport(df, scores_df, perspectief=perspectief)
     opleiding = ""
     if "opleiding" in df.columns and df["opleiding"].notna().any():
@@ -1288,13 +1335,6 @@ def download_rapport(_n, store_data, scores_store, uitkomst_key):
 
 # ── Dashboard callbacks ───────────────────────────────────────────────────────
 
-
-GROEP_TABEL_KLEUREN = {
-    "Niet gestart": {"backgroundColor": "#f1f5f9", "color": "#475569"},
-    "Gestart, niet naar jaar 2": {"backgroundColor": "#fff7ed", "color": "#9a3412"},
-    "Doorgestroomd naar jaar 2": {"backgroundColor": "#f0fdf4", "color": "#166534"},
-    "Gestart, diploma gehaald": {"backgroundColor": "#eff6ff", "color": "#1e40af"},
-}
 
 # Kwalitatief palet voor demografische groepen. De labels variëren per dataset
 # (vooropleiding kan van alles zijn), dus kleuren worden op volgorde toegekend in
@@ -1316,61 +1356,98 @@ def _meng_met_wit(kleur: str, f: float = 0.80) -> str:
 
 
 def _groep_tabel_stijl(groepeer, kleur_map, volgorde) -> list:
-    """style_data_conditional dat tabelrijen op de groep kleurt: uitkomstgroepen
-    met de vaste kleuren, demografische groepen met een lichte tint van de
-    bijbehorende boxplot-kleur."""
-    if groepeer == "groep":
-        return [
-            {"if": {"filter_query": f'{{Groep}} = "{groep}"'}, **stijl}
-            for groep, stijl in GROEP_TABEL_KLEUREN.items()
-        ]
-    return [
+    """style_data_conditional dat tabelrijen op de groep kleurt met een lichte
+    tint van de bijbehorende boxplot-kleur."""
+    stijlen = [
         {
             "if": {"filter_query": f'{{Groep}} = "{groep}"'},
             "backgroundColor": _meng_met_wit(kleur_map[groep]),
         }
         for groep in volgorde
     ]
+    stijlen.append(
+        {
+            "if": {"filter_query": '{Groep} = "Niet in vergelijking"'},
+            "backgroundColor": "#f1f5f9",
+            "fontStyle": "italic",
+            "color": "#64748b",
+        }
+    )
+    return stijlen
 
 
 def _aantallen_per_groep(df, groepeer):
-    """Aantal studenten per groep (n en %). De uitkomstgroep telt alle
-    kandidaten; geslacht en vooropleiding tellen alleen ingeschreven studenten,
-    want die achtergrond komt uit 1CHO."""
+    """Aantal studenten per groep (n en %). Bij een binaire uitkomst telt de
+    populatie die bij dat perspectief hoort; bij geslacht en vooropleiding
+    tellen alleen ingeschreven studenten (achtergrond komt uit 1CHO)."""
     if groepeer == "groep":
-        telling = df["groep"].value_counts().reindex(GROEP_VOLGORDE).dropna()
+        telling = (
+            df["groep"]
+            .value_counts()
+            .reindex([g for g in GROEP_VOLGORDE if g in df["groep"].values])
+        )
+        n_buiten = 0
+    elif perspectief := UITKOMST_PERSPECTIEVEN.get(groepeer):
+        pop = df[df["groep"].isin(perspectief["populatie"])]
+        binair = pop["groep"].isin(perspectief["positief_groepen"])
+        labels = binair.map(
+            {True: perspectief["positief_label"], False: perspectief["negatief_label"]}
+        )
+        volgorde = [perspectief["positief_label"], perspectief["negatief_label"]]
+        telling = labels.value_counts().reindex(volgorde).dropna()
+        n_buiten = int((~df["groep"].isin(perspectief["populatie"])).sum())
     else:
         ingeschr = df[df["groep"].isin(GROEP_INGESCHREVEN)]
         if groepeer not in ingeschr.columns:
             return pd.DataFrame()
         telling = ingeschr[groepeer].dropna().value_counts()
+        n_buiten = 0
     totaal = int(telling.sum())
     if totaal == 0:
         return pd.DataFrame()
-    return pd.DataFrame(
-        [
-            {"Groep": str(groep), "n": int(n), "%": f"{n / totaal * 100:.0f}%"}
-            for groep, n in telling.items()
-        ]
-    )
+    rijen = [
+        {"Groep": str(groep), "n": int(n), "%": f"{n / totaal * 100:.0f}%"}
+        for groep, n in telling.items()
+    ]
+    if n_buiten > 0:
+        rijen.append({"Groep": "Niet in vergelijking", "n": n_buiten, "%": ""})
+    return pd.DataFrame(rijen)
 
 
 def _scores_per_groep(df, scores_df, groepeer):
     """Long-format scores met een kolom 'groep' die de gekozen groepering bevat
-    (uitkomstgroep of een demografische dimensie). Returnt
-    (scores, kleur_map, volgorde), of ``None`` als de dimensie ontbreekt. De
-    demografie bestaat alleen voor ingeschreven studenten."""
+    (binaire uitkomst, de 4-delige uitkomstgroep, of een demografische dimensie).
+    Returnt (scores, kleur_map, volgorde), of ``None`` als de dimensie ontbreekt.
+    De demografie bestaat alleen voor ingeschreven studenten."""
     if groepeer == "groep":
         scores = scores_df.merge(
             df[["studentnummer", "groep"]].drop_duplicates(),
             on="studentnummer",
             how="inner",
         )
-        scores["groep"] = pd.Categorical(
-            scores["groep"], categories=GROEP_VOLGORDE, ordered=True
-        )
+        volgorde = [g for g in GROEP_VOLGORDE if g in scores["groep"].values]
+        kleur_map = {g: GROEP_KLEUREN[g] for g in volgorde}
         scores["item_kort"] = scores["item"].apply(shorten_item)
-        return scores, GROEP_KLEUREN, GROEP_VOLGORDE
+        return scores, kleur_map, volgorde
+    perspectief = UITKOMST_PERSPECTIEVEN.get(groepeer)
+    if perspectief:
+        pop = df[df["groep"].isin(perspectief["populatie"])]
+        scores = scores_df.merge(
+            pop[["studentnummer", "groep"]].drop_duplicates(),
+            on="studentnummer",
+            how="inner",
+        )
+        pos_label = perspectief["positief_label"]
+        neg_label = perspectief["negatief_label"]
+        scores["groep"] = (
+            scores["groep"]
+            .isin(perspectief["positief_groepen"])
+            .map({True: pos_label, False: neg_label})
+        )
+        volgorde = [pos_label, neg_label]
+        kleur_map = binair_kleur_map(perspectief)
+        scores["item_kort"] = scores["item"].apply(shorten_item)
+        return scores, kleur_map, volgorde
     dim = next((d for d in DEMO_DIMENSIES if d["kolom"] == groepeer), None)
     if dim is None:
         return None
@@ -1523,36 +1600,20 @@ def update_scores_tab(
     return fig, aant_data, aant_cols, groep_stijl, gem_data, gem_cols, groep_stijl
 
 
-def _uitleg_verschil_uitkomst():
+def _uitleg_verschil_uitkomst(perspectief):
+    pos = perspectief["positief_label"]
+    neg = perspectief["negatief_label"]
     return [
         html.P(
-            "Deze tabel vergelijkt per item twee groepen studenten die met de "
-            "opleiding zijn begonnen, en toetst of de succesgroep bij de selectie "
-            "hoger scoorde:",
-            className="text-muted small mb-1",
-        ),
-        html.Ul(
-            [
-                html.Li(
-                    [
-                        html.B("Succes: "),
-                        "studenten die doorstroomden naar jaar 2 of hun diploma haalden.",
-                    ]
-                ),
-                html.Li(
-                    [
-                        html.B("Geen succes: "),
-                        "studenten die wel begonnen maar uitvielen (geen jaar 2, geen diploma).",
-                    ]
-                ),
-            ],
+            f"Deze tabel vergelijkt per item twee groepen: '{pos}' versus "
+            f"'{neg}'. {perspectief['beschrijving']}",
             className="text-muted small mb-1",
         ),
         html.P(
-            "Studenten die nooit startten blijven buiten de toets. Mann-Whitney U "
-            "met de rank-biseriale effectgrootte (-1 tot +1, positief = succesgroep "
-            "scoort hoger) en een 95%-betrouwbaarheidsinterval. Positief en "
-            "significant (p < 0.05) betekent dat het item voorspellende waarde heeft.",
+            "Mann-Whitney U met de rank-biseriale effectgrootte (-1 tot +1, "
+            f"positief = groep '{pos}' scoort hoger) en een "
+            "95%-betrouwbaarheidsinterval. Positief en significant (p < 0.05) "
+            "betekent dat het item voorspellende waarde heeft.",
             className="text-muted small mb-0",
         ),
     ]
@@ -1585,18 +1646,17 @@ def _uitleg_verschil_demografisch(label):
     Output("tabel-verschil", "columns"),
     Output("verschiltoets-uitleg", "children"),
     Input("verschil-niveau", "value"),
-    Input("uitkomst-selector", "value"),
-    State("data-store", "data"),
+    Input("data-store", "data"),
     State("scores-store", "data"),
 )
-def update_verschiltoets_tab(niveau, uitkomst_key, store_data, scores_store):
+def update_verschiltoets_tab(niveau, store_data, scores_store):
     df = df_from_store(store_data)
     if df.empty or not scores_store:
         return [], [], ""
     scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
-    perspectief = UITKOMST_PERSPECTIEVEN.get(uitkomst_key or "doorstroom")
 
-    if niveau == "groep":
+    perspectief = UITKOMST_PERSPECTIEVEN.get(niveau)
+    if perspectief:
         pop = df[df["groep"].isin(perspectief["populatie"])]
         scores = scores_df.merge(
             pop[["studentnummer", "groep"]].drop_duplicates(),
@@ -1606,7 +1666,7 @@ def update_verschiltoets_tab(niveau, uitkomst_key, store_data, scores_store):
         scores["item_kort"] = scores["item"].apply(shorten_item)
         tabel = vergelijk_succes_per_item(scores, perspectief=perspectief)
         kolommen = VERGELIJKING_KOLOMMEN
-        uitleg = _uitleg_verschil_uitkomst()
+        uitleg = _uitleg_verschil_uitkomst(perspectief)
     else:
         dim = next((d for d in DEMO_DIMENSIES if d["kolom"] == niveau), None)
         scores = demografie_scores(df, scores_df, dim) if dim else None
@@ -1619,6 +1679,209 @@ def update_verschiltoets_tab(niveau, uitkomst_key, store_data, scores_store):
     data = tabel[kolommen].to_dict("records") if not tabel.empty else []
     cols = [{"name": c, "id": c} for c in kolommen]
     return data, cols, uitleg
+
+
+@app.callback(
+    Output("demografie-inhoud", "children"),
+    Input("demo-dimensie", "value"),
+    Input("data-store", "data"),
+)
+def update_demografie_tab(dim_kolom, store_data):
+    df = df_from_store(store_data)
+    if df.empty:
+        return html.P(
+            "Laad eerst data om de demografie te zien.", className="text-muted"
+        )
+
+    dim = next((d for d in DEMO_DIMENSIES if d["kolom"] == dim_kolom), None)
+    perspectief = PERSPECTIEF_DOORSTROOM
+    if dim is None:
+        return html.P("Selecteer een achtergrond.", className="text-muted")
+
+    dim_col = dim["kolom"]
+    dim_label = dim["label"]
+    if dim_col not in df.columns or df[dim_col].dropna().empty:
+        return html.P(
+            f"Geen {dim_label.lower()} gegevens beschikbaar.", className="text-muted"
+        )
+
+    pos_label = perspectief["positief_label"]
+    neg_label = perspectief["negatief_label"]
+    pop = df[df["groep"].isin(perspectief["populatie"])].copy()
+    pop["_uitkomst"] = (
+        pop["groep"]
+        .isin(perspectief["positief_groepen"])
+        .map({True: pos_label, False: neg_label})
+    )
+    subset = pop.dropna(subset=[dim_col])
+    if subset.empty:
+        return html.P("Te weinig data voor deze combinatie.", className="text-muted")
+
+    volgorde = [pos_label, neg_label]
+    kleuren = binair_kleur_map(perspectief)
+
+    ct = pd.crosstab(
+        subset[dim_col], subset["_uitkomst"], margins=True, margins_name="Totaal"
+    )
+    aanwezig = [c for c in volgorde if c in ct.columns]
+    ct = ct[aanwezig + ["Totaal"]]
+    ct_pct = ct.div(ct["Totaal"], axis=0).drop(columns=["Totaal"]).round(3)
+
+    tabel_data = []
+    for rij_naam in ct.index:
+        rij = {dim_label: str(rij_naam)}
+        for col in aanwezig:
+            n = int(ct.loc[rij_naam, col])
+            pct = ct_pct.loc[rij_naam, col] * 100 if col in ct_pct.columns else 0
+            rij[col] = f"{n} ({pct:.0f}%)"
+        rij["Totaal"] = int(ct.loc[rij_naam, "Totaal"])
+        tabel_data.append(rij)
+
+    tabel_cols = [{"name": dim_label, "id": dim_label}]
+    tabel_cols += [{"name": c, "id": c} for c in aanwezig]
+    tabel_cols.append({"name": "Totaal", "id": "Totaal"})
+
+    tabel_stijl = []
+    for col_naam in aanwezig:
+        tabel_stijl.append(
+            {
+                "if": {"column_id": col_naam},
+                "backgroundColor": _meng_met_wit(kleuren[col_naam]),
+            }
+        )
+    tabel_stijl.append(
+        {
+            "if": {"filter_query": '{%s} = "Totaal"' % dim_label},
+            "fontWeight": "bold",
+            "backgroundColor": "#f8fafc",
+        }
+    )
+
+    groep_namen = [g for g in ct.index if g != "Totaal"]
+    fig = go.Figure()
+    for uitkomst_cat in aanwezig:
+        waarden = [
+            ct_pct.loc[g, uitkomst_cat] * 100
+            if g in ct_pct.index and uitkomst_cat in ct_pct.columns
+            else 0
+            for g in groep_namen
+        ]
+        n_waarden = [int(ct.loc[g, uitkomst_cat]) for g in groep_namen]
+        fig.add_trace(
+            go.Bar(
+                name=uitkomst_cat,
+                x=[str(g) for g in groep_namen],
+                y=waarden,
+                text=[f"n={n}" for n in n_waarden],
+                textposition="inside",
+                marker_color=kleuren.get(uitkomst_cat, "#94a3b8"),
+            )
+        )
+    fig.update_layout(
+        barmode="stack",
+        yaxis_title="Percentage",
+        yaxis=dict(range=[0, 100]),
+        height=320,
+        **CHART_BASE,
+        margin=dict(t=10, b=30),
+        legend=dict(orientation="h", y=1.12),
+    )
+
+    n_buiten = int((~df["groep"].isin(perspectief["populatie"])).sum())
+    voetnoot = []
+    if n_buiten > 0:
+        voetnoot.append(
+            html.P(
+                f"{n_buiten} studenten vallen buiten de populatie voor "
+                f"'{perspectief['label'].lower()}' en zijn niet meegenomen.",
+                className="text-muted small fst-italic mt-2 mb-0",
+            )
+        )
+
+    return [
+        dash_table.DataTable(
+            data=tabel_data,
+            columns=tabel_cols,
+            style_table={"overflowX": "auto"},
+            style_data_conditional=tabel_stijl,
+            **TABLE_STYLE,
+        ),
+        dcc.Graph(figure=fig),
+        *voetnoot,
+    ]
+
+
+def _bereken_model_stats(df, scores_df, perspectief):
+    """Draai het gezamenlijke logistische regressiemodel en retourneer pseudo R² + sig items."""
+    import statsmodels.api as sm
+    from numpy.linalg import matrix_rank
+
+    populatie = df[df["groep"].isin(perspectief["populatie"])].copy()
+    if len(populatie) < 10:
+        return None
+
+    populatie["uitkomst"] = (
+        populatie["groep"].isin(perspectief["positief_groepen"]).astype(int)
+    )
+    item_pivot = scores_df.pivot_table(
+        index="studentnummer", columns="item", values="score", aggfunc="mean"
+    )
+    item_pivot.columns = [shorten_item(c) for c in item_pivot.columns]
+    item_pivot_pop = item_pivot.loc[
+        item_pivot.index.isin(populatie["studentnummer"])
+    ].copy()
+
+    nan_pct = item_pivot_pop.isna().mean()
+    bruikbare_cols = [c for c in item_pivot_pop.columns if nan_pct.get(c, 1) <= 0.3]
+    if len(bruikbare_cols) < 2:
+        return None
+
+    item_pivot_pop[bruikbare_cols] = item_pivot_pop[bruikbare_cols].fillna(
+        item_pivot_pop[bruikbare_cols].mean()
+    )
+    item_pivot_pop = item_pivot_pop.dropna(subset=bruikbare_cols)
+    if len(item_pivot_pop) < 10:
+        return None
+
+    y = populatie.set_index("studentnummer").loc[item_pivot_pop.index, "uitkomst"]
+    X = item_pivot_pop[bruikbare_cols].copy()
+
+    while len(X.columns) > 1:
+        rank = matrix_rank(X.values)
+        if rank >= len(X.columns):
+            break
+        corr_vals = X.corr().abs().to_numpy().copy()
+        np.fill_diagonal(corr_vals, 0)
+        flat_idx = corr_vals.argmax()
+        _, col_idx = divmod(flat_idx, corr_vals.shape[1])
+        X = X.drop(columns=[X.columns[col_idx]])
+
+    joint_cols = list(X.columns)
+    n_events = min(int(y.sum()), int(len(y) - y.sum()))
+    max_predictoren = max(2, n_events // 5)
+    if len(joint_cols) > max_predictoren:
+        joint_cols = joint_cols[:max_predictoren]
+        X = X[joint_cols]
+
+    try:
+        X_z = X.astype(float).apply(
+            lambda s: (
+                (s - s.mean()) / s.std() if s.std() > 0 else pd.Series(0, index=s.index)
+            )
+        )
+        X_const = sm.add_constant(X_z)
+        model = sm.Logit(y.astype(float), X_const).fit(disp=0, maxiter=100)
+        sig_items = [
+            col
+            for col in joint_cols
+            if col in model.pvalues.index and model.pvalues[col] < 0.05
+        ]
+        return {
+            "pseudo_r2": round(float(model.prsquared), 3),
+            "sig_items": sig_items,
+        }
+    except Exception:
+        return None
 
 
 def _bevindingen_lijst(titel, items, leeg_tekst):
@@ -1635,20 +1898,31 @@ def _bevindingen_lijst(titel, items, leeg_tekst):
 
 @app.callback(
     Output("bevindingen-inhoud", "children"),
+    Input("main-tabs", "active_tab"),
     Input("data-store", "data"),
-    Input("uitkomst-selector", "value"),
     State("scores-store", "data"),
 )
-def update_bevindingen(store_data, uitkomst_key, scores_store):
+def update_bevindingen(active_tab, store_data, scores_store):
+    if active_tab != "tab-bevindingen":
+        return dash.no_update
     df = df_from_store(store_data)
     if df.empty or not scores_store:
         return html.P(
             "Laad eerst data om de bevindingen te zien.", className="text-muted"
         )
 
-    perspectief = UITKOMST_PERSPECTIEVEN.get(uitkomst_key or "doorstroom")
     scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+
+    perspectief = PERSPECTIEF_DOORSTROOM
     pop = df[df["groep"].isin(perspectief["populatie"])]
+    n_pos = int(pop["groep"].isin(perspectief["positief_groepen"]).sum())
+    n_neg = int(len(pop) - n_pos)
+    groepsgroottes = {
+        "n_totaal": len(df),
+        "n_populatie": len(pop),
+        "n_positief": n_pos,
+        "n_negatief": n_neg,
+    }
     scores = scores_df.merge(
         pop[["studentnummer", "groep"]].drop_duplicates(),
         on="studentnummer",
@@ -1656,6 +1930,9 @@ def update_bevindingen(store_data, uitkomst_key, scores_store):
     )
     scores["item_kort"] = scores["item"].apply(shorten_item)
     succes_tabel = vergelijk_succes_per_item(scores, perspectief=perspectief)
+    uni_data = bereken_univariaat(df, scores_df, perspectief)
+    model_stats = _bereken_model_stats(df, scores_df, perspectief)
+    demo_verdelingen = chi2_per_dimensie(df, perspectief)
 
     demo_tabellen = {}
     for dim in DEMO_DIMENSIES:
@@ -1665,9 +1942,25 @@ def update_bevindingen(store_data, uitkomst_key, scores_store):
                 demo_scores, dim["kolom"]
             )
 
-    bevindingen = genereer_bevindingen(
-        succes_tabel, demo_tabellen, perspectief=perspectief
+    corr_matrix = None
+    item_pivot = scores_df.pivot_table(
+        index="studentnummer", columns="item", values="score", aggfunc="mean"
     )
+    if not item_pivot.empty:
+        item_pivot.columns = [shorten_item(c) for c in item_pivot.columns]
+        corr_matrix = item_pivot.corr().round(3)
+
+    bevindingen = genereer_bevindingen(
+        succes_tabel,
+        demo_tabellen,
+        perspectief=perspectief,
+        correlatie_matrix=corr_matrix,
+        univariaat_data=uni_data,
+        model_stats=model_stats,
+        groepsgroottes=groepsgroottes,
+        demografie_verdeling=demo_verdelingen,
+    )
+
     secties = []
     if bevindingen["samenvatting"]:
         secties.append(
@@ -1675,14 +1968,51 @@ def update_bevindingen(store_data, uitkomst_key, scores_store):
         )
     secties.append(
         _bevindingen_lijst(
-            "Wat voorspelt studiesucces?",
+            "Verschiltoets",
             bevindingen["validiteit"],
             "Geen opvallende voorspellers gevonden in de cijfers.",
         )
     )
+    if bevindingen.get("regressie"):
+        secties.append(
+            _bevindingen_lijst(
+                "Univariate regressie",
+                bevindingen["regressie"],
+                "Geen univariate regressieresultaten beschikbaar.",
+            )
+        )
+    if bevindingen.get("model"):
+        secties.append(
+            _bevindingen_lijst(
+                "Gezamenlijk model",
+                bevindingen["model"],
+                "",
+            )
+        )
+    if bevindingen.get("demografie"):
+        secties.append(
+            _bevindingen_lijst(
+                "Demografie en uitkomst",
+                bevindingen["demografie"],
+                "",
+            )
+        )
+
+    secties.append(html.Hr())
+    secties.append(html.H5("Samenhang tussen items", className="mt-3 mb-2"))
     secties.append(
         _bevindingen_lijst(
-            "Verschillen tussen groepen (let op eerlijkheid)",
+            "Correlatie",
+            bevindingen["correlatie"],
+            "Onvoldoende items voor een correlatieanalyse.",
+        )
+    )
+
+    secties.append(html.Hr())
+    secties.append(html.H5("Verschillen tussen groepen", className="mt-3 mb-2"))
+    secties.append(
+        _bevindingen_lijst(
+            "Eerlijkheid (geslacht, vooropleiding)",
             bevindingen["fairness"],
             "Geen demografische gegevens beschikbaar om te vergelijken.",
         )
@@ -1757,15 +2087,15 @@ def update_correlatie_tab(sh_instrument, sh_criterium, scores_store):
     Output("tabel-regressie", "columns"),
     Output("tabel-regressie", "style_data_conditional"),
     Input("data-store", "data"),
-    Input("uitkomst-selector", "value"),
     State("scores-store", "data"),
 )
-def update_regressie_tab(store_data, uitkomst_key, scores_store):
+def update_regressie_tab(store_data, scores_store):
     df = df_from_store(store_data)
+    leeg7 = ("", [], [], [], [], [], [])
     if df.empty or not scores_store:
-        return "", [], [], [], [], [], []
+        return leeg7
 
-    perspectief = UITKOMST_PERSPECTIEVEN.get(uitkomst_key or "doorstroom")
+    perspectief = PERSPECTIEF_DOORSTROOM
     scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
 
     regressie_msg = ""
@@ -1791,15 +2121,7 @@ def update_regressie_tab(store_data, uitkomst_key, scores_store):
             color="warning",
             className="small",
         )
-        return (
-            regressie_msg,
-            uni_data,
-            uni_cols,
-            uni_style,
-            reg_data,
-            reg_cols,
-            reg_style,
-        )
+        return (regressie_msg, [], [], [], [], [], [])
 
     populatie["uitkomst"] = (
         populatie["groep"].isin(perspectief["positief_groepen"]).astype(int)
@@ -1827,15 +2149,7 @@ def update_regressie_tab(store_data, uitkomst_key, scores_store):
             color="warning",
             className="small",
         )
-        return (
-            regressie_msg,
-            uni_data,
-            uni_cols,
-            uni_style,
-            reg_data,
-            reg_cols,
-            reg_style,
-        )
+        return (regressie_msg, [], [], [], [], [], [])
 
     item_pivot_pop[bruikbare_cols] = item_pivot_pop[bruikbare_cols].fillna(
         item_pivot_pop[bruikbare_cols].mean()
@@ -1848,15 +2162,7 @@ def update_regressie_tab(store_data, uitkomst_key, scores_store):
             color="warning",
             className="small",
         )
-        return (
-            regressie_msg,
-            uni_data,
-            uni_cols,
-            uni_style,
-            reg_data,
-            reg_cols,
-            reg_style,
-        )
+        return (regressie_msg, [], [], [], [], [], [])
 
     y = populatie.set_index("studentnummer").loc[item_pivot_pop.index, "uitkomst"]
     X_all = item_pivot_pop[bruikbare_cols]
@@ -2032,7 +2338,15 @@ def update_regressie_tab(store_data, uitkomst_key, scores_store):
             className="small",
         )
 
-    return regressie_msg, uni_data, uni_cols, uni_style, reg_data, reg_cols, reg_style
+    return (
+        regressie_msg,
+        uni_data,
+        uni_cols,
+        uni_style,
+        reg_data,
+        reg_cols,
+        reg_style,
+    )
 
 
 if __name__ == "__main__":

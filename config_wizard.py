@@ -247,6 +247,55 @@ def detecteer_score_kolommen(
     return resultaat
 
 
+def _instrument_tip(score_kols: list[dict]):
+    """Geef een tip als de data instrument-level scores heeft (1 kolom per instrument).
+
+    Dit is herkenbaar doordat het instrument veld leeg is (geen gedeeld prefix),
+    of doordat elk instrument slechts 1 item heeft.
+    """
+    instrumenten = {}
+    for rij in score_kols:
+        if rij.get("meenemen", "Ja") != "Ja":
+            continue
+        inst = rij.get("instrument", "").strip()
+        if inst:
+            instrumenten.setdefault(inst, []).append(rij["kolom_naam"])
+
+    if not instrumenten:
+        geen_instrument = [
+            r for r in score_kols
+            if r.get("meenemen", "Ja") == "Ja" and not r.get("instrument", "").strip()
+        ]
+        if geen_instrument:
+            return dbc.Alert(
+                [
+                    html.Strong("Tip: "),
+                    "De wizard herkent geen instrumentgroepen (gedeelde prefixen). "
+                    "Als elke kolom een apart meetinstrument is (bijv. 'Wiskunde', "
+                    "'Motivatiebrief', 'Interview'), vul dan bij elke rij het "
+                    "instrument in. De itemnaam mag hetzelfde zijn als het instrument.",
+                ],
+                color="info",
+                className="small py-2 mb-0",
+            )
+        return ""
+
+    alleen_1_item = all(len(items) == 1 for items in instrumenten.values())
+    if alleen_1_item and len(instrumenten) >= 2:
+        return dbc.Alert(
+            [
+                html.Strong("Tip: "),
+                "Elk instrument heeft precies 1 scorekolom. Dat is prima: de tool "
+                "werkt ook met instrumentscores zonder onderliggende items. "
+                "Controleer dat de instrument- en itemnamen kloppen.",
+            ],
+            color="info",
+            className="small py-2 mb-0",
+        )
+
+    return ""
+
+
 def bouw_config_dict(
     blad_naam: str,
     header_rij: int,
@@ -537,6 +586,7 @@ def maak_wizard_layout() -> html.Div:
                                     ),
                                 ],
                             ),
+                            html.Div(id="wiz-tip", className="mt-2"),
                             html.Div(id="wiz-status", className="mt-2 mb-2"),
                             dbc.Row(
                                 [
@@ -646,13 +696,14 @@ def registreer_callbacks(app: dash.Dash) -> None:
         Output("wiz-totaalscore", "value"),
         Output("wiz-kolommen-tabel", "data"),
         Output("wiz-tabel-placeholder", "style"),
+        Output("wiz-tip", "children"),
         Input("wiz-sheet-dropdown", "value"),
         Input("wiz-header-rij", "value"),
         State("wiz-raw-store", "data"),
         prevent_initial_call=True,
     )
     def detecteer_kolommen(blad, header_rij, raw_contents):
-        leeg = ([], None, [], None, [], {"display": "block"})
+        leeg = ([], None, [], None, [], {"display": "block"}, "")
 
         if not blad or not raw_contents or not header_rij:
             return leeg
@@ -673,6 +724,10 @@ def registreer_callbacks(app: dash.Dash) -> None:
 
             score_kols = detecteer_score_kolommen(df, id_kol, totaal_kol)
 
+            tip = ""
+            if score_kols:
+                tip = _instrument_tip(score_kols)
+
             return (
                 col_options,
                 id_kol,
@@ -680,6 +735,7 @@ def registreer_callbacks(app: dash.Dash) -> None:
                 totaal_kol,
                 score_kols,
                 {"display": "none"} if score_kols else {"display": "block"},
+                tip,
             )
         except Exception:
             return leeg

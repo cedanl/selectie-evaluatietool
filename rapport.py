@@ -20,9 +20,9 @@ from fpdf import FPDF
 from shared import (
     GROEP_VOLGORDE,
     GROEP_KLEUREN,
-    GROEP_DIPLOMA,
     CHART_BASE,
-    UITKOMST_PERSPECTIEVEN,
+    PERSPECTIEF_DOORSTROOM,
+    binair_kleur_map,
     shorten_item,
     schaal_grenzen,
     bucket_per_item,
@@ -37,6 +37,8 @@ from shared import (
     genereer_bevindingen,
     DEMO_DIMENSIES,
     demografie_scores,
+    bereken_univariaat,
+    chi2_per_dimensie,
 )
 
 log = logging.getLogger(__name__)
@@ -106,7 +108,7 @@ class RapportPDF(FPDF):
         self.set_text_color(*GRAY)
         self.cell(0, 10, "Evaluatietool Selectie | CEDA", align="C")
 
-    def cover_page(self, n_per_groep: dict):
+    def cover_page(self, n_per_groep: dict, n_totaal: int):
         self.add_page()
 
         if LOGO_PATH.exists():
@@ -160,22 +162,20 @@ class RapportPDF(FPDF):
         self.ln(14)
         self.set_font("Helvetica", "", 11)
         self.set_text_color(*DARK)
-        total = sum(n_per_groep.values())
         self.cell(
             0,
             7,
-            f"Totaal kandidaten: {total}",
+            f"Totaal kandidaten: {n_totaal}",
             align="C",
             new_x="LMARGIN",
             new_y="NEXT",
         )
-        for groep in GROEP_VOLGORDE:
-            n = n_per_groep.get(groep, 0)
+        for groep, n in n_per_groep.items():
             self.cell(
                 0,
                 7,
-                f"{groep}: {n} ({n / total * 100:.0f}%)"
-                if total > 0
+                f"{groep}: {n} ({n / n_totaal * 100:.0f}%)"
+                if n_totaal > 0
                 else f"{groep}: 0",
                 align="C",
                 new_x="LMARGIN",
@@ -206,18 +206,17 @@ class RapportPDF(FPDF):
         self.multi_cell(0, 5, text)
         self.ln(2)
 
-    def groep_header(self, groep: str, n: int) -> None:
-        """Gekleurde kop boven een groepstabel, met het kandidaataantal erbij.
-
-        Het kleurvlakje gebruikt dezelfde groepskleur als de grafieken, zodat
-        de tabellen visueel aansluiten op de boxplots. Houdt de kop bij elkaar
-        met de eerste tabelregels door bij weinig ruimte een pagina te breken.
-        """
+    def groep_header(
+        self, groep: str, n: int, kleur_map: dict[str, str] | None = None
+    ) -> None:
+        """Gekleurde kop boven een groepstabel, met het kandidaataantal erbij."""
+        if kleur_map is None:
+            kleur_map = GROEP_KLEUREN
         if self.get_y() > 225:
             self.add_page()
         self.ln(2)
         y = self.get_y()
-        self.set_fill_color(*_hex_to_rgb(GROEP_KLEUREN.get(groep, "#94a3b8")))
+        self.set_fill_color(*_hex_to_rgb(kleur_map.get(groep, "#94a3b8")))
         self.rect(10, y + 0.5, 4, 5, style="F")
         self.set_xy(16, y)
         self.set_font("Helvetica", "B", 11)
@@ -295,7 +294,13 @@ def _build_figures(
     scores_met_groep: pd.DataFrame,
     item_pivot: pd.DataFrame,
     score_cols: list[str],
+    groep_kleuren: dict[str, str] | None = None,
+    groep_volgorde: list[str] | None = None,
 ) -> dict[str, tuple[go.Figure, int, int]]:
+    if groep_kleuren is None:
+        groep_kleuren = GROEP_KLEUREN
+    if groep_volgorde is None:
+        groep_volgorde = GROEP_VOLGORDE
     figures = {}
 
     # Eén boxplot per schaal: items met een ander bereik horen niet op dezelfde
@@ -312,8 +317,8 @@ def _build_figures(
                 x="item_kort",
                 y="score",
                 color="groep",
-                color_discrete_map=GROEP_KLEUREN,
-                category_orders={"groep": GROEP_VOLGORDE, "item_kort": items_kort},
+                color_discrete_map=groep_kleuren,
+                category_orders={"groep": groep_volgorde, "item_kort": items_kort},
                 height=500,
                 labels={"item_kort": "", "score": "Score", "groep": ""},
             )
@@ -370,7 +375,7 @@ def _run_regression(
     perspectief: dict | None = None,
 ) -> tuple[list[list[str]], float | None, str | None]:
     if perspectief is None:
-        perspectief = UITKOMST_PERSPECTIEVEN["doorstroom"]
+        perspectief = PERSPECTIEF_DOORSTROOM
     populatie = df[df["groep"].isin(perspectief["populatie"])].copy()
 
     reg_rows = []
@@ -498,7 +503,7 @@ def genereer_rapport(
     df: pd.DataFrame, scores_df: pd.DataFrame, perspectief: dict | None = None
 ) -> bytes:
     if perspectief is None:
-        perspectief = UITKOMST_PERSPECTIEVEN["doorstroom"]
+        perspectief = PERSPECTIEF_DOORSTROOM
     opleiding = ""
     if "opleiding" in df.columns and df["opleiding"].notna().any():
         opleiding = str(df["opleiding"].dropna().iloc[0])
@@ -508,16 +513,40 @@ def genereer_rapport(
         jaren = sorted(df["selectiejaar"].dropna().unique())
         jaar = ", ".join(str(int(j)) for j in jaren)
 
-    counts = df["groep"].value_counts()
-    n_per_groep = {groep: int(counts.get(groep, 0)) for groep in GROEP_VOLGORDE}
+    pos_label = perspectief["positief_label"]
+    neg_label = perspectief["negatief_label"]
+    binaire_volgorde = [pos_label, neg_label]
+    binaire_kleuren = binair_kleur_map(perspectief)
+
+    pop = df[df["groep"].isin(perspectief["populatie"])]
+    binair_col = (
+        pop["groep"]
+        .isin(perspectief["positief_groepen"])
+        .map({True: pos_label, False: neg_label})
+    )
+    n_per_groep = binair_col.value_counts().reindex(binaire_volgorde, fill_value=0)
+    n_per_groep = {groep: int(n_per_groep[groep]) for groep in binaire_volgorde}
 
     # -- Shared data --
-    df_groep = df[["studentnummer", "groep"]].drop_duplicates()
-    scores_met_groep = scores_df.merge(df_groep, on="studentnummer", how="inner")
-    scores_met_groep["groep"] = pd.Categorical(
-        scores_met_groep["groep"], categories=GROEP_VOLGORDE, ordered=True
+    # scores_origineel behoudt de 4-level groep voor analyse-functies die
+    # positief/negatief groepen matchen op de oorspronkelijke labels.
+    df_groep = pop[["studentnummer", "groep"]].drop_duplicates()
+    scores_origineel = scores_df.merge(df_groep, on="studentnummer", how="inner")
+    scores_origineel["groep"] = pd.Categorical(
+        scores_origineel["groep"], categories=GROEP_VOLGORDE, ordered=True
     )
-    scores_met_groep["item_kort"] = scores_met_groep["item"].apply(shorten_item)
+    scores_origineel["item_kort"] = scores_origineel["item"].apply(shorten_item)
+
+    # scores_met_groep heeft de binaire labels voor weergave (boxplots, tabellen).
+    scores_met_groep = scores_origineel.copy()
+    scores_met_groep["groep"] = (
+        scores_met_groep["groep"]
+        .isin(perspectief["positief_groepen"])
+        .map({True: pos_label, False: neg_label})
+    )
+    scores_met_groep["groep"] = pd.Categorical(
+        scores_met_groep["groep"], categories=binaire_volgorde, ordered=True
+    )
 
     item_pivot = scores_met_groep.pivot_table(
         index="studentnummer", columns="item_kort", values="score", aggfunc="mean"
@@ -541,7 +570,15 @@ def genereer_rapport(
     )
 
     # -- Build and render all charts --
-    figures = _build_figures(df, scores_df, scores_met_groep, item_pivot, score_cols)
+    figures = _build_figures(
+        df,
+        scores_df,
+        scores_met_groep,
+        item_pivot,
+        score_cols,
+        groep_kleuren=binaire_kleuren,
+        groep_volgorde=binaire_volgorde,
+    )
     images = _render_figures(figures)
 
     # Demografische verschiltoetsen per dimensie (tabellen, geen figuren).
@@ -553,20 +590,46 @@ def genereer_rapport(
                 demo_scores, dim["kolom"]
             )
 
+    # Correlatiematrix (voor conclusies)
+    corr_pivot = scores_df.pivot_table(
+        index="studentnummer", columns="item", values="score", aggfunc="mean"
+    )
+    corr_matrix = None
+    if not corr_pivot.empty:
+        corr_pivot.columns = [shorten_item(c) for c in corr_pivot.columns]
+        corr_matrix = corr_pivot.corr().round(3)
+
+    # Univariate regressie per item (voor conclusies)
+    univariaat_data = bereken_univariaat(df, scores_df, perspectief)
+
+    # Model stats uit de reeds gedraaide regressie
+    model_stats = None
+    if pseudo_r2 is not None:
+        sig_items_model = [r[0] for r in reg_rows if r[4] != "ns"]
+        model_stats = {"pseudo_r2": pseudo_r2, "sig_items": sig_items_model}
+
+    demo_verdeling = chi2_per_dimensie(df, perspectief)
+
     # -- Assemble PDF --
     pdf = RapportPDF(opleiding=opleiding, jaar=jaar)
 
-    pdf.cover_page(n_per_groep)
+    total = len(df)
+    n_pos = n_per_groep.get(pos_label, 0)
+    n_neg = n_per_groep.get(neg_label, 0)
+    n_pop = n_pos + n_neg
+
+    groepsgroottes = {
+        "n_totaal": total,
+        "n_populatie": n_pop,
+        "n_positief": n_pos,
+        "n_negatief": n_neg,
+    }
+
+    pdf.cover_page(n_per_groep, total)
 
     # Inleiding
     pdf.add_page()
     pdf.section_title("1. Inleiding")
-
-    n_door = n_per_groep.get("Doorgestroomd naar jaar 2", 0)
-    n_uitval = n_per_groep.get("Gestart, niet naar jaar 2", 0)
-    n_niet = n_per_groep.get("Niet gestart", 0)
-    n_diploma = n_per_groep.get(GROEP_DIPLOMA, 0)
-    total = len(df)
 
     pdf.body_text(
         f"Dit rapport evalueert de selectieprocedure van {opleiding} "
@@ -576,57 +639,13 @@ def genereer_rapport(
         f"ook hoger bij de selectie dan studenten die stoppen?"
     )
 
-    pdf.body_text(f"De data bevat {total} kandidaten, verdeeld over deze groepen:")
-
     pdf.body_text(
-        f"  1. Niet gestart ({n_niet} kandidaten): deze personen staan niet in "
-        f"de inschrijvingsdata (1CHO). Ze zijn niet toegelaten, of wel "
-        f"geselecteerd maar uiteindelijk nooit begonnen aan de opleiding."
+        f"De data bevat {total} kandidaten. Dit rapport vergelijkt twee "
+        f"groepen op basis van de uitkomstmaat '{perspectief['label']}':"
     )
-    pdf.body_text(
-        f"  2. Gestart, niet naar jaar 2 ({n_uitval} studenten): deze studenten "
-        f"zijn wel begonnen, maar zijn na het eerste jaar gestopt of overgestapt. "
-        f"Ze hebben in 1CHO een inschrijving voor jaar 1, maar niet voor jaar 2."
-    )
-    pdf.body_text(
-        f"  3. Doorgestroomd naar jaar 2 ({n_door} studenten): deze studenten "
-        f"zijn begonnen en hebben het eerste jaar succesvol doorlopen. Ze hebben "
-        f"zowel een jaar 1 als een jaar 2 inschrijving in 1CHO."
-    )
-    if n_diploma > 0:
-        pdf.body_text(
-            f"  4. Gestart, diploma gehaald ({n_diploma} studenten): bij een "
-            f"eenjarige opleiding is er geen jaar 2. Deze studenten zijn begonnen "
-            f"en hebben in het cohortjaar hun diploma gehaald. Dat geldt als succes."
-        )
-
-    succes_omschrijving = (
-        "studenten met een positieve uitkomst (doorgestroomd naar jaar 2 of "
-        "diploma gehaald)"
-        if n_diploma > 0
-        else "studenten die doorstroomden naar jaar 2"
-    )
-    pdf.subsection_title("Waarom kijken we soms alleen naar gestarte studenten?")
-    pdf.body_text(
-        "Bij sommige analyses in dit rapport (zoals de verschiltoets en de "
-        "regressie) gebruiken we alleen de studenten die "
-        "daadwerkelijk begonnen zijn aan de opleiding. We vergelijken dan twee "
-        f"groepen: {succes_omschrijving} tegenover studenten die wel begonnen "
-        "maar zijn uitgevallen (gestart, niet naar jaar 2). De niet-gestarte "
-        "kandidaten laten we in die gevallen buiten beschouwing."
-    )
-    pdf.body_text(
-        "De reden is dat we voor de niet-gestarte kandidaten geen "
-        "studiesuccesgegevens hebben. We weten niet of ze het goed zouden "
-        "hebben gedaan, want ze zijn nooit begonnen. Bovendien zitten in "
-        "deze groep zowel afgewezen kandidaten als kandidaten die zelf "
-        "hebben afgezien. Dat maakt het lastig om hun selectiescores zinvol "
-        "te vergelijken met studenten die wel zijn gestart."
-    )
-    pdf.body_text(
-        "Bij de selectiescores (boxplots) en demografische gegevens laten we "
-        "alle groepen wel zien, zodat je het volledige plaatje hebt."
-    )
+    pdf.body_text(f"  - {pos_label} ({n_pos} studenten)")
+    pdf.body_text(f"  - {neg_label} ({n_neg} studenten)")
+    pdf.body_text(perspectief["beschrijving"])
 
     # Section 2: Dataset overview
     pdf.add_page()
@@ -657,14 +676,13 @@ def genereer_rapport(
 
     pdf.subsection_title("Groepsverdeling")
     pdf.body_text(
-        "Hieronder staat hoeveel kandidaten er in elke groep zitten. Dit geeft "
-        "een eerste indruk van de verhoudingen: hoeveel procent van de "
-        "kandidaten is daadwerkelijk doorgestroomd?"
+        f"Hieronder staat de verdeling van kandidaten op basis van "
+        f"'{perspectief['label']}'."
     )
     groep_rows = []
-    for groep in GROEP_VOLGORDE:
-        n = n_per_groep[groep]
-        pct = f"{n / total * 100:.1f}%" if total > 0 else "0%"
+    for groep in binaire_volgorde:
+        n = n_per_groep.get(groep, 0)
+        pct = f"{n / n_pop * 100:.1f}%" if n_pop > 0 else "0%"
         groep_rows.append([groep, str(n), pct])
     pdf.add_data_table(
         ["Groep", "n", "%"],
@@ -677,18 +695,17 @@ def genereer_rapport(
     pdf.section_title("3. Selectiescores per groep")
     pdf.body_text(
         "In deze sectie bekijken we de selectiescores per groep. Het idee is "
-        "simpel: als de selectie goed werkt, dan zouden studenten die "
-        "uiteindelijk doorstromen gemiddeld hoger moeten scoren dan studenten "
-        "die stoppen of niet gestart zijn."
+        f"simpel: als de selectie goed werkt, dan zou de groep '{pos_label}' "
+        f"gemiddeld hoger moeten scoren dan de groep '{neg_label}'."
     )
     pdf.body_text(
         "De boxplots hieronder tonen de verdeling van scores per item, "
-        "uitgesplitst naar de uitkomstgroepen. Items zijn gegroepeerd per "
+        "uitgesplitst naar de twee groepen. Items zijn gegroepeerd per "
         "meetschaal, zodat een item op een 1-5 schaal niet op dezelfde as wordt "
         "geplet als een item op een 0-100 schaal. Elke box laat zien waar de "
         "middelste 50% van de scores ligt. De lijn in het midden van de box "
-        "is de mediaan (het middelste getal). Als de groene boxen (doorstromers) "
-        "duidelijk hoger liggen dan de oranje en grijze, dan heeft dat item "
+        f"is de mediaan (het middelste getal). Als de groene boxen ('{pos_label}') "
+        "duidelijk hoger liggen dan de oranje, dan heeft dat item "
         "voorspellende waarde."
     )
 
@@ -707,11 +724,11 @@ def genereer_rapport(
         "betekent dat de scores ver uit elkaar liggen. Het aantal kandidaten "
         "staat bij de groepsnaam."
     )
-    for groep in GROEP_VOLGORDE:
+    for groep in binaire_volgorde:
         sub = gem_tabel[gem_tabel["groep"] == groep]
         if sub.empty:
             continue
-        pdf.groep_header(groep, n_per_groep[groep])
+        pdf.groep_header(groep, n_per_groep.get(groep, 0), kleur_map=binaire_kleuren)
         groep_rows = [
             [
                 str(r["instrument"]),
@@ -728,29 +745,23 @@ def genereer_rapport(
             col_widths=[55, 50, 45, 20, 20],
         )
 
-    pdf.subsection_title("Verschiltoets: scoren succesvolle studenten hoger?")
+    pdf.subsection_title(f"Verschiltoets: scoort '{pos_label}' hoger?")
     pdf.body_text(
-        "De tabel hieronder vergelijkt per item twee groepen studenten die met "
-        "de opleiding zijn begonnen. De succesgroep bestaat uit studenten die "
-        "doorstroomden naar jaar 2 of hun diploma haalden (de groepen "
-        "'Doorgestroomd naar jaar 2' en 'Gestart, diploma gehaald'). De groep "
-        "zonder succes bestaat uit studenten die wel begonnen maar uitvielen, "
-        "zonder jaar 2 en zonder diploma ('Gestart, niet naar jaar 2'). "
-        "Studenten die nooit zijn gestart ('Niet gestart') blijven buiten deze "
-        "toets, want voor hen is er geen studieresultaat om mee te vergelijken."
+        f"De tabel hieronder vergelijkt per item de groep '{pos_label}' met "
+        f"de groep '{neg_label}'. {perspectief['beschrijving']}"
     )
     pdf.body_text(
         "De toets is een Mann-Whitney "
         "U, die past bij de ordinale en vaak scheve schalen van selectie-items. "
         "De effectgrootte (Effect r) is de rank-biseriale correlatie van -1 tot "
-        "+1: positief betekent dat de succesgroep hoger scoorde. Vuistregels "
-        "(Cohen, 1988): r < 0.10 verwaarloosbaar, 0.10-0.30 zwak, 0.30-0.50 "
-        "matig, boven 0.50 sterk. Het 95%-BI geeft de onzekerheid rond de "
-        "effectgrootte; loopt het door 0, dan is zelfs de richting onzeker. Een "
-        "p-waarde onder 0.05 geldt als significant. De items staan op "
-        "effectgrootte gesorteerd, de sterkste voorspellers bovenaan."
+        f"+1: positief betekent dat de groep '{pos_label}' hoger scoorde. "
+        "Vuistregels (Cohen, 1988): r < 0.10 verwaarloosbaar, 0.10-0.30 zwak, "
+        "0.30-0.50 matig, boven 0.50 sterk. Het 95%-BI geeft de onzekerheid "
+        "rond de effectgrootte; loopt het door 0, dan is zelfs de richting "
+        "onzeker. Een p-waarde onder 0.05 geldt als significant. De items "
+        "staan op effectgrootte gesorteerd, de sterkste voorspellers bovenaan."
     )
-    vergelijking = vergelijk_succes_per_item(scores_met_groep, perspectief=perspectief)
+    vergelijking = vergelijk_succes_per_item(scores_origineel, perspectief=perspectief)
     if vergelijking.empty:
         pdf.body_text(
             "Er zijn te weinig gestarte studenten om de groepen te vergelijken."
@@ -797,12 +808,8 @@ def genereer_rapport(
     else:
         pdf.body_text("[Correlatiematrix kon niet worden gegenereerd]")
 
-    uitkomst_label = (
-        "studiesucces (doorstroom naar jaar 2 of diploma)"
-        if n_diploma > 0
-        else "doorstroom naar jaar 2"
-    )
-    uitkomst_kort = "studiesucces" if n_diploma > 0 else "doorstroom"
+    uitkomst_label = perspectief["label"].lower()
+    uitkomst_kort = pos_label.lower()
     pdf.subsection_title("Logistische regressie")
     pdf.body_text(
         f"Met logistische regressie kijken we welke selectie-items {uitkomst_label} "
@@ -811,10 +818,8 @@ def genereer_rapport(
         "eigen bijdrage levert bovenop de andere items."
     )
     pdf.body_text(
-        "Let op: voor deze analyse gebruiken we alleen de studenten die "
-        "daadwerkelijk begonnen zijn aan de opleiding. De niet-gestarte "
-        "kandidaten zitten hier niet in, omdat we voor hen geen "
-        "studiesuccesgegevens hebben."
+        f"Let op: voor deze analyse gebruiken we de populatie die past bij "
+        f"de uitkomstmaat '{perspectief['label']}' ({n_pop} studenten)."
     )
     pdf.body_text(
         "In de tabel hieronder staat per item de coefficient (hoe sterk het "
@@ -896,49 +901,45 @@ def genereer_rapport(
         "p-waarde volgt. Lees ze met de steekproefgrootte in het achterhoofd."
     )
 
-    if total > 0:
-        n_succes = n_door + n_diploma
-        pdf.body_text(
-            f"Van de {total} kandidaten zijn er {n_succes} succesvol "
-            f"(doorgestroomd of diploma, {n_succes / total * 100:.0f}%), "
-            f"{n_uitval} gestart maar gestopt ({n_uitval / total * 100:.0f}%), "
-            f"en {n_niet} niet gestart ({n_niet / total * 100:.0f}%)."
-        )
-
-    succes_tabel = vergelijk_succes_per_item(scores_met_groep, perspectief=perspectief)
+    succes_tabel = vergelijk_succes_per_item(scores_origineel, perspectief=perspectief)
     bevindingen = genereer_bevindingen(
-        succes_tabel, demo_toetsen, perspectief=perspectief
+        succes_tabel,
+        demo_toetsen,
+        perspectief=perspectief,
+        correlatie_matrix=corr_matrix,
+        univariaat_data=univariaat_data,
+        model_stats=model_stats,
+        groepsgroottes=groepsgroottes,
+        demografie_verdeling=demo_verdeling,
     )
 
-    pdf.subsection_title("Welke selectie-items voorspellen studiesucces?")
+    if bevindingen["samenvatting"]:
+        for regel in bevindingen["samenvatting"]:
+            pdf.body_text(regel)
+
+    pdf.subsection_title("Verschiltoets per item")
     for regel in bevindingen["validiteit"]:
         pdf.body_text(f"  {regel}")
     if not bevindingen["validiteit"]:
         pdf.body_text(
-            "  Geen enkel item laat per item een opvallend verschil zien tussen "
+            "  Geen enkel item laat een opvallend verschil zien tussen "
             "geslaagde en uitgevallen studenten."
         )
-    if reg_rows:
-        sig_items = [r[0] for r in reg_rows if r[4] != "ns"]
-        if sig_items:
-            pdf.body_text(
-                "  In het gezamenlijke regressiemodel (alle items tegelijk) zijn de "
-                f"significante voorspellers: {', '.join(sig_items)}."
-            )
-        if pseudo_r2 is not None:
-            if pseudo_r2 < 0.05:
-                kracht = "zeer beperkte"
-            elif pseudo_r2 < 0.15:
-                kracht = "beperkte"
-            elif pseudo_r2 < 0.30:
-                kracht = "matige"
-            else:
-                kracht = "substantiele"
-            pdf.body_text(
-                f"  Het regressiemodel heeft {kracht} voorspellende kracht "
-                f"(pseudo R-kwadraat = {pseudo_r2}; hoe hoger, hoe beter de items "
-                f"samen {uitkomst_kort} voorspellen)."
-            )
+
+    if bevindingen["regressie"]:
+        pdf.subsection_title("Univariate regressie")
+        for regel in bevindingen["regressie"]:
+            pdf.body_text(f"  {regel}")
+
+    if bevindingen["model"]:
+        pdf.subsection_title("Gezamenlijk model")
+        for regel in bevindingen["model"]:
+            pdf.body_text(f"  {regel}")
+
+    if bevindingen["correlatie"]:
+        pdf.subsection_title("Samenhang tussen items")
+        for regel in bevindingen["correlatie"]:
+            pdf.body_text(f"  {regel}")
 
     pdf.subsection_title("Verschillen tussen groepen (eerlijkheid)")
     for regel in bevindingen["fairness"]:
@@ -948,13 +949,10 @@ def genereer_rapport(
             "  Geen achtergrondgegevens beschikbaar om groepen te vergelijken."
         )
 
-    n_ingeschreven = n_door + n_uitval + n_diploma
-    if n_ingeschreven < 30:
-        pdf.body_text(
-            f"  Let op: het aantal ingeschreven studenten is klein (n={n_ingeschreven}). "
-            "Bij kleine aantallen zijn statistische analyses minder betrouwbaar; "
-            "wees voorzichtig met harde conclusies."
-        )
+    if bevindingen["demografie"]:
+        pdf.subsection_title("Demografie en uitkomst")
+        for regel in bevindingen["demografie"]:
+            pdf.body_text(f"  {regel}")
 
     buf = io.BytesIO()
     pdf.output(buf)
