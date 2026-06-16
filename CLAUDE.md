@@ -108,9 +108,9 @@ The config Excel has two sheets:
 
 ## Demo data
 
-Two datasets in `data/demo/`:
-- `gezondheidskunde_univ_noordstad_2026/` (120 candidates, 10 items across 4 instruments)
-- `sportkunde_hs_westland_2026/` (80 candidates)
+Two datasets in `data/demo/`, both bachelor psychologie-style with the same structure (schooldiploma kernvakken + combinatiecijfer + matchingsvragenlijst, header_rij=3). Keuzevakken are in the raw Excel but not config items, only via the combinatiecijfer:
+- `demo_leiden_2026/` (Gedragswetenschappen, Universiteit Leiden, 150 candidates, 50 enrolled)
+- `demo_radboud_2026/` (Psychologie, Radboud Universiteit, 200 candidates, 70 enrolled)
 
 Each contains: `selectiedata.xlsx`, `config.xlsx`, `1cho_data.csv`
 
@@ -123,7 +123,7 @@ from cho_transform import transformeer_cho
 from app import koppel_data
 from rapport import genereer_rapport
 
-demo = Path("data/demo/gezondheidskunde_univ_noordstad_2026")
+demo = Path("data/demo/demo_leiden_2026")
 uri = lambda p: f"data:application/octet-stream;base64,{base64.b64encode(p.read_bytes()).decode()}"
 config = lees_config(uri(demo / "config.xlsx"))
 scores_df = transformeer_naar_lang(parse_selectiedata(uri(demo / "selectiedata.xlsx"), config), config)
@@ -140,7 +140,7 @@ scripts/
   maak_template.py      # generates docs/config_template.xlsx
   eenmalig/             # one-time scripts, not part of the running tool
     maak_presentatie.py  # generates the PowerPoint presentation
-    maak_fictief_*.py    # generates fictitious selectiedata for demos
+    maak_fictief_*.py    # generates fictitious selectiedata for demos (demo_leiden, demo_radboud)
     update_configs.py    # one-time config migration
     update_datawoordenboek.py
 
@@ -150,8 +150,8 @@ docs/
 
 data/
   demo/                  # shipped with repo, loaded by demo picker
-    gezondheidskunde_univ_noordstad_2026/
-    sportkunde_hs_westland_2026/
+    demo_leiden_2026/
+    demo_radboud_2026/
   configs/               # gitignored, opleiding-specific configs for maak_data.py
   fictief/               # gitignored, intermediate output from fictief scripts
 ```
@@ -194,7 +194,7 @@ Some items have missing values for a subset of candidates (optional modules, keu
 
 ### Summary for developers
 
-The regression output is useful for spotting patterns but should not be overinterpreted given typical sample sizes (50-150 enrolled students). The dashboard communicates this through the toelichting text and the pseudo R-squared. When changing the regression code, test with both demo datasets: biomed has 10 items and ~84 enrolled students (comfortable EPV), bewegingswetenschappen has fewer items but header_rij=3 and more missing data.
+The regression output is useful for spotting patterns but should not be overinterpreted given typical sample sizes (50-150 enrolled students). The dashboard communicates this through the toelichting text and the pseudo R-squared. When changing the regression code, test with both demo datasets: demo_leiden (8 items, 50 enrolled) and demo_radboud (8 items, 70 enrolled), both header_rij=3 with the keuzevakken excluded from the config.
 
 ## Known gotchas
 
