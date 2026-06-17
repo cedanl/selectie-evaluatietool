@@ -289,6 +289,7 @@ SIDEBAR = html.Div(
 # vooropleiding).
 GROEPEER_OPTIES = [
     {"label": PERSPECTIEF_DOORSTROOM["label"], "value": "doorstroom"},
+    {"label": UITKOMST_PERSPECTIEVEN["gestart"]["label"], "value": "gestart"},
 ] + [{"label": d["label"], "value": d["kolom"]} for d in DEMO_DIMENSIES]
 
 GROEPEER_OPTIES_SCORES = [
@@ -363,8 +364,9 @@ app.layout = html.Div(
                                             [
                                                 html.H5("Selectiescores per groep"),
                                                 html.P(
-                                                    "Vergelijk de selectiescores per item tussen groepen. Kies doorstroom "
-                                                    "naar jaar 2 of een demografische dimensie (geslacht, vooropleiding). "
+                                                    "Vergelijk de selectiescores per item tussen groepen. Kies of een "
+                                                    "kandidaat met de opleiding is gestart, doorstroom naar jaar 2, of een "
+                                                    "demografische dimensie (geslacht, vooropleiding). "
                                                     "Scoren de groepen verschillend, dan maakt dat item onderscheid.",
                                                     className="text-muted small",
                                                 ),
@@ -389,7 +391,7 @@ app.layout = html.Div(
                                                 html.H6("Aantal studenten per groep"),
                                                 html.P(
                                                     "Bij geslacht en vooropleiding tellen alleen ingeschreven studenten "
-                                                    "mee (uit 1CHO). Bij 'Begonnen' tellen alle kandidaten mee.",
+                                                    "mee (uit 1CHO). Bij 'Gestart met de opleiding' tellen alle kandidaten mee.",
                                                     className="text-muted small",
                                                 ),
                                                 dash_table.DataTable(

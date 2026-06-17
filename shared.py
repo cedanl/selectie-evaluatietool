@@ -35,6 +35,19 @@ GROEP_KLEUREN = {
 }
 
 UITKOMST_PERSPECTIEVEN = {
+    "gestart": {
+        "label": "Gestart met de opleiding",
+        "positief_label": "Gestart",
+        "negatief_label": "Niet gestart",
+        "positief_groepen": GROEP_INGESCHREVEN,
+        "negatief_groepen": [GROEP_NIET_GESTART],
+        "populatie": GROEP_VOLGORDE,
+        "beschrijving": (
+            "Vergelijkt kandidaten die met de opleiding zijn begonnen (staan in "
+            "1CHO) met kandidaten die niet zijn begonnen (afgewezen of niet "
+            "ingeschreven)."
+        ),
+    },
     "doorstroom": {
         "label": "Doorstroom naar jaar 2",
         "positief_label": "Doorgestroomd",
