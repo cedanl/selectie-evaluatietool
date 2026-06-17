@@ -9,6 +9,7 @@ import base64
 import io
 import json
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 import numpy as np
 import pandas as pd
@@ -309,6 +310,7 @@ registreer_callbacks(app)
 
 app.layout = html.Div(
     [
+        dcc.Location(id="url", refresh=False),
         dcc.Store(id="data-store", storage_type="memory"),
         dcc.Store(id="scores-store", storage_type="memory"),
         dbc.Toast(
@@ -1091,6 +1093,37 @@ def _laad_demodata(dataset_name=None):
         joined.to_json(orient="split", date_format="iso"),
         scores_df.to_json(orient="split", date_format="iso"),
     )
+
+
+# ── Embed via URL ─────────────────────────────────────────────────────────────
+
+
+@app.callback(
+    Output("data-store", "data", allow_duplicate=True),
+    Output("scores-store", "data", allow_duplicate=True),
+    Output("main-tabs", "active_tab"),
+    Input("url", "search"),
+    prevent_initial_call="initial_duplicate",
+)
+def laad_via_url(search):
+    """Maakt het dashboard embedbaar per tab. Een URL als
+    ?demo=leiden&tab=correlatie laadt de demodata en opent meteen het
+    gevraagde tabblad, zodat een iframe direct die tab toont."""
+    if not search:
+        return dash.no_update, dash.no_update, dash.no_update
+
+    params = parse_qs(urlsplit(search).query)
+    demo = (params.get("demo") or [None])[0]
+    tab = (params.get("tab") or [None])[0]
+
+    data_out, scores_out = dash.no_update, dash.no_update
+    if demo:
+        match = next((d["value"] for d in DEMO_DATASETS if demo in d["value"]), None)
+        if match:
+            data_out, scores_out = _laad_demodata(match)
+
+    tab_out = f"tab-{tab}" if tab else dash.no_update
+    return data_out, scores_out, tab_out
 
 
 # ── Sidebar callbacks ─────────────────────────────────────────────────────────
