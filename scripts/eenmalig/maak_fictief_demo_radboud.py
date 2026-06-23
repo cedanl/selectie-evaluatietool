@@ -271,24 +271,11 @@ doorstroomt = RNG.random(n_ingeschreven) < doorstroom_kans
 geslacht = RNG.choice(
     ["vrouw", "man", "anders"], size=n_ingeschreven, p=[0.66, 0.31, 0.03]
 )
-herkomst = RNG.choice(
-    [
-        "Nederland",
-        "westerse achtergrond",
-        "Marokko",
-        "Turkije",
-        "Suriname/Antillen",
-        "overig niet-westers",
-    ],
-    size=n_ingeschreven,
-    p=[0.73, 0.08, 0.04, 0.04, 0.04, 0.07],
-)
 vooropleiding = RNG.choice(
     ["VWO", "HAVO + propedeuse", "Anders"],
     size=n_ingeschreven,
     p=[0.82, 0.11, 0.07],
 )
-vo_cijfers = clip_round(RNG.normal(6.9, 0.6, n_ingeschreven), 5.0, 9.5)
 
 cho_df = bouw_ruwe_cho(
     ingeschreven_ids,
@@ -297,9 +284,7 @@ cho_df = bouw_ruwe_cho(
     opleiding=OPLEIDING,
     instellingscode=INSTELLING,
     geslacht=geslacht,
-    herkomst=herkomst,
     vooropleiding_omschrijving=vooropleiding,
-    gem_eindcijfer_vo=vo_cijfers,
 )
 
 cho_path = OUT_DIR / "1cho_data_demo_radboud_2026.csv"

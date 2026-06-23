@@ -859,8 +859,8 @@ def genereer_rapport(
     pdf.section_title("5. Selectiescores naar achtergrond")
     pdf.body_text(
         "In deze sectie kijken we of de selectiescores verschillen tussen "
-        "studenten met een andere achtergrond (geslacht, vooropleiding, "
-        "herkomst). Een systematisch verschil op een instrument kan wijzen op "
+        "studenten met een andere achtergrond (geslacht, vooropleiding). "
+        "Een systematisch verschil op een instrument kan wijzen op "
         "onbedoelde vertekening: het instrument meet dan deels iets dat met de "
         "achtergrond samenhangt in plaats van met geschiktheid."
     )

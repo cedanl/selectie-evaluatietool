@@ -38,7 +38,7 @@ RUWE_CHO_KOLOMMEN = [
 ]
 
 # Demografische kolommen die we ongewijzigd meenemen als ze aanwezig zijn.
-_DEMO_KOLOMMEN = ["geslacht", "herkomst", "gem_eindcijfer_vo"]
+_DEMO_KOLOMMEN = ["geslacht"]
 
 # Optionele passthrough-kolommen die de rest van de tool nog kan gebruiken.
 _META_KOLOMMEN = ["opleiding", "instellingscode"]
@@ -180,9 +180,7 @@ def bouw_ruwe_cho(
     opleiding: str | None = None,
     instellingscode: str | None = None,
     geslacht: ArrayLike | None = None,
-    herkomst: ArrayLike | None = None,
     vooropleiding_omschrijving: ArrayLike | None = None,
-    gem_eindcijfer_vo: ArrayLike | None = None,
 ) -> pd.DataFrame:
     """Bouw synthetische ruwe 1CHO-data in lang formaat.
 
@@ -221,12 +219,8 @@ def bouw_ruwe_cho(
         jaar1["instellingscode"] = instellingscode
     if geslacht is not None:
         jaar1["geslacht"] = np.asarray(geslacht)
-    if herkomst is not None:
-        jaar1["herkomst"] = np.asarray(herkomst)
     if vooropleiding_omschrijving is not None:
         jaar1[_VOOROPL_OMSCHRIJVING_KOLOM] = np.asarray(vooropleiding_omschrijving)
-    if gem_eindcijfer_vo is not None:
-        jaar1["gem_eindcijfer_vo"] = np.asarray(gem_eindcijfer_vo)
     if diploma_behaald is not None:
         diploma_behaald = np.asarray(diploma_behaald, dtype=bool)
         if len(diploma_behaald) != n:

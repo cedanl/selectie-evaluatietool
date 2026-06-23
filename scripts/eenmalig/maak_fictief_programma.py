@@ -511,18 +511,6 @@ diploma_behaald = RNG.random(n_ingeschreven) < diploma_kans
 geslacht = RNG.choice(
     ["vrouw", "man", "anders"], size=n_ingeschreven, p=[0.65, 0.32, 0.03]
 )
-herkomst = RNG.choice(
-    [
-        "Nederland",
-        "westerse achtergrond",
-        "Marokko",
-        "Turkije",
-        "Suriname/Antillen",
-        "overig niet-westers",
-    ],
-    size=n_ingeschreven,
-    p=[0.72, 0.08, 0.04, 0.03, 0.05, 0.08],
-)
 vooropleiding = RNG.choice(
     [
         "Biomedische wetenschappen bachelor",
@@ -534,7 +522,6 @@ vooropleiding = RNG.choice(
     size=n_ingeschreven,
     p=[0.45, 0.25, 0.15, 0.10, 0.05],
 )
-vo_cijfers = np.clip(RNG.normal(7.2, 0.5, n_ingeschreven), 5.5, 9.5).round(1)
 
 # Ruwe 1CHO in lang formaat. Bij een master is er geen jaar 2; wie slaagt
 # krijgt diploma_behaald=True. De groep wordt door de tool afgeleid.
@@ -545,9 +532,7 @@ cho_df = bouw_ruwe_cho(
     opleiding=OPLEIDING,
     instellingscode=INSTELLING,
     geslacht=geslacht,
-    herkomst=herkomst,
     vooropleiding_omschrijving=vooropleiding,
-    gem_eindcijfer_vo=vo_cijfers,
 )
 
 cho_path = OUT_DIR / "1cho_data_biomed_2026.csv"

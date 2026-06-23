@@ -26,14 +26,6 @@ RNG = np.random.default_rng(2026)
 OUT_DIR = Path("data/test")
 
 GESLACHT_LABELS = ["vrouw", "man", "anders"]
-HERKOMST_LABELS = [
-    "Nederland",
-    "westerse achtergrond",
-    "Marokko",
-    "Turkije",
-    "Suriname/Antillen",
-    "overig niet-westers",
-]
 
 DATASETS = [
     {
@@ -54,8 +46,6 @@ DATASETS = [
             "Biologie": 0.10,
             "Anders": 0.05,
         },
-        "gem_vo": 7.1,
-        "sd_vo": 0.5,
     },
     {
         "naam": "far_leiden_2025",
@@ -75,8 +65,6 @@ DATASETS = [
             "Biologie": 0.10,
             "Anders": 0.05,
         },
-        "gem_vo": 7.1,
-        "sd_vo": 0.5,
     },
     {
         "naam": "psychologie_2026",
@@ -95,8 +83,6 @@ DATASETS = [
             "HAVO + propedeuse": 0.10,
             "Anders": 0.08,
         },
-        "gem_vo": 6.8,
-        "sd_vo": 0.6,
     },
     {
         "naam": "psychologie_2022",
@@ -114,8 +100,6 @@ DATASETS = [
             "HAVO + propedeuse": 0.10,
             "Anders": 0.08,
         },
-        "gem_vo": 6.8,
-        "sd_vo": 0.6,
     },
 ]
 
@@ -134,14 +118,6 @@ def genereer_1cho(dataset_cfg, studentnummers, totaalscores):
     vooropl_labels = list(dataset_cfg["vooropleidingen"].keys())
     vooropl_probs = list(dataset_cfg["vooropleidingen"].values())
     vooropl = RNG.choice(vooropl_labels, size=n, p=vooropl_probs)
-
-    herkomst = RNG.choice(
-        HERKOMST_LABELS, size=n, p=[0.70, 0.09, 0.05, 0.04, 0.05, 0.07]
-    )
-
-    gem_vo = dataset_cfg.get("gem_vo", 7.0)
-    sd_vo = dataset_cfg.get("sd_vo", 0.5)
-    vo_cijfers = np.clip(RNG.normal(gem_vo, sd_vo, n), 5, 10).round(1)
 
     totaal_arr = np.array(totaalscores, dtype=float)
     if totaal_arr.std() > 0:
@@ -163,9 +139,7 @@ def genereer_1cho(dataset_cfg, studentnummers, totaalscores):
         opleiding=dataset_cfg["opleiding"],
         instellingscode=dataset_cfg["instellingscode"],
         geslacht=geslacht,
-        herkomst=herkomst,
         vooropleiding_omschrijving=vooropl,
-        gem_eindcijfer_vo=vo_cijfers,
     )
 
 

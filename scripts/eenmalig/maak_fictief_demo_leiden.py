@@ -1,13 +1,19 @@
 """
-Genereer een fictief selectiebestand voor Gedragswetenschappen (demo Leiden).
+Genereer een fictief selectiebestand voor de master Farmacie (demo Leiden).
 
-Structuur lijkt op Psychologie 2026-2027: schoolcijfers met drie
-kernvakken, een combinatiecijfer en een matchingsvragenlijst. De
-keuzevakken staan wel in het ruwe Excel-bestand, maar worden niet als
-selectie-items in de config meegenomen (alleen via het combinatiecijfer).
-Bachelor, header_rij=3.
+Structuur lijkt op 'dummy data selectie FAR Leiden 2025': een
+masterselectie met een enkele kop-rij (header_rij=1) op het blad
+'2 Master beoordelingen'. De selectie bestaat uit een beoordeling van het
+bachelordiploma (gemiddeld cijfer en studietempo) en twee onafhankelijke
+beoordelaars (B1 en B2) die de Nederlandse documenten, een gesprek/
+schrijfopdracht en het selectiegesprek scoren. De puntenscores (C_..._Sc_...)
+tellen op tot subtotalen en een eindtotaal (C_Sc_Totaal).
 
-150 kandidaten, waarvan 50 ingeschreven. Niet herleidbaar naar echte data.
+Omdat het een master is, is succes het halen van het diploma in het
+cohortjaar (geen doorstroom naar jaar 2). De uitkomstgroep zit niet als
+kolom in de data maar wordt door de tool afgeleid uit het 1CHO-bestand.
+
+140 kandidaten, waarvan 60 ingeschreven. Niet herleidbaar naar echte data.
 
 Draai:
     uv run python scripts/eenmalig/maak_fictief_demo_leiden.py
@@ -31,152 +37,111 @@ RNG = np.random.default_rng(2468)
 OUT_DIR = Path("data/fictief")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-N = 150
-OPLEIDING = "Gedragswetenschappen"
+N = 140
+N_INGESCHREVEN = 60
+OPLEIDING = "Farmacie"
 INSTELLING = "Universiteit Leiden"
 JAAR = 2026
-BLAD_NAAM = "Scores en ranking"
+BLAD_NAAM = "2 Master beoordelingen"
 
+aanvraagnummers = RNG.choice(range(200000, 999999), size=N, replace=False)
+aanvraagnummers.sort()
 
-def clip_round(arr, lo, hi, decimals=2):
-    return np.clip(arr, lo, hi).round(decimals)
-
-
-studentnummers = RNG.choice(range(3000000, 3999999), size=N, replace=False)
-studentnummers.sort()
-
-# -- Instrument 1: Schooldiploma (kernvakken) --------------------------------
-# Drie kernvakken met cijfers en puntenscore, net als Psychologie
-kernvakken = {
-    "Wiskunde": {"afk": "WI", "gem": 6.5, "std": 1.0},
-    "Engels": {"afk": "EN", "gem": 6.9, "std": 0.9},
-    "Biologie": {"afk": "BIO", "gem": 6.7, "std": 0.95},
-}
-
-
-def cijfer_naar_punten(cijfer):
-    return clip_round((cijfer - 4.0) / 1.2, 0, 5)
-
-
+# Kolommen worden in volgorde toegevoegd; een insertion-ordered dict bewaart die
+# volgorde voor het uiteindelijke DataFrame.
 kolommen = {}
-kolom_volgorde = []
 
-for vak, params in kernvakken.items():
-    afk = params["afk"]
-    cijfers = clip_round(RNG.normal(params["gem"], params["std"], N), 4.0, 10.0)
-    punten = cijfer_naar_punten(cijfers)
-    kolommen[f"{afk} CIJF"] = cijfers
-    kolommen[f"{afk} SCORE"] = punten
-    kolom_volgorde.extend([f"{afk} CIJF", f"{afk} SCORE"])
+# -- Identificatie en achtergrond --------------------------------------------
+kolommen["A_Nummer_Aanvraag"] = aanvraagnummers
+kolommen["Selectie"] = ["Master"] * N
+kolommen["A_Geslacht"] = RNG.choice(["V", "M"], size=N, p=[0.6, 0.4])
 
-kern_scores = np.column_stack(
-    [kolommen[f"{p['afk']} SCORE"] for p in kernvakken.values()]
-)
-kolommen["WI+EN+BIO (0-5)"] = kern_scores.mean(axis=1).round(2)
-kolom_volgorde.append("WI+EN+BIO (0-5)")
-
-# -- Instrument 2: Keuzevakken (V1-V10) --------------------------------------
-keuzevakken_pool = [
-    "Nederlands",
-    "Frans",
-    "Duits",
-    "Geschiedenis",
-    "Aardrijkskunde",
-    "Economie",
-    "Maatschappijleer",
-    "Natuurkunde",
-    "Scheikunde",
-    "Informatica",
-    "Filosofie",
-    "Muziek",
-    "Kunst",
+bachelor_pool = [
+    "Bachelor (university)  -  Farmacie",
+    "Bachelor (university)  -  Bio-farmaceutische wetenschappen",
+    "Bachelor (university)  -  Scheikunde",
+    "Bachelor (university)  -  Biologie",
 ]
-
-max_keuzevakken = 10
-n_keuzevakken_per_student = RNG.integers(4, 9, size=N)
-
-for ki in range(1, max_keuzevakken + 1):
-    vak_namen = []
-    vak_cijfers = []
-    vak_scores = []
-    for si in range(N):
-        if ki <= n_keuzevakken_per_student[si]:
-            vak = RNG.choice(keuzevakken_pool)
-            cijf = clip_round(RNG.normal(6.6, 1.0, 1), 4.0, 10.0)[0]
-            vak_namen.append(vak)
-            vak_cijfers.append(cijf)
-            vak_scores.append(cijfer_naar_punten(cijf))
-        else:
-            vak_namen.append(np.nan)
-            vak_cijfers.append(np.nan)
-            vak_scores.append(np.nan)
-    kolommen[f"V{ki}"] = vak_namen
-    kolommen[f"V{ki} CIJF"] = vak_cijfers
-    kolommen[f"V{ki} SCORE"] = vak_scores
-    kolom_volgorde.extend([f"V{ki}", f"V{ki} CIJF", f"V{ki} SCORE"])
-
-# Combinatiecijfer: gemiddelde van alle cijfers
-alle_cijfers_per_student = []
-for si in range(N):
-    cijs = [kolommen[f"{p['afk']} CIJF"][si] for p in kernvakken.values()]
-    for ki in range(1, max_keuzevakken + 1):
-        c = kolommen[f"V{ki} CIJF"][si]
-        if not np.isnan(c):
-            cijs.append(c)
-    alle_cijfers_per_student.append(np.mean(cijs))
-
-kolommen["Combinatiecijfer"] = np.array(alle_cijfers_per_student).round(2)
-kolom_volgorde.append("Combinatiecijfer")
-
-combi_score = cijfer_naar_punten(np.array(alle_cijfers_per_student))
-kolommen["COMBICIJF \nSCORE"] = combi_score
-kolom_volgorde.append("COMBICIJF \nSCORE")
-
-# Keuzevakken + combinatiecijfer deelscore
-keuzevak_gem = []
-for si in range(N):
-    scores = []
-    for ki in range(1, max_keuzevakken + 1):
-        s = kolommen[f"V{ki} SCORE"][si]
-        if not np.isnan(s):
-            scores.append(s)
-    scores.append(combi_score[si])
-    keuzevak_gem.append(np.mean(scores))
-
-kolommen["V1-V10 + COMBICIJF (0-5)"] = np.array(keuzevak_gem).round(2)
-kolom_volgorde.append("V1-V10 + COMBICIJF (0-5)")
-
-# -- Instrument 3: Matchingsvragenlijst (1-3 schaal) -------------------------
-matching_score = RNG.choice([1, 2, 3], size=N, p=[0.15, 0.45, 0.40]).astype(float)
-kolommen["Matching Score (1-3)"] = matching_score
-kolom_volgorde.append("Matching Score (1-3)")
-
-# -- Deelscores en totaalscore ------------------------------------------------
-# Vragenlijst % = (WI+EN+BIO + V1-V10+COMBICIJF) / 2, genormaliseerd naar %
-vragenlijst_pct = (
-    (kolommen["WI+EN+BIO (0-5)"] + kolommen["V1-V10 + COMBICIJF (0-5)"]) / 2 / 5 * 100
-).round(1)
-matching_pct = (matching_score / 3 * 100).round(1)
-
-kolommen["Vragenlijst %"] = vragenlijst_pct
-kolommen["Matching %"] = matching_pct
-kolom_volgorde.extend(["Vragenlijst %", "Matching %"])
-
-totaal_pct = (0.60 * vragenlijst_pct + 0.40 * matching_pct).round(1)
-kolommen["Totale selectiescore %"] = totaal_pct
-kolommen["Rangnummer"] = (
-    pd.Series(totaal_pct).rank(ascending=False, method="min").astype(int).values
+kolommen["A_Gevolgde_Opleiding_1"] = RNG.choice(
+    bachelor_pool, size=N, p=[0.55, 0.25, 0.12, 0.08]
 )
-kolom_volgorde.extend(["Totale selectiescore %", "Rangnummer"])
+
+# -- Bachelordiploma: gemiddeld cijfer en studietempo ------------------------
+# Een hoger bachelorcijfer levert een puntenscore (drempel bij een 7).
+bachelorcijfer = np.clip(RNG.normal(7.0, 0.5, N), 6.0, 8.5).round(1)
+kolommen["A_Gem_Cijfer_Bachelor_1"] = bachelorcijfer
+score_cijfer = (bachelorcijfer >= 7.0).astype(int)
+kolommen["A_Score_Gem_Cijfer_Ba1"] = score_cijfer
+
+# Studieduur in maanden; 36 is nominaal. Sneller dan nominaal levert 2 punten,
+# anders 1 punt.
+maanden = np.clip(RNG.normal(38, 4, N), 34, 50).round(0).astype(int)
+kolommen["A_Bachelor_Maanden_1"] = maanden
+kolommen["A_Mnd_Nominaal1"] = [36] * N
+kolommen["A_Mnd_Ba_boven_Nominaal1"] = maanden - 36
+score_duur = np.where(maanden <= 38, 2, 1)
+kolommen["A_Score_Duur_Ba_Nominaal1"] = score_duur
+kolommen["A_Bereken_Pnt_Duur_Ba"] = score_duur
+
+
+# -- Twee beoordelaars (B1 en B2) --------------------------------------------
+def maak_beoordelaar(prefix, achternamen):
+    """Genereer de kolommen van een beoordelaar en geef de drie puntenscores
+    terug. Elke beoordelaar scoort de Nederlandse documenten (G/V), een gesprek/
+    schrijfopdracht (G/V) en het selectiegesprek (2-6). G geeft 2 punten, V 1."""
+    kolommen[f"{prefix}_Achternaam"] = RNG.choice(achternamen, size=N)
+
+    nl_docs = RNG.choice(["G", "V"], size=N, p=[0.7, 0.3])
+    sc_nl_docs = np.where(nl_docs == "G", 2, 1)
+    kolommen[f"{prefix}_NL_Docs"] = nl_docs
+    kolommen[f"{prefix}_Score_NL_Docs"] = sc_nl_docs
+
+    nl_gespr = RNG.choice(["G", "V"], size=N, p=[0.65, 0.35])
+    sc_nl_gespr = np.where(nl_gespr == "G", 2, 1)
+    kolommen[f"{prefix}_NL_Gespr_Schrijf"] = nl_gespr
+    kolommen[f"{prefix}_Score_NL_Gespr_Schrijf"] = sc_nl_gespr
+
+    gesprek = RNG.integers(2, 7, size=N)
+    kolommen[f"{prefix}_Beoord_Gespr_Schrijfop"] = gesprek
+    kolommen[f"{prefix}_Score_Beoord_Gesprek"] = gesprek
+    return sc_nl_docs, sc_nl_gespr, gesprek
+
+
+b1_docs, b1_gespr, b1_gesprek = maak_beoordelaar("B1", ["ZZ", "YY", "XX", "WW", "VV"])
+b2_docs, b2_gespr, b2_gesprek = maak_beoordelaar("B2", ["AA", "BB", "CC", "DD", "EE"])
+
+# -- Puntenscores (C-kolommen) en subtotalen ---------------------------------
+kolommen["C_Sc_Gem_Cijfer_Ba"] = score_cijfer
+kolommen["C_Sc_Duur_Ba_Nominaal1"] = score_duur
+
+kolommen["C_B1_Sc_NL_Docs"] = b1_docs
+kolommen["C_B2_Sc_NL_Docs"] = b2_docs
+kolommen["C_B1_Sc_NL_Gespr_Schrijf"] = b1_gespr
+kolommen["C_B2_Sc_NL_Gespr_Schrijf"] = b2_gespr
+kolommen["C_B1_Sc_Beoord_Gesprek"] = b1_gesprek
+kolommen["C_B2_Sc_Beoord_Gesprek"] = b2_gesprek
+
+c_b1_subtotaal = b1_docs + b1_gespr + b1_gesprek
+c_b2_subtotaal = b2_docs + b2_gespr + b2_gesprek
+kolommen["C_B1_Sc_SubTotaal"] = c_b1_subtotaal
+kolommen["C_B2_Sc_SubTotaal"] = c_b2_subtotaal
+kolommen["C_B1_B2_Sc_SubTotaal"] = c_b1_subtotaal + c_b2_subtotaal
+
+c_a_subtotaal = score_cijfer + score_duur
+kolommen["C_A_Sc_SubTotaal"] = c_a_subtotaal
+
+totaal = c_b1_subtotaal + c_b2_subtotaal + c_a_subtotaal
+kolommen["C_Sc_Totaal"] = totaal
+
+kolommen["Rangnummer definitief"] = (
+    pd.Series(totaal).rank(ascending=False, method="min").astype(int).values
+)
 
 # -- Build DataFrame ----------------------------------------------------------
-df = pd.DataFrame({"Studentnummer": studentnummers})
-for col in kolom_volgorde:
-    df[col] = kolommen[col]
-
+df = pd.DataFrame(kolommen)
 print(f"Selectiebestand: {df.shape[0]} kandidaten, {df.shape[1]} kolommen")
 
-# -- Write Excel met groepskoppen (header_rij=3) ------------------------------
+# -- Write Excel (header_rij=1, enkele kop-rij) ------------------------------
 from openpyxl import Workbook  # noqa: E402
 from openpyxl.styles import Font, PatternFill  # noqa: E402
 
@@ -188,24 +153,13 @@ ws.title = BLAD_NAAM
 
 header_fill = PatternFill(start_color="2C3E50", end_color="2C3E50", fill_type="solid")
 header_font = Font(color="FFFFFF", bold=True)
-group_font = Font(bold=True, size=12)
 
-# Rij 1: groepskoppen
-ws.cell(row=1, column=2, value="Kernvakken Score").font = group_font
-ws.cell(row=1, column=8, value="Keuzevakken").font = group_font
-ws.cell(row=1, column=39, value="Deelscores").font = group_font
-ws.cell(row=1, column=41, value="Matchingsvragenlijst").font = group_font
-ws.cell(row=1, column=44, value="Totale selectiescore en rangnummer").font = group_font
-
-# Rij 2: leeg (spacer)
-# Rij 3: kolomnamen
 for ci, col_name in enumerate(df.columns, 1):
-    cell = ws.cell(row=3, column=ci, value=col_name)
+    cell = ws.cell(row=1, column=ci, value=col_name)
     cell.font = header_font
     cell.fill = header_fill
 
-# Rij 4+: data
-for ri, (_, row) in enumerate(df.iterrows(), 4):
+for ri, (_, row) in enumerate(df.iterrows(), 2):
     for ci, val in enumerate(row, 1):
         if pd.notna(val):
             ws.cell(row=ri, column=ci, value=val)
@@ -214,49 +168,76 @@ wb.save(xlsx_path)
 print(f"Opgeslagen: {xlsx_path}")
 
 # -- Configuratiebestand ------------------------------------------------------
+# Spiegelt de FAR Leiden 2025 config: instrumenten Bachelordiploma en Gesprek,
+# met C_Sc_Totaal als totaalscore.
 config_path = OUT_DIR / "config_demo_leiden_2026.xlsx"
 make_config(
     str(config_path),
     [
-        ("Koppel_id_kolom", "Studentnummer"),
+        ("Koppel_id_kolom", "A_Nummer_Aanvraag"),
         ("opleiding", OPLEIDING),
         ("instellingscode", INSTELLING),
         ("jaar", str(JAAR)),
         ("blad_naam", BLAD_NAAM),
-        ("header_rij", "3"),
-        ("totaalscore_kolom", "Totale selectiescore %"),
+        ("header_rij", "1"),
+        ("totaalscore_kolom", "C_Sc_Totaal"),
     ],
     [
-        ["WI SCORE", "Schooldiploma", "Wiskunde puntenscore", "Vakkennis wiskunde"],
-        ["EN SCORE", "Schooldiploma", "Engels puntenscore", "Vakkennis Engels"],
-        ["BIO SCORE", "Schooldiploma", "Biologie puntenscore", "Vakkennis biologie"],
         [
-            "WI+EN+BIO (0-5)",
-            "Schooldiploma",
-            "Gemiddelde kernvakken (0-5)",
-            "Profielsterkheid",
+            "A_Gem_Cijfer_Bachelor_1",
+            "Bachelordiploma",
+            "Gemiddeld bachelorcijfer",
+            "Studieresultaat",
         ],
         [
-            "COMBICIJF \nSCORE",
-            "Schooldiploma",
-            "Combinatiecijfer puntenscore",
-            "Algemeen studieniveau",
+            "A_Score_Gem_Cijfer_Ba1",
+            "Bachelordiploma",
+            "Puntenscore bachelorcijfer",
+            "Studieresultaat",
         ],
         [
-            "Matching Score (1-3)",
-            "Matchingsvragenlijst",
-            "Matchingscore (1-3)",
-            "Studiemotivatie",
+            "A_Bereken_Pnt_Duur_Ba",
+            "Bachelordiploma",
+            "Puntenscore studietempo",
+            "Studietempo",
         ],
-        ["Vragenlijst %", "Deelscore", "Vragenlijst score percentage", ""],
+        ["C_B1_Sc_NL_Docs", "Gesprek", "Nederlandse documenten (B1)", "Taalbeheersing"],
+        ["C_B2_Sc_NL_Docs", "Gesprek", "Nederlandse documenten (B2)", "Taalbeheersing"],
+        [
+            "C_B1_Sc_NL_Gespr_Schrijf",
+            "Gesprek",
+            "Taalvaardigheid gesprek/schrijf (B1)",
+            "Taalbeheersing",
+        ],
+        [
+            "C_B2_Sc_NL_Gespr_Schrijf",
+            "Gesprek",
+            "Taalvaardigheid gesprek/schrijf (B2)",
+            "Taalbeheersing",
+        ],
+        [
+            "C_B1_Sc_Beoord_Gesprek",
+            "Gesprek",
+            "Gespreksbeoordeling (B1)",
+            "Communicatievaardigheid",
+        ],
+        [
+            "C_B2_Sc_Beoord_Gesprek",
+            "Gesprek",
+            "Gespreksbeoordeling (B2)",
+            "Communicatievaardigheid",
+        ],
+        ["C_B1_B2_Sc_SubTotaal", "Gesprek", "Subtotaal gesprek B1+B2", ""],
+        ["C_A_Sc_SubTotaal", "Bachelordiploma", "Subtotaal diploma", ""],
     ],
 )
 
 # -- 1CHO-data ----------------------------------------------------------------
-rang = kolommen["Rangnummer"]
-ingeschreven_mask = rang <= 50
-ingeschreven_ids = studentnummers[ingeschreven_mask]
-ingeschreven_totaal = totaal_pct[ingeschreven_mask]
+# Master: succes is het diploma in het cohortjaar, niet doorstroom naar jaar 2.
+rang = kolommen["Rangnummer definitief"]
+ingeschreven_mask = rang <= N_INGESCHREVEN
+ingeschreven_ids = aanvraagnummers[ingeschreven_mask]
+ingeschreven_totaal = totaal[ingeschreven_mask]
 n_ingeschreven = len(ingeschreven_ids)
 
 totaal_z = ingeschreven_totaal - ingeschreven_totaal.mean()
@@ -265,48 +246,36 @@ if ingeschreven_totaal.std() > 0:
 else:
     totaal_z = np.zeros(n_ingeschreven)
 
-doorstroom_kans = 1 / (1 + np.exp(-(0.0 + 0.5 * totaal_z)))
-doorstroomt = RNG.random(n_ingeschreven) < doorstroom_kans
+diploma_kans = 1 / (1 + np.exp(-(0.4 + 0.6 * totaal_z)))
+diploma_behaald = RNG.random(n_ingeschreven) < diploma_kans
 
-geslacht = RNG.choice(
-    ["vrouw", "man", "anders"], size=n_ingeschreven, p=[0.64, 0.33, 0.03]
-)
-herkomst = RNG.choice(
-    [
-        "Nederland",
-        "westerse achtergrond",
-        "Marokko",
-        "Turkije",
-        "Suriname/Antillen",
-        "overig niet-westers",
-    ],
-    size=n_ingeschreven,
-    p=[0.71, 0.08, 0.05, 0.04, 0.05, 0.07],
-)
+geslacht = RNG.choice(["vrouw", "man"], size=n_ingeschreven, p=[0.6, 0.4])
+# Bij een master is de vooropleiding een bachelor: vrijwel iedereen hoger
+# onderwijs, een enkeling met een buitenlands diploma.
 vooropleiding = RNG.choice(
-    ["VWO", "HAVO + propedeuse", "Anders"],
+    ["WO Bachelor", "Buitenlands diploma"],
     size=n_ingeschreven,
-    p=[0.80, 0.12, 0.08],
+    p=[0.85, 0.15],
 )
-vo_cijfers = clip_round(RNG.normal(6.8, 0.6, n_ingeschreven), 5.0, 9.5)
 
 cho_df = bouw_ruwe_cho(
     ingeschreven_ids,
     jaar=JAAR,
-    doorstroomt=doorstroomt,
+    diploma_behaald=diploma_behaald,
     opleiding=OPLEIDING,
     instellingscode=INSTELLING,
     geslacht=geslacht,
-    herkomst=herkomst,
     vooropleiding_omschrijving=vooropleiding,
-    gem_eindcijfer_vo=vo_cijfers,
 )
 
 cho_path = OUT_DIR / "1cho_data_demo_leiden_2026.csv"
 cho_df.to_csv(cho_path, index=False, sep=";")
 
 print(f"\n1CHO-data: {n_ingeschreven} ingeschreven van {N} kandidaten")
-print(f"Doorgestroomd: {int(doorstroomt.sum())}, niet: {int((~doorstroomt).sum())}")
+print(
+    f"Diploma gehaald: {int(diploma_behaald.sum())}, "
+    f"niet: {int((~diploma_behaald).sum())}"
+)
 
 # -- Kopieer naar demo --------------------------------------------------------
 demo_subdir = Path("data/demo/demo_leiden_2026")
@@ -318,10 +287,10 @@ print(f"Demo bestanden in {demo_subdir}/")
 
 print("\nSamenvatting:")
 print(f"  Kolommen in selectiebestand: {df.shape[1]}")
-print("  Kolommen in config: 7 (keuzevak-items en matching % niet meegenomen)")
+print("  Items in config: 11 (subtotalen meegenomen, ruwe G/V-kolommen niet)")
 print(f"  Kandidaten: {N}")
-print("  header_rij: 3 (groepskoppen boven kolomnamen)")
+print("  header_rij: 1 (enkele kop-rij)")
 print(f"  Ingeschreven: {n_ingeschreven}")
-print(f"  Doorgestroomd: {int(doorstroomt.sum())}")
-print(f"  Niet doorgestroomd: {int(n_ingeschreven - doorstroomt.sum())}")
+print(f"  Diploma gehaald: {int(diploma_behaald.sum())}")
+print(f"  Geen diploma: {int(n_ingeschreven - diploma_behaald.sum())}")
 print(f"  Niet gestart: {N - n_ingeschreven}")

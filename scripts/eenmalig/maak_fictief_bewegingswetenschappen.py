@@ -306,24 +306,11 @@ doorstroomt = RNG.random(n_ingeschreven) < doorstroom_kans
 geslacht = RNG.choice(
     ["vrouw", "man", "anders"], size=n_ingeschreven, p=[0.55, 0.42, 0.03]
 )
-herkomst = RNG.choice(
-    [
-        "Nederland",
-        "westerse achtergrond",
-        "Marokko",
-        "Turkije",
-        "Suriname/Antillen",
-        "overig niet-westers",
-    ],
-    size=n_ingeschreven,
-    p=[0.74, 0.07, 0.04, 0.03, 0.05, 0.07],
-)
 vooropleiding = RNG.choice(
     ["VWO", "HAVO + propedeuse", "Anders"],
     size=n_ingeschreven,
     p=[0.78, 0.15, 0.07],
 )
-vo_cijfers = clip_round(RNG.normal(6.7, 0.55, n_ingeschreven), 5.0, 9.5)
 
 # Ruwe 1CHO in lang formaat: doorstromers krijgen een extra inschrijfrij voor
 # jaar 2. De groep wordt door de tool afgeleid, niet hier opgeslagen.
@@ -334,9 +321,7 @@ cho_df = bouw_ruwe_cho(
     opleiding=OPLEIDING,
     instellingscode=INSTELLING,
     geslacht=geslacht,
-    herkomst=herkomst,
     vooropleiding_omschrijving=vooropleiding,
-    gem_eindcijfer_vo=vo_cijfers,
 )
 
 cho_path = OUT_DIR / "1cho_data_bewegingswetenschappen_2026.csv"
