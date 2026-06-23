@@ -1,6 +1,7 @@
 """Tab 'Correlatie': correlatiematrix tussen items."""
 
 import io
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from dash import dcc, html, Input, Output, State
@@ -222,18 +223,30 @@ def registreer_callbacks(app):
         score_cols = list(item_pivot.columns)
         corr_matrix = item_pivot[score_cols].corr().round(3)
 
+        # De matrix is symmetrisch, dus de bovenste helft is een spiegeling van de
+        # onderste. We tonen alleen de onderste driehoek (inclusief diagonaal),
+        # zodat er geen verwarrende dubbelingen staan.
+        boven = np.triu(np.ones(corr_matrix.shape, dtype=bool), k=1)
+        z = corr_matrix.to_numpy(dtype=float).copy()
+        z[boven] = np.nan
+        tekst = [
+            ["" if boven[i, j] else f"{corr_matrix.iat[i, j]:.2f}" for j in range(z.shape[1])]
+            for i in range(z.shape[0])
+        ]
+
         fig = go.Figure(
             data=go.Heatmap(
-                z=corr_matrix.values,
+                z=z,
                 x=corr_matrix.columns,
                 y=corr_matrix.index,
                 colorscale="RdBu_r",
                 zmid=0,
                 zmin=-1,
                 zmax=1,
-                text=corr_matrix.values.round(2),
+                text=tekst,
                 texttemplate="%{text}",
                 textfont={"size": 10},
+                hoverongaps=False,
             )
         )
         fig.update_layout(

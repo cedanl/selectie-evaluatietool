@@ -35,10 +35,10 @@ def maak_layout():
                 [
                     html.H5("Selectiescores per groep"),
                     html.P(
-                        "Vergelijk de selectiescores per item tussen groepen. Kies of een "
-                        "kandidaat met de opleiding is gestart, doorstroom naar jaar 2, of een "
-                        "demografische dimensie (geslacht, vooropleiding). "
-                        "Scoren de groepen verschillend, dan maakt dat item onderscheid.",
+                        "Vergelijk de selectiescores per item tussen groepen. Kies of je "
+                        "groepeert op doorstroom naar jaar 2, of op een achtergrondkenmerk "
+                        "(geslacht, vooropleiding). Scoren de groepen verschillend, dan "
+                        "maakt dat item onderscheid.",
                         className="text-muted small",
                     ),
                     dbc.Row(

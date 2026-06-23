@@ -452,7 +452,9 @@ def toets_verschil_per_item(
         medianen = {naam: float(pd.Series(v).median()) for naam, v in groepen.items()}
         hoog = max(medianen, key=medianen.get)
         laag = min(medianen, key=medianen.get)
-        if medianen[hoog] == medianen[laag]:
+        # Een richting ('man > vrouw') alleen tonen als het verschil significant
+        # is. Anders is de rangschikking ruis en is 'vergelijkbaar' eerlijker.
+        if p >= 0.05 or medianen[hoog] == medianen[laag]:
             verschil = "vergelijkbaar"
         elif len(groepen) == 2:
             verschil = f"{hoog} > {laag}"

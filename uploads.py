@@ -19,7 +19,7 @@ from transformatie import (
 from cho_transform import ontbrekende_cho_kolommen, transformeer_cho
 from config_wizard import maak_wizard_layout
 from rapport import genereer_rapport
-from shared import PERSPECTIEF_DOORSTROOM
+from shared import PERSPECTIEF_DOORSTROOM, GROEP_INGESCHREVEN, GROEP_SUCCES
 from helpers import (
     DEMO_DATASETS,
     df_from_store,
@@ -140,6 +140,9 @@ SIDEBAR = html.Div(
         html.Img(src="/assets/nko-logo.svg", className="sidebar-logo"),
         html.P("Kandidaten per cohort", className="sidebar-label"),
         html.Div(id="cohort-stats"),
+        html.Hr(className="mt-3 mb-2"),
+        html.P("Van aanmelding tot doorstroom", className="sidebar-label"),
+        html.Div(id="funnel-stats"),
         html.Hr(className="mt-3 mb-2"),
         dcc.Loading(
             [
@@ -416,6 +419,39 @@ def registreer_callbacks(app):
                 for jaar in jaren
             ],
             className="g-1",
+        )
+
+    @app.callback(
+        Output("funnel-stats", "children"),
+        Input("data-store", "data"),
+    )
+    def update_funnel(store_data):
+        """Korte trechter als context: hoeveel kandidaten begonnen er en hoeveel
+        stroomden door. Vervangt de losse 'Niet gestart'-groep, die uit de
+        analyses is gehaald omdat hij voor gebruikers weinig zei."""
+        df = df_from_store(store_data)
+        if df.empty:
+            return ""
+        n_kandidaten = len(df)
+        n_ingeschreven = int(df["groep"].isin(GROEP_INGESCHREVEN).sum())
+        n_doorgestroomd = int(df["groep"].isin(GROEP_SUCCES).sum())
+
+        def stap(label, n, deel_van):
+            pct = f" ({n / deel_van * 100:.0f}%)" if deel_van else ""
+            return html.Div(
+                [
+                    html.Span(label, className="text-muted small"),
+                    html.Span(f"{n}{pct}", className="fw-bold small"),
+                ],
+                className="d-flex justify-content-between",
+            )
+
+        return html.Div(
+            [
+                stap("Kandidaten", n_kandidaten, None),
+                stap("Ingeschreven", n_ingeschreven, n_kandidaten),
+                stap("Doorgestroomd", n_doorgestroomd, n_ingeschreven),
+            ]
         )
 
     app.clientside_callback(

@@ -115,15 +115,14 @@ TABLE_STYLE = dict(
 # ── Groeperingsopties ─────────────────────────────────────────────────────────
 # De Selectiescores- en Verschiltoets-tabs laten de gebruiker kiezen waarop te
 # groeperen: doorstroom naar jaar 2 of een demografische dimensie (geslacht,
-# vooropleiding).
+# vooropleiding). De vergelijking 'gestart vs niet gestart' en de losse
+# 'Niet gestart'-groep zijn uit het dashboard gehaald; niet-gestarte kandidaten
+# leven nog wel in de data en worden alleen als funnel-telling getoond.
 GROEPEER_OPTIES = [
     {"label": PERSPECTIEF_DOORSTROOM["label"], "value": "doorstroom"},
-    {"label": UITKOMST_PERSPECTIEVEN["gestart"]["label"], "value": "gestart"},
 ] + [{"label": d["label"], "value": d["kolom"]} for d in DEMO_DIMENSIES]
 
-GROEPEER_OPTIES_SCORES = [
-    {"label": "Uitkomstgroep", "value": "groep"}
-] + GROEPEER_OPTIES
+GROEPEER_OPTIES_SCORES = GROEPEER_OPTIES
 
 
 def _file_to_data_uri(path: Path) -> str:
