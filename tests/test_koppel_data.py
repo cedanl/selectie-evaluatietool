@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from app import koppel_data
+from helpers import koppel_data
 from shared import GROEP_NIET_GESTART, GROEP_DOORGESTROOMD, GROEP_GESTART_GEEN_VERVOLG
 
 

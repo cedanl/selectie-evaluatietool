@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from app import koppel_data
+from helpers import koppel_data
 from shared import GROEP_VOLGORDE, UITKOMST_PERSPECTIEVEN, vergelijk_succes_per_item
 
 
