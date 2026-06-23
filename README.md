@@ -103,8 +103,16 @@ moet invullen.
 
 ## Wat zie je in het dashboard?
 
-Het dashboard heeft vier tabbladen. Hieronder staat per tabblad wat je
+Het dashboard heeft zes tabbladen. Hieronder staat per tabblad wat je
 ziet en hoe je het leest.
+
+### Wat valt op
+
+Dit is de samenvatting. De tool zet hier automatisch de opvallendste
+bevindingen op een rij, rechtstreeks uit de berekeningen op jouw data. Er
+wordt niets bijbedacht: elke regel volgt uit een gemeten verschil of een
+p-waarde. Handig om in een oogopslag te zien wat er speelt voordat je de
+losse tabbladen induikt.
 
 ### Selectiescores
 
@@ -113,44 +121,52 @@ studenten scoorden. Dat gebeurt met een boxplot. Een boxplot is een
 manier om in een oogopslag te laten zien hoe een groep scoorde: waar de
 meeste mensen zitten, en hoe ver de uitschieters uit elkaar liggen.
 
+Bovenaan kies je waarop je de studenten wilt opdelen: of ze met de
+opleiding zijn gestart, of ze doorstroomden naar jaar 2, of een
+achtergrondkenmerk zoals geslacht of vooropleiding.
+
 De vraag die je jezelf stelt: scoorden de studenten die het later goed
 deden, ook hoger bij de selectie? Als de groep doorstromers duidelijk
 hoger ligt dan de groep uitvallers, dan zegt dat onderdeel van de
 selectie kennelijk iets zinnigs.
 
-### Samenhang
+### Demografie
 
-"Samenhang" betekent: hangen twee dingen met elkaar samen, gaan ze samen
-op en neer? Dit tabblad laat twee soorten samenhang zien.
+Hier zie je hoe achtergrondkenmerken (geslacht, vooropleiding) samenhangen
+met de studieuitkomst. Per kenmerk laat een tabel zien welk aandeel van
+elke groep doorstroomde naar jaar 2. Handig om te checken of de selectie
+voor de ene groep anders uitpakt dan voor de andere.
 
-Het eerste is een kleurenkaart die laat zien welke selectie-onderdelen op
-elkaar lijken. Als twee onderdelen sterk samenhangen, meten ze waarschijnlijk
-bijna hetzelfde, en hoef je ze misschien niet allebei af te nemen.
+### Verschiltoets
 
-Het tweede is een tabel die laat zien welke onderdelen het sterkst
-voorspellen of iemand doorstroomt naar het tweede jaar. Bovenaan staan de
-onderdelen die er het meest toe lijken te doen.
+Dit tabblad toetst per onderdeel of de scores echt verschillen tussen
+groepen, of dat het toeval kan zijn. Je kiest of je kijkt naar doorstroom
+naar jaar 2 (voorspelt het onderdeel studiesucces?) of naar een
+achtergrondkenmerk (maakt het onderdeel onbedoeld onderscheid?).
+
+Per onderdeel zie je hoe groot het verschil is, hoe sterk dat effect is, en
+of het significant is. Een ster betekent dat het verschil waarschijnlijk
+niet op toeval berust.
+
+### Correlatie
+
+"Correlatie" betekent: hangen twee dingen met elkaar samen, gaan ze samen
+op en neer? Dit tabblad laat met een kleurenkaart zien welke
+selectie-onderdelen op elkaar lijken. Als twee onderdelen sterk
+samenhangen, meten ze waarschijnlijk bijna hetzelfde, en hoef je ze
+misschien niet allebei af te nemen. Hangen ze juist weinig samen, dan
+vullen ze elkaar aan.
+
+### Regressie
+
+Dit tabblad laat zien welke onderdelen van de selectie het sterkst
+voorspellen of een student de opleiding succesvol vervolgt: doorstroom naar
+het tweede jaar, of een diploma bij eenjarige opleidingen. Bovenaan staan
+de onderdelen die er het meest toe lijken te doen.
 
 Let op: dit werkt het best bij grote groepen. Bij kleine groepen (denk aan
 enkele tientallen studenten) zijn de uitkomsten wankel en moet je ze zien
 als een hint, niet als een hard bewijs.
-
-### Demografisch
-
-Hier zie je hoe de groep is samengesteld: per cohort (lichting), per
-geslacht, per herkomst en per vooropleiding. Handig om te checken of een
-bepaalde groep juist veel vaker of veel minder vaak voorkomt dan je zou
-verwachten.
-
-### VO-cijfer
-
-VO staat voor voortgezet onderwijs, oftewel de middelbare school. Dit
-tabblad vergelijkt de selectiescores met het gemiddelde eindexamencijfer.
-
-Als die twee sterk samenhangen, dan meet de selectie eigenlijk hetzelfde
-als het schoolcijfer al deed. Als ze juist weinig samenhangen, meet de
-selectie iets nieuws, iets wat je niet al uit het eindexamencijfer kon
-aflezen.
 
 
 ## De groepen
@@ -184,11 +200,11 @@ de soorten opleidingen kloppen.
    `persoonsgebonden_nummer`, `inschrijvingsjaar` en
    `eerste_jaar_aan_deze_opleiding_instelling`. Uit die drie leidt de tool
    zelf af in welke groep een student valt. Je mag er ook nog
-   `geslacht`, `herkomst`,
-   `hoogste_vooropleiding_omschrijving_vooropleiding`, `gem_eindcijfer_vo`
-   en `diploma_behaald` aan toevoegen. Voeg `diploma_behaald` toe als het
-   om een eenjarige opleiding gaat waar het diploma het doel is in plaats
-   van doorstroom naar jaar 2.
+   `geslacht`, `hoogste_vooropleiding_omschrijving_vooropleiding` en
+   `diploma_behaald` aan toevoegen. Geslacht en vooropleiding gebruikt de
+   tool op het tabblad Demografie en in de verschiltoets. Voeg
+   `diploma_behaald` toe als het om een eenjarige opleiding gaat waar het
+   diploma het doel is in plaats van doorstroom naar jaar 2.
 3. Upload alle drie de bestanden in het dashboard.
 
 

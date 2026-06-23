@@ -11,18 +11,28 @@ uv run ruff format .         # format
 uv run ruff check --fix .    # lint
 ```
 
-There are no tests. Verify changes by running the app and loading demo data.
+Tests live in `tests/` (pytest). Run with `uv run pytest -q`. Still verify UI changes by running the app and loading demo data, since the tests cover the data pipeline, not the Dash callbacks.
 
 ## Source files
 
+app.py was split into modules per responsibility (pitch [#15](https://github.com/cedanl/selectie-evaluatietool/issues/15)). Each tab module and uploads.py exports `maak_layout()` and/or `registreer_callbacks(app)`, the same pattern config_wizard.py uses. app.py only composes the layout and wires the callbacks.
+
 | File | Lines | Role |
 |---|---|---|
-| `app.py` | ~2000 | Main Dash app. Layout, 18 callbacks, data loading, all four dashboard tabs. Entry point. |
-| `rapport.py` | ~1040 | PDF report generation. Uses fpdf2 + kaleido. Called from app.py download button. |
-| `config_wizard.py` | ~720 | Auto-detection of columns from uploaded Excel. Integrated into app.py via `registreer_callbacks`. |
+| `app.py` | ~120 | App init, layout composition, `registreer_callbacks` wiring, the embed-via-URL callback, server start. Entry point. |
+| `helpers.py` | ~360 | Shared app-level helpers: `koppel_data`, `df_from_store`, `_laad_demodata`, `TABLE_STYLE`, `GROEPEER_OPTIES`, the groep-/kleur-helpers (`_scores_per_groep`, `_aantallen_per_groep`, `_groep_tabel_stijl`, `_meng_met_wit`), `_bereken_model_stats`, `DEMO_DATASETS`. |
+| `uploads.py` | ~450 | Upload overlay + sidebar layout and the upload/validation/demodata-load/cohort/download callbacks. |
+| `tabs/bevindingen.py` | ~190 | "Wat valt op"-tab: layout + `update_bevindingen`. |
+| `tabs/scores.py` | ~430 | Selectiescores-tab: layout + cascading score-filters + `update_scores_tab`. |
+| `tabs/demografie.py` | ~200 | Demografie-tab: layout + `update_demografie_tab`. |
+| `tabs/verschiltoets.py` | ~165 | Verschiltoets-tab: layout + `update_verschiltoets_tab`. |
+| `tabs/correlatie.py` | ~245 | Correlatie-tab: layout + `update_correlatie_tab` + the data-change callback that fills the correlatie filters and the app-subtitle. |
+| `tabs/regressie.py` | ~395 | Regressie-tab: layout + `update_regressie_tab`. |
+| `rapport.py` | ~960 | PDF report generation. Uses fpdf2 + kaleido. Called from uploads.py download button. |
+| `config_wizard.py` | ~830 | Auto-detection of columns from uploaded Excel. Wired in app.py via `registreer_callbacks`. |
 | `transformatie.py` | ~240 | File parsing, config reading, data validation, wide-to-long transformation. |
-| `cho_transform.py` | ~210 | Raw 1CHO handling. `transformeer_cho()` derives the doorstroom group from long-format enrollment rows; `bouw_ruwe_cho()` builds synthetic raw 1CHO for the data scripts. |
-| `shared.py` | ~27 | Shared constants and helpers used by both app.py and rapport.py. |
+| `cho_transform.py` | ~240 | Raw 1CHO handling. `transformeer_cho()` derives the doorstroom group from long-format enrollment rows; `bouw_ruwe_cho()` builds synthetic raw 1CHO for the data scripts. |
+| `shared.py` | ~850 | Shared constants and analysis functions used by the tabs and rapport.py (perspectieven, effectgroottes, `vergelijk_succes_per_item`, `toets_verschil_per_item`, `bereken_univariaat`, `chi2_per_dimensie`, `genereer_bevindingen`, demografie-helpers). |
 
 ## Data flow
 
@@ -31,7 +41,7 @@ There are no tests. Verify changes by running the app and loading demo data.
 3. `transformatie.parse_selectiedata()` reads the selection Excel using config metadata (sheet name, header row)
 4. `transformatie.transformeer_naar_lang()` melts wide score columns into long format (`scores_df`)
 5. `cho_transform.transformeer_cho()` collapses the raw long-format 1CHO (one row per enrollment year) to one row per student and derives the doorstroom `groep`
-6. `app.koppel_data()` merges that derived 1CHO with pivoted scores, computes z-scores and totaalscore, and fills non-matches with "Niet gestart"
+6. `helpers.koppel_data()` merges that derived 1CHO with pivoted scores, computes z-scores and totaalscore, and fills non-matches with "Niet gestart"
 7. Both `df` (joined main data) and `scores_df` (long-format scores) are stored as JSON in `dcc.Store`
 8. Callbacks deserialize and filter per tab
 
@@ -50,26 +60,29 @@ The required raw 1CHO columns are `persoonsgebonden_nummer`, `inschrijvingsjaar`
 
 The data scripts choose the outcome by `opleidingsfase`: masters (`"M"`, e.g. biomed demo) generate `diploma_behaald`; bachelors (`"B"`, e.g. bewegingswetenschappen demo) generate year-2 doorstroom.
 
-## Dashboard tabs (app.py callbacks)
+## Dashboard tabs
 
-| Tab | Key callback | What it shows |
-|---|---|---|
-| Selectiescores | `update_scores_tab` | Boxplots per item per group, mean/SD table. Filters: instrument, criterium, item. |
-| Samenhang | `update_samenhang_tab` | Correlation heatmap with Cohen 1988 interpretation, logistic regression table. |
-| Demografisch | `update_demo_tab` | Stacked bars for cohort distribution, geslacht, herkomst (Nederland/niet-Nederland), vooropleiding. |
-| VO-cijfer | `update_vo_tab` | Pearson correlations between selection scores and VO GPA, scatter plot. |
+Each tab is its own module under `tabs/`, with `maak_layout()` for the layout and `registreer_callbacks(app)` for the callbacks listed below.
+
+| Tab | Module | Key callback | What it shows |
+|---|---|---|---|
+| Wat valt op | `tabs/bevindingen.py` | `update_bevindingen` | Auto-generated findings from `shared.genereer_bevindingen`. Every line follows from a measured effect size or p-value, nothing invented. |
+| Selectiescores | `tabs/scores.py` | `update_scores_tab` | Boxplots per item per group, mean/SD table. "Groepeer op" dropdown: gestart, doorstroom, or a demographic dimension (geslacht, vooropleiding). Filters: instrument, criterium, item, schaal/bereik (cascading, via `update_score_filters`). |
+| Demografie | `tabs/demografie.py` | `update_demografie_tab` | Per background dimension (geslacht, vooropleiding), crosstab of the dimension against doorstroom outcome. |
+| Verschiltoets | `tabs/verschiltoets.py` | `update_verschiltoets_tab` | Per-item significance test (Mann-Whitney for doorstroom, Kruskal-Wallis for demographic dimensions) with effect size and p-value. |
+| Correlatie | `tabs/correlatie.py` | `update_correlatie_tab` | Inter-item correlation heatmap with Cohen 1988 interpretation. Own instrument/criterium filters (filled by `update_filters_on_data_change`, which also sets the app-subtitle). |
+| Regressie | `tabs/regressie.py` | `update_regressie_tab` | Univariate + joint logistic regression predicting study success (doorstroom or diploma). |
 
 ## PDF report (rapport.py)
 
 `genereer_rapport(df, scores_df) -> bytes` produces a multi-section PDF:
 
-1. Inleiding (explains groups and why some analyses use only 2)
+1. Inleiding (explains the chosen perspective and the two groups compared)
 2. Dataset overzicht (instruments, items, group counts)
-3. Selectiescores per groep (boxplot, means table)
-4. Samenhang en regressie (heatmap with Cohen interpretation, logistic regression)
-5. Demografisch profiel (verdeling, geslacht, herkomst, vooropleiding with charts and tables)
-6. VO-eindcijfer (Pearson correlations with strength labels, scatter)
-7. Samenvatting (auto-generated bullet points)
+3. Selectiescores per groep (boxplots per scale, means table, per-item verschiltoets)
+4. Samenhang en regressie (correlation heatmap with Cohen interpretation, logistic regression)
+5. Selectiescores naar achtergrond (per-item Kruskal-Wallis verschiltoets per demographic dimension: geslacht, vooropleiding)
+6. Conclusies (auto-generated bullet points from `genereer_bevindingen`)
 
 ### Kaleido performance
 
@@ -108,9 +121,9 @@ The config Excel has two sheets:
 
 ## Demo data
 
-Two datasets in `data/demo/`, both bachelor psychologie-style with the same structure (schooldiploma kernvakken + combinatiecijfer + matchingsvragenlijst, header_rij=3). Keuzevakken are in the raw Excel but not config items, only via the combinatiecijfer:
-- `demo_leiden_2026/` (Gedragswetenschappen, Universiteit Leiden, 150 candidates, 50 enrolled)
-- `demo_radboud_2026/` (Psychologie, Radboud Universiteit, 200 candidates, 70 enrolled)
+Two datasets in `data/demo/`, deliberately different in shape so the demos don't look alike. Each mirrors a real (gitignored) source file:
+- `demo_leiden_2026/` (Farmacie master, Universiteit Leiden, 140 candidates, 70 enrolled). Mirrors `dummy data selectie FAR Leiden 2025`: a master selection on sheet "2 Master beoordelingen" with a single header row (header_rij=1). Bachelordiploma assessment (gemiddeld cijfer + studietempo) plus two assessors (B1, B2) scoring NL documents, gesprek/schrijfopdracht and the selection interview. The `C_*_Sc_*` point columns add up to subtotals and `C_Sc_Totaal`. Because it is a master, the outcome is `diploma_behaald`, not year-2 doorstroom. 11 config items across instruments Bachelordiploma and Gesprek.
+- `demo_radboud_2026/` (Psychologie bachelor, Radboud Universiteit, 200 candidates, 70 enrolled). Mirrors `2026-2027 Totaalscores Psychologie (dummy)`: schooldiploma kernvakken + combinatiecijfer + matchingsvragenlijst, header_rij=3. Keuzevakken are in the raw Excel but not config items, only via the combinatiecijfer. Outcome is year-2 doorstroom. 7 config items.
 
 Each contains: `selectiedata.xlsx`, `config.xlsx`, `1cho_data.csv`
 
@@ -120,7 +133,7 @@ import base64, pandas as pd
 from pathlib import Path
 from transformatie import lees_config, parse_selectiedata, transformeer_naar_lang
 from cho_transform import transformeer_cho
-from app import koppel_data
+from helpers import koppel_data
 from rapport import genereer_rapport
 
 demo = Path("data/demo/demo_leiden_2026")
@@ -194,24 +207,22 @@ Some items have missing values for a subset of candidates (optional modules, keu
 
 ### Summary for developers
 
-The regression output is useful for spotting patterns but should not be overinterpreted given typical sample sizes (50-150 enrolled students). The dashboard communicates this through the toelichting text and the pseudo R-squared. When changing the regression code, test with both demo datasets: demo_leiden (8 items, 50 enrolled) and demo_radboud (8 items, 70 enrolled), both header_rij=3 with the keuzevakken excluded from the config.
+The regression output is useful for spotting patterns but should not be overinterpreted given typical sample sizes (50-150 enrolled students). The dashboard communicates this through the toelichting text and the pseudo R-squared. When changing the regression code, test with both demo datasets: demo_leiden (Farmacie master, 11 items, 70 enrolled, header_rij=1, diploma outcome) and demo_radboud (Psychologie bachelor, 7 items, 70 enrolled, header_rij=3, doorstroom outcome). They differ in shape on purpose, so passing both exercises both the master/diploma and bachelor/doorstroom paths.
 
 ## Known gotchas
 
 - **No .claudeignore**: the `data/` and `.venv/` directories are large. Don't glob or grep into them.
-- **app.py stores data as JSON strings** in `dcc.Store`. Callbacks deserialize with `df_from_store()` and `pd.read_json(orient="split")`.
-- **The config wizard** (`config_wizard.py`) registers its own callbacks via `registreer_callbacks(app)` at module level in app.py. It shares the upload components.
-- **`bereken_pct()` in app.py** (line ~160) is a reusable groupby-pct helper. rapport.py does similar aggregations but handles them internally.
-- **Herkomst mapping** (Nederland / niet-Nederland) is defined inline in both app.py and rapport.py. If changing the logic, update both.
+- **The data stores hold JSON strings** in `dcc.Store` (data-store, scores-store). Tab callbacks deserialize with `helpers.df_from_store()` and `pd.read_json(orient="split")`.
+- **The config wizard** (`config_wizard.py`) registers its own callbacks via `registreer_callbacks(app)`, wired in app.py. It shares the upload components with uploads.py.
 - **fpdf2 SVG support** is limited. The NKO logo uses a PNG version (`assets/nko-logo.png`) for PDF rendering; the SVG (`assets/nko-logo.svg`) is only for the web dashboard.
-- **statsmodels import** is done lazily inside `_run_regression()` because it is slow to import and only needed for the regression analysis.
+- **statsmodels import** is done lazily inside the regression code (`rapport._run_regression()`, `helpers._bereken_model_stats()`, `shared.bereken_univariaat()`, `tabs/regressie.py`) because it is slow to import and only needed for regression.
 
 ## Multi-session coordination
 
 Multiple Claude Code sessions work on this project in parallel. Rules:
 
-- **config_wizard.py** is self-contained. Changes there don't conflict with app.py work.
-- **app.py** is the highest-conflict file. Avoid large refactors unless you own it for the session. There is a pitch to split it up: https://github.com/cedanl/evaluatietool-voorbeeld/issues/15
+- **config_wizard.py** is self-contained. Changes there don't conflict with other work.
+- **app.py** is now small (layout composition + wiring only). Tab work is isolated per `tabs/*.py` module, so two sessions on different tabs no longer conflict. Shared helpers live in helpers.py; touching those is the higher-conflict area now. (Pitch [#15](https://github.com/cedanl/selectie-evaluatietool/issues/15) to split app.py is implemented.)
 - **rapport.py** and **shared.py** are owned by the rapport/dashboard session.
 - **scripts/eenmalig/maak_presentatie.py** generates the PowerPoint. Update it when features change.
 - Always check `git status` before committing. Another session may have staged or committed while you were working.
@@ -264,11 +275,11 @@ This session audited the full codebase for bugs, dead code, and data safety. All
 These were identified during the audit but left unfixed. Pick them up when relevant.
 
 ### Code quality
-- **rapport.py duplicates analysis logic**: regression, Pearson-r, and demographic aggregations are reimplemented separately from app.py. Extracting shared analysis functions would prevent drift between dashboard and PDF.
+- **rapport.py partly duplicates analysis logic**: the joint logistic regression (`_run_regression`) is still implemented separately from app.py. Most other analysis (univariate regression, per-item verschiltoets, findings) now lives in shared.py and is reused by both, which prevents drift.
 - **Silent except blocks in config_wizard.py**: callbacks at lines ~596 and ~641 swallow all exceptions with bare `except Exception`. Should at minimum log the error.
 - **detecteer_totaalscore second loop too broad**: matches any column containing "totaal" in the name, which can pick up unrelated columns.
 - **Hardcoded group strings**: `"Niet gestart"`, `"Gestart, niet naar jaar 2"`, `"Doorgestroomd naar jaar 2"` appear as raw strings throughout app.py instead of referencing `GROEP_VOLGORDE` from shared.py.
-- **Large callbacks**: `update_samenhang_tab` (158 lines) and `update_vo_tab` (140 lines) do a lot of work inline. Splitting data prep from layout would improve readability.
+- **Large callbacks**: `update_regressie_tab` and `update_verschiltoets_tab` still do a lot of work inline. Splitting data prep from layout would improve readability. (The old `update_samenhang_tab`/`update_vo_tab` were already split: Samenhang became the Correlatie + Regressie tabs and the VO-cijfer tab was removed.)
 - **No encoding fallback**: `parse_csv_or_excel()` in transformatie.py decodes CSV as utf-8 only. Dutch institutional files sometimes use latin-1 or cp1252.
 
 ### Uncommitted work from other sessions
