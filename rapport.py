@@ -753,7 +753,7 @@ def genereer_rapport(
     pdf.body_text(
         "De toets is een Mann-Whitney "
         "U, die past bij de ordinale en vaak scheve schalen van selectie-items. "
-        "De effectgrootte (Effect r) is de rank-biseriale correlatie van -1 tot "
+        "De kolom Effectgrootte is de rank-biseriale correlatie van -1 tot "
         f"+1: positief betekent dat de groep '{pos_label}' hoger scoorde. "
         "Vuistregels (Cohen, 1988): r < 0.10 verwaarloosbaar, 0.10-0.30 zwak, "
         "0.30-0.50 matig, boven 0.50 sterk. Het 95%-BI geeft de onzekerheid "

@@ -23,45 +23,59 @@ from helpers import (
 )
 
 
+def _uitleg_details(samenvatting, inhoud):
+    """Plain-language uitleg met een inklapbaar 'Hoe wordt dit berekend?'-blok
+    eronder, zodat de statistische details beschikbaar zijn zonder de gewone
+    gebruiker te overladen. Eenzelfde patroon over de tabbladen heen."""
+    return html.Div(
+        [
+            html.P(samenvatting, className="text-muted small mb-1"),
+            html.Details(
+                [
+                    html.Summary(
+                        "Hoe wordt dit berekend?",
+                        className="small text-muted",
+                        style={"cursor": "pointer"},
+                    ),
+                    html.Div(inhoud, className="small text-muted mt-1"),
+                ]
+            ),
+        ],
+        className="mb-2",
+    )
+
+
 def _uitleg_verschil_uitkomst(perspectief):
     pos = perspectief["positief_label"]
     neg = perspectief["negatief_label"]
-    return [
-        html.P(
-            f"Deze tabel vergelijkt per item twee groepen: '{pos}' versus "
-            f"'{neg}'. {perspectief['beschrijving']}",
-            className="text-muted small mb-1",
-        ),
-        html.P(
-            "Mann-Whitney U met de rank-biseriale effectgrootte (-1 tot +1, "
-            f"positief = groep '{pos}' scoort hoger) en een "
-            "95%-betrouwbaarheidsinterval. Positief en significant (p < 0.05) "
-            "betekent dat het item voorspellende waarde heeft.",
-            className="text-muted small mb-0",
-        ),
-    ]
+    return _uitleg_details(
+        f"Per onderdeel vergelijken we of de groep '{pos}' hoger scoorde dan "
+        f"'{neg}'. Een sterretje betekent dat het verschil waarschijnlijk niet "
+        "op toeval berust; dan heeft het onderdeel voorspellende waarde. De "
+        "kolom Effectgrootte zegt hoe groot het verschil is (niet hoeveel keer "
+        "groter de kans is, dat staat op het tabblad Regressie).",
+        f"We toetsen het verschil met een verdelingsvrije toets (Mann-Whitney U), "
+        "passend bij de ordinale, vaak scheve schalen van selectie-items. De "
+        "Effectgrootte is de rank-biseriale correlatie (-1 tot +1; positief = "
+        f"'{pos}' scoort hoger), met een 95%-betrouwbaarheidsinterval. "
+        "Vuistregels: onder 0.10 verwaarloosbaar, 0.10-0.30 zwak, 0.30-0.50 "
+        "matig, daarboven sterk.",
+    )
 
 
 def _uitleg_verschil_demografisch(label):
     laag = label.lower()
-    return [
-        html.P(
-            f"Deze tabel toetst per item of de selectiescores verschillen tussen "
-            f"{laag}-groepen. Een systematisch verschil kan wijzen op onbedoelde "
-            "vertekening van een instrument.",
-            className="text-muted small mb-1",
-        ),
-        html.P(
-            f"De {laag} komt uit 1CHO en is alleen bekend voor ingeschreven "
-            "studenten; de toets vergelijkt dus binnen de ingeschreven groep. "
-            "Kruskal-Wallis (werkt voor twee of meer groepen) met epsilon-kwadraat "
-            "als effectgrootte (0-1: onder 0.01 verwaarloosbaar, 0.01-0.06 zwak, "
-            "0.06-0.14 matig, boven 0.14 sterk). De kolom 'Verschil' toont welke "
-            "groep het hoogst scoort. Een significant verschil (p < 0.05) verdient "
-            "aandacht bij het beoordelen van de eerlijkheid van het instrument.",
-            className="text-muted small mb-0",
-        ),
-    ]
+    return _uitleg_details(
+        f"Per onderdeel kijken we of de scores verschillen tussen {laag}-groepen. "
+        "Een sterretje betekent een verschil dat waarschijnlijk niet op toeval "
+        "berust; dat kan wijzen op onbedoelde vertekening. Staat er 'vergelijkbaar', "
+        f"dan is er geen aangetoond verschil. De {laag} komt uit 1CHO en is alleen "
+        "bekend voor ingeschreven studenten, dus we vergelijken binnen die groep.",
+        "We toetsen het verschil met een verdelingsvrije toets (Kruskal-Wallis, "
+        "werkt voor twee of meer groepen). De Effectgrootte is epsilon-kwadraat "
+        "(0-1): onder 0.01 verwaarloosbaar, 0.01-0.06 zwak, 0.06-0.14 matig, "
+        "daarboven sterk.",
+    )
 
 
 def maak_layout():

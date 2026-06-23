@@ -199,7 +199,7 @@ VERGELIJKING_KOLOMMEN = [
     "Item",
     "Succes (n)",
     "Geen succes (n)",
-    "Effect (r)",
+    "Effectgrootte",
     "Sterkte",
     "95%-BI",
     "p",
@@ -298,7 +298,7 @@ def vergelijk_succes_per_item(
             "Item": item,
             "Succes (n)": len(succes),
             "Geen succes (n)": len(geen),
-            "Effect (r)": "-",
+            "Effectgrootte": "-",
             "Sterkte": "-",
             "95%-BI": "-",
             "p": "-",
@@ -322,7 +322,7 @@ def vergelijk_succes_per_item(
         r, lo, hi = _effect_met_bi(auc, len(succes), len(geen))
         rij.update(
             {
-                "Effect (r)": f"{r:+.2f}",
+                "Effectgrootte": f"{r:+.2f}",
                 "Sterkte": effect_sterkte(r),
                 "95%-BI": f"{lo:+.2f} tot {hi:+.2f}",
                 "p": f"{fmt_p(float(toets.pvalue))} {sig_sym(float(toets.pvalue))}",
@@ -549,13 +549,13 @@ def genereer_bevindingen(
             if r["_r"] > 0:
                 validiteit.append(
                     f"'{r['Item']}': de groep '{pos_label}' scoorde hoger "
-                    f"(effect {r['Effect (r)']}, p = {fmt_p(r['_p'])}). Dit item heeft "
+                    f"(effect {r['Effectgrootte']}, p = {fmt_p(r['_p'])}). Dit item heeft "
                     "voorspellende waarde."
                 )
             else:
                 validiteit.append(
                     f"'{r['Item']}': juist de groep '{neg_label}' scoorde hoger "
-                    f"(effect {r['Effect (r)']}, p = {fmt_p(r['_p'])}). Onverwacht en de "
+                    f"(effect {r['Effectgrootte']}, p = {fmt_p(r['_p'])}). Onverwacht en de "
                     "moeite waard om nader te bekijken."
                 )
         if len(getoetst) and sig.empty:
@@ -565,7 +565,7 @@ def genereer_bevindingen(
             validiteit.append(
                 f"Geen enkel item verschilt significant tussen '{pos_label}' en "
                 f"'{neg_label}'. Het sterkste (niet-significante) signaal is "
-                f"'{sterkste['Item']}' (effect {sterkste['Effect (r)']}). Bij kleine "
+                f"'{sterkste['Item']}' (effect {sterkste['Effectgrootte']}). Bij kleine "
                 "groepen is dat niet ongebruikelijk."
             )
 

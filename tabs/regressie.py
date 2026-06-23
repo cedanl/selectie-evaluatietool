@@ -53,8 +53,10 @@ def maak_layout():
                                                 "kans op doorstroom. Genormaliseerd (z-scores), dus vergelijkbaar."
                                             ),
                                             html.Li(
-                                                "Odds ratio: kansverhouding per SD stijging. OR 1.5 = 50% hogere "
-                                                "kans. OR < 1 = lagere kans."
+                                                "Odds ratio: een kansverhouding per standaarddeviatie hogere score. "
+                                                "OR 1.5 = 50% meer kans, OR < 1 = minder kans. Dit is iets anders dan "
+                                                "de Effectgrootte op het tabblad Verschiltoets: die zegt hoe groot het "
+                                                "verschil is, niet hoeveel keer groter de kans wordt."
                                             ),
                                             html.Li(
                                                 "p-waarde: kans op dit resultaat als het item geen effect heeft. "
@@ -67,11 +69,13 @@ def maak_layout():
                                         className="small text-muted mb-1",
                                     ),
                                     html.P(
-                                        "Het univariate model toetst elk item afzonderlijk. Het gezamenlijke "
-                                        "model zet alle items tegelijk in en laat zien welk item bovenop de "
-                                        "andere items nog een eigen bijdrage levert. Bij weinig studenten "
-                                        "worden de zwakste items automatisch weggelaten (EPV-regel: minimaal "
-                                        "5 events per predictor).",
+                                        "Het univariate model toetst elk onderdeel afzonderlijk: voorspelt dit "
+                                        "onderdeel op zichzelf studiesucces? Het gezamenlijke model zet alle "
+                                        "onderdelen tegelijk in en laat zien welk onderdeel bovenop de andere "
+                                        "nog een eigen bijdrage levert. Bij weinig studenten worden de zwakste "
+                                        "onderdelen automatisch weggelaten: per onderdeel in het model zijn "
+                                        "ongeveer vijf studenten met de uitkomst nodig, anders worden de "
+                                        "schattingen onbetrouwbaar.",
                                         className="small text-muted mb-0",
                                     ),
                                 ],
@@ -86,9 +90,11 @@ def maak_layout():
                                 id="regressie-samenvatting",
                                 className="mb-3",
                             ),
-                            html.H6("Univariaat per item"),
+                            html.H6("Elk onderdeel los getoetst"),
                             html.P(
-                                "Elk item afzonderlijk getoetst. Hier valt niets weg.",
+                                "Voorspelt dit onderdeel op zichzelf studiesucces? Hier "
+                                "wordt elk onderdeel afzonderlijk bekeken; alle onderdelen "
+                                "blijven staan, er valt niets weg.",
                                 className="text-muted small",
                             ),
                             dash_table.DataTable(
@@ -101,8 +107,8 @@ def maak_layout():
                                 className="mt-4",
                             ),
                             html.P(
-                                "Alle items tegelijk. Items kunnen niet-significant worden door "
-                                "overlap met andere items.",
+                                "Alle onderdelen tegelijk in een model. Een onderdeel kan hier "
+                                "niet-significant worden als het sterk overlapt met een ander onderdeel.",
                                 className="text-muted small",
                             ),
                             dash_table.DataTable(
@@ -315,13 +321,16 @@ def registreer_callbacks(app):
                     f"n = {len(y)} ({pos_label}: {n_positief}, {neg_label}: {n_negatief})",
                     className="small text-muted me-3",
                 ),
-                html.Span(f"Pseudo R² = {pseudo_r2}", className="small fw-bold"),
+                html.Span(
+                    f"Verklarende kracht (pseudo R²) = {pseudo_r2}",
+                    className="small fw-bold",
+                ),
             ]
             if verwijderd_nan:
                 msg_parts.append(html.Br())
                 msg_parts.append(
                     html.Span(
-                        f"Items niet meegenomen (>30% ontbrekend): {', '.join(verwijderd_nan)}",
+                        f"Onderdelen niet meegenomen (>30% ontbrekend): {', '.join(verwijderd_nan)}",
                         className="small text-muted",
                     )
                 )
@@ -329,7 +338,7 @@ def registreer_callbacks(app):
                 msg_parts.append(html.Br())
                 msg_parts.append(
                     html.Span(
-                        f"Items niet meegenomen (overlap): {', '.join(verwijderd_collinear)}",
+                        f"Onderdelen niet meegenomen (te veel overlap): {', '.join(verwijderd_collinear)}",
                         className="small text-muted",
                     )
                 )
@@ -337,7 +346,8 @@ def registreer_callbacks(app):
                 msg_parts.append(html.Br())
                 msg_parts.append(
                     html.Span(
-                        f"Items niet meegenomen (EPV-beperking, top {len(joint_cols)} behouden): "
+                        f"Onderdelen niet meegenomen (te weinig studenten met de uitkomst; "
+                        f"de {len(joint_cols)} sterkste behouden): "
                         f"{', '.join(verwijderd_epv)}",
                         className="small text-muted",
                     )

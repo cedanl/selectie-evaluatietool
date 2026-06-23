@@ -24,16 +24,29 @@ from helpers import (
 )
 
 
-def _bevindingen_lijst(titel, items, leeg_tekst):
-    return html.Div(
-        [
-            html.H6(titel),
-            html.Ul([html.Li(x) for x in items], className="small mb-0")
-            if items
-            else html.P(leeg_tekst, className="text-muted small mb-0"),
-        ],
-        className="mb-4",
+def _bevindingen_lijst(titel, items, leeg_tekst, uitleg=None):
+    """Een sectie met een kop en lijst bevindingen. Met 'uitleg' krijgt de kop
+    een (i)-icoon met een informatiewolkje dat uitlegt waar de bevindingen
+    vandaan komen."""
+    kop_kinderen = [titel]
+    extra = []
+    if uitleg:
+        tip_id = "tip-" + "".join(c if c.isalnum() else "-" for c in titel.lower())
+        kop_kinderen.append(
+            html.Span(
+                " ⓘ",
+                id=tip_id,
+                className="text-muted",
+                style={"cursor": "help", "fontSize": "0.85em"},
+            )
+        )
+        extra.append(dbc.Tooltip(uitleg, target=tip_id, placement="right"))
+    inhoud = (
+        html.Ul([html.Li(x) for x in items], className="small mb-0")
+        if items
+        else html.P(leeg_tekst, className="text-muted small mb-0")
     )
+    return html.Div([html.H6(kop_kinderen), *extra, inhoud], className="mb-4")
 
 
 def maak_layout():
@@ -138,6 +151,11 @@ def registreer_callbacks(app):
                 "Verschiltoets",
                 bevindingen["validiteit"],
                 "Geen opvallende voorspellers gevonden in de cijfers.",
+                uitleg=(
+                    "Onderdelen waar de doorgestroomde groep duidelijk anders "
+                    "scoorde dan de uitvallers. Komt van het tabblad Verschiltoets; "
+                    "alleen verschillen die waarschijnlijk niet op toeval berusten."
+                ),
             )
         )
         if bevindingen.get("regressie"):
@@ -146,6 +164,11 @@ def registreer_callbacks(app):
                     "Univariate regressie",
                     bevindingen["regressie"],
                     "Geen univariate regressieresultaten beschikbaar.",
+                    uitleg=(
+                        "Onderdelen die op zichzelf de kans op doorstroom "
+                        "voorspellen. Komt van het tabblad Regressie, waar elk "
+                        "onderdeel los is getoetst."
+                    ),
                 )
             )
         if bevindingen.get("model"):
@@ -154,6 +177,10 @@ def registreer_callbacks(app):
                     "Gezamenlijk model",
                     bevindingen["model"],
                     "",
+                    uitleg=(
+                        "Hoe goed alle onderdelen samen doorstroom voorspellen, en "
+                        "welk onderdeel een eigen bijdrage levert bovenop de rest."
+                    ),
                 )
             )
         if bevindingen.get("demografie"):
@@ -162,6 +189,10 @@ def registreer_callbacks(app):
                     "Demografie en uitkomst",
                     bevindingen["demografie"],
                     "",
+                    uitleg=(
+                        "Hangt een achtergrondkenmerk (geslacht, vooropleiding) "
+                        "samen met de kans op doorstroom?"
+                    ),
                 )
             )
 
@@ -172,6 +203,10 @@ def registreer_callbacks(app):
                 "Correlatie",
                 bevindingen["correlatie"],
                 "Onvoldoende items voor een correlatieanalyse.",
+                uitleg=(
+                    "Onderdelen die sterk met elkaar samenhangen en dus deels "
+                    "hetzelfde meten. Komt van het tabblad Correlatie."
+                ),
             )
         )
 
@@ -182,6 +217,11 @@ def registreer_callbacks(app):
                 "Eerlijkheid (geslacht, vooropleiding)",
                 bevindingen["fairness"],
                 "Geen demografische gegevens beschikbaar om te vergelijken.",
+                uitleg=(
+                    "Onderdelen waar achtergrondgroepen verschillend scoorden. "
+                    "Kan wijzen op onbedoelde vertekening. Komt van het tabblad "
+                    "Verschiltoets."
+                ),
             )
         )
         return secties
