@@ -246,31 +246,36 @@ def _raad_schaal(waarden: pd.Series) -> str:
     return f"{laag}-{hoog}"
 
 
-def detecteer_score_kolommen(
+def detecteer_alle_kolommen(
     df: pd.DataFrame,
     id_kolom: str | None,
     totaalscore_kolom: str | None,
 ) -> list[dict]:
+    """Eén rij per kolom in het selectiebestand, met `_meenemen` aan voor de
+    kolommen die als score worden herkend (numeriek, geen ID/totaal/uitsluiting).
+    Voor die kolommen worden instrument, item en schaal alvast voorgesteld; de
+    overige kolommen komen leeg en uitgevinkt in de tabel."""
     skip = {id_kolom, totaalscore_kolom} - {None}
     alle_kolommen = [str(c) for c in df.columns]
     resultaat = []
 
     for col in df.columns:
         col_str = str(col)
-        if col_str in skip:
-            continue
-        if not pd.api.types.is_numeric_dtype(df[col]):
-            continue
-        if _moet_uitsluiten(col_str):
-            continue
-
+        is_score = (
+            col_str not in skip
+            and pd.api.types.is_numeric_dtype(df[col])
+            and not _moet_uitsluiten(col_str)
+        )
         resultaat.append(
             {
                 "kolom_naam": col_str,
-                "instrument": _raad_instrument(col_str, alle_kolommen),
-                "item": _maak_item_naam(col_str),
+                "instrument": _raad_instrument(col_str, alle_kolommen)
+                if is_score
+                else "",
+                "item": _maak_item_naam(col_str) if is_score else "",
                 "criterium": "",
-                "schaal": _raad_schaal(df[col]),
+                "schaal": _raad_schaal(df[col]) if is_score else "",
+                "_meenemen": is_score,
             }
         )
 
@@ -281,8 +286,10 @@ def _instrument_tip(score_kols: list[dict]):
     """Geef een tip als de data instrument-level scores heeft (1 kolom per instrument).
 
     Dit is herkenbaar doordat het instrument veld leeg is (geen gedeeld prefix),
-    of doordat elk instrument slechts 1 item heeft.
+    of doordat elk instrument slechts 1 item heeft. Alleen meegenomen
+    scorekolommen tellen mee.
     """
+    score_kols = [r for r in score_kols if r.get("_meenemen", True)]
     instrumenten = {}
     for rij in score_kols:
         inst = rij.get("instrument", "").strip()
@@ -339,7 +346,13 @@ def bouw_config_dict(
         "blad_naam": str(blad_naam).strip(),
         "header_rij": str(int(header_rij)),
         "totaalscore_kolom": str(totaalscore_kolom).strip(),
-        "kolommen": [{k: str(v).strip() for k, v in kol.items()} for kol in kolommen],
+        "kolommen": [
+            {
+                k: (bool(v) if k == "meenemen" else str(v).strip())
+                for k, v in kol.items()
+            }
+            for kol in kolommen
+        ],
     }
 
 
@@ -362,12 +375,22 @@ def exporteer_config_excel(config: dict) -> bytes:
         ws_inst.cell(row=r, column=2, value=val)
 
     ws_kol = wb.create_sheet("kolommen")
-    kol_headers = ["kolom_naam", "instrument", "item", "criterium", "schaal"]
+    kol_headers = [
+        "meenemen",
+        "kolom_naam",
+        "instrument",
+        "item",
+        "criterium",
+        "schaal",
+    ]
     for c, h in enumerate(kol_headers, start=1):
         ws_kol.cell(row=1, column=c, value=h)
     for r, kol in enumerate(config.get("kolommen", []), start=2):
         for c, veld in enumerate(kol_headers, start=1):
-            ws_kol.cell(row=r, column=c, value=kol.get(veld, ""))
+            if veld == "meenemen":
+                ws_kol.cell(row=r, column=c, value=bool(kol.get("meenemen", True)))
+            else:
+                ws_kol.cell(row=r, column=c, value=kol.get(veld, ""))
 
     buf = io.BytesIO()
     wb.save(buf)
@@ -554,25 +577,24 @@ def maak_wizard_layout() -> html.Div:
                         html.Div(
                             id="wiz-tabel-container",
                             children=[
-                                dbc.Label("Scorekolommen", className="small"),
+                                dbc.Label("Kolommen", className="small"),
                                 html.P(
                                     [
-                                        "Elke rij is een kolom die de wizard als "
-                                        "score herkent. Het ",
+                                        "Elke rij is een kolom uit je selectiebestand. "
+                                        "Het ",
                                         html.Strong("vinkje vooraan elke rij"),
                                         " bepaalt of die kolom meegaat in de analyse. "
-                                        "Alle herkende kolommen staan standaard "
-                                        "aangevinkt; haal het vinkje weg bij kolommen "
-                                        "die geen selectiescore zijn (bijv. een "
-                                        "volgnummer of een tekstveld dat toch als "
-                                        "getal binnenkomt). Instrument is het "
+                                        "De wizard vinkt de kolommen die hij als score "
+                                        "herkent alvast aan; vink een kolom uit die "
+                                        "geen selectiescore is, of vink er een aan die "
+                                        "de wizard miste. Instrument is het "
                                         "meetinstrument (bijv. een test of "
                                         "beoordeling), Item is wat het meet, "
                                         "Criterium is een optionele groepering, en "
                                         "Schaal is het bereik van de scores (bijv. "
-                                        "1-7 of 0-100). De wizard stelt een nette "
-                                        "schaal voor op basis van de scores; pas de "
-                                        "teksten aan waar nodig.",
+                                        "1-7 of 0-100). Voor herkende scorekolommen "
+                                        "stelt de wizard deze velden alvast voor; pas "
+                                        "ze aan waar nodig.",
                                     ],
                                     className="wiz-uitleg mb-2",
                                 ),
@@ -775,20 +797,25 @@ def registreer_callbacks(app: dash.Dash) -> None:
             id_kol = detecteer_id_kolom(headers)
             totaal_kol = detecteer_totaalscore(headers)
 
-            score_kols = detecteer_score_kolommen(df, id_kol, totaal_kol)
+            alle_kols = detecteer_alle_kolommen(df, id_kol, totaal_kol)
 
-            tip = ""
-            if score_kols:
-                tip = _instrument_tip(score_kols)
+            tip = _instrument_tip(alle_kols) if alle_kols else ""
+
+            # De checkboxes (selected_rows) zijn de Meenemen-vlag; vink de
+            # herkende scorekolommen vast aan. _meenemen hoort niet in de tabel.
+            geselecteerd = [i for i, k in enumerate(alle_kols) if k["_meenemen"]]
+            tabel_rijen = [
+                {k: v for k, v in kol.items() if k != "_meenemen"} for kol in alle_kols
+            ]
 
             return (
                 col_options,
                 id_kol,
                 col_options,
                 totaal_kol,
-                score_kols,
-                list(range(len(score_kols))),
-                {"display": "none"} if score_kols else {"display": "block"},
+                tabel_rijen,
+                geselecteerd,
+                {"display": "none"} if tabel_rijen else {"display": "block"},
                 tip,
             )
         except Exception:
@@ -843,10 +870,14 @@ def registreer_callbacks(app: dash.Dash) -> None:
                 {"display": "none"},
             )
 
+        # De config bevat alle kolommen; de checkboxes bepalen per rij Meenemen.
         gekozen = set(selected_rows or [])
-        actieve_kolommen = [rij for i, rij in enumerate(tabel_data) if i in gekozen]
+        kolommen = [
+            {**rij, "meenemen": i in gekozen} for i, rij in enumerate(tabel_data)
+        ]
+        n_actief = sum(k["meenemen"] for k in kolommen)
 
-        if not actieve_kolommen:
+        if not n_actief:
             return (
                 dash.no_update,
                 dbc.Alert(
@@ -865,11 +896,10 @@ def registreer_callbacks(app: dash.Dash) -> None:
             opleiding=opleiding or "",
             instellingscode=instelling or "",
             jaar=str(jaar) if jaar else "",
-            kolommen=actieve_kolommen,
+            kolommen=kolommen,
         )
 
-        n_totaal = len(tabel_data)
-        n_actief = len(actieve_kolommen)
+        n_totaal = len(kolommen)
         return (
             json.dumps(config),
             dbc.Alert(

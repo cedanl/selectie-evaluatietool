@@ -22,6 +22,24 @@ def _find_col(headers: list[str], naam: str) -> str | None:
     return None
 
 
+_WAAR_WAARDEN = {"true", "waar", "ja", "yes", "y", "1", "1.0", "x"}
+
+
+def _parse_bool(val) -> bool:
+    """Lees een Meenemen-cel (TRUE/FALSE, Ja/Nee, 1/0, ...) als boolean."""
+    if isinstance(val, bool):
+        return val
+    if val is None or (isinstance(val, float) and pd.isna(val)):
+        return False
+    return str(val).strip().lower() in _WAAR_WAARDEN
+
+
+def meegenomen_kolommen(config: dict) -> list[dict]:
+    """De kolommen waarvoor Meenemen aan staat. Oudere configs zonder
+    Meenemen-kolom hebben dit veld niet, dus die tellen standaard mee."""
+    return [k for k in config.get("kolommen", []) if k.get("meenemen", True)]
+
+
 def parse_csv_or_excel(contents: str, filename: str) -> pd.DataFrame:
     raw = _decode_upload(contents)
     if filename.endswith((".xlsx", ".xls")):
@@ -53,18 +71,39 @@ def lees_config(contents: str) -> dict:
     )
 
     kolommen_df = pd.read_excel(xls, sheet_name="kolommen")
-    kolommen_df = kolommen_df.dropna(subset=[kolommen_df.columns[0]])
-    kolommen_df = kolommen_df[kolommen_df.iloc[:, 0].astype(str).str.strip() != ""]
 
-    veld_namen = ["kolom_naam", "instrument", "item", "criterium", "schaal"]
+    # De kolommen-tab bevat alle kolommen uit het selectiebestand met een
+    # Meenemen-boolean voorop. Oudere configs zonder die kolom beginnen met
+    # kolom_naam; we lezen positioneel zodat een header als "criterium
+    # (optioneel)" geen probleem is, en herkennen het formaat aan de eerste kop.
+    heeft_meenemen = str(kolommen_df.columns[0]).strip().lower().startswith("meenemen")
+    if heeft_meenemen:
+        veld_volgorde = [
+            "meenemen",
+            "kolom_naam",
+            "instrument",
+            "item",
+            "criterium",
+            "schaal",
+        ]
+        naam_idx = 1
+    else:
+        veld_volgorde = ["kolom_naam", "instrument", "item", "criterium", "schaal"]
+        naam_idx = 0
+
     kolommen = []
-    for idx, rij in kolommen_df.iterrows():
-        entry = {}
-        for i, veld in enumerate(veld_namen):
-            if i < len(rij) and pd.notna(rij.iloc[i]):
-                entry[veld] = str(rij.iloc[i]).strip()
+    for _, rij in kolommen_df.iterrows():
+        if naam_idx >= len(rij) or pd.isna(rij.iloc[naam_idx]):
+            continue
+        if str(rij.iloc[naam_idx]).strip() == "":
+            continue
+        entry = {"meenemen": True}
+        for i, veld in enumerate(veld_volgorde):
+            waarde = rij.iloc[i] if i < len(rij) else None
+            if veld == "meenemen":
+                entry["meenemen"] = _parse_bool(waarde)
             else:
-                entry[veld] = ""
+                entry[veld] = str(waarde).strip() if pd.notna(waarde) else ""
         kolommen.append(entry)
 
     return {**instellingen, "kolommen": kolommen}
@@ -108,7 +147,7 @@ def valideer_config(config: dict, selectiedata_contents: str) -> list[dict]:
             }
         )
 
-    kolommen = config.get("kolommen", [])
+    kolommen = meegenomen_kolommen(config)
     gevonden = 0
     niet_gevonden = []
     for kol in kolommen:
@@ -182,7 +221,7 @@ def transformeer_naar_lang(selectiedata_df: pd.DataFrame, config: dict) -> pd.Da
     opleiding = config.get("opleiding", "")
     jaar_raw = config.get("jaar", "")
     jaar = int(float(jaar_raw)) if jaar_raw else None
-    kolommen = config.get("kolommen", [])
+    kolommen = meegenomen_kolommen(config)
 
     headers = list(selectiedata_df.columns.astype(str))
 
