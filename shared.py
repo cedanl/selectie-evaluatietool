@@ -592,14 +592,15 @@ def genereer_bevindingen(
         if sig.empty:
             fairness.append(
                 f"{label}: geen significante verschillen tussen de groepen op de "
-                "selectie-items."
+                "selectie-items (Kruskal-Wallis)."
             )
             continue
         for _, r in sig.head(top).iterrows():
             fairness.append(
                 f"{label}: op '{r['Item']}' verschillen de groepen significant "
-                f"({r['Verschil']}, effectgrootte {r['Effectgrootte']}, "
-                f"p = {fmt_p(r['_p'])}). Beoordeel of dit een terecht onderscheid is."
+                f"(Kruskal-Wallis, {r['Verschil']}, effectgrootte "
+                f"{r['Effectgrootte']}, p = {fmt_p(r['_p'])}). Beoordeel of dit een "
+                "terecht onderscheid is."
             )
 
     if demografie_verdeling:
@@ -758,7 +759,7 @@ def _bevindingen_demografie_verdeling(
         else:
             resultaten.append(
                 f"{dim_label}: geen significant verschil in uitkomstverdeling "
-                f"tussen de groepen (p = {fmt_p(p)})."
+                f"tussen de groepen (chi², p = {fmt_p(p)})."
             )
 
 
