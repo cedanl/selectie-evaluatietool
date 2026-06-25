@@ -20,8 +20,9 @@ app.py was split into modules per responsibility (pitch [#15](https://github.com
 | File | Lines | Role |
 |---|---|---|
 | `app.py` | ~120 | App init, layout composition, `registreer_callbacks` wiring, the embed-via-URL callback, server start. Entry point. |
-| `helpers.py` | ~360 | Shared app-level helpers: `koppel_data`, `df_from_store`, `_laad_demodata`, `TABLE_STYLE`, `GROEPEER_OPTIES`, the groep-/kleur-helpers (`_scores_per_groep`, `_aantallen_per_groep`, `_groep_tabel_stijl`, `_meng_met_wit`), `_bereken_model_stats`, `DEMO_DATASETS`. |
+| `helpers.py` | ~360 | Shared app-level helpers: `koppel_data`, `bouw_data_stores` (runs parse→transform→join, shared by the upload and demo load paths), `df_from_store`, `_laad_demodata`, `TABLE_STYLE`, `GROEPEER_OPTIES`, the groep-/kleur-helpers (`_scores_per_groep`, `_aantallen_per_groep`, `_groep_tabel_stijl`, `_meng_met_wit`), `_bereken_model_stats`, `DEMO_DATASETS`. |
 | `uploads.py` | ~450 | Upload overlay + sidebar layout and the upload/validation/demodata-load/cohort/download callbacks. |
+| `tabs/intro.py` | ~190 | "Introductie"-tab: static, accessible welcome/context page. No callbacks (kept out of the `registreer_callbacks` loop). First tab, active by default. Group labels/colors come from `shared.GROEP_KLEUREN`. |
 | `tabs/bevindingen.py` | ~190 | "Wat valt op"-tab: layout + `update_bevindingen`. |
 | `tabs/scores.py` | ~430 | Selectiescores-tab: layout + cascading score-filters + `update_scores_tab`. |
 | `tabs/demografie.py` | ~200 | Demografie-tab: layout + `update_demografie_tab`. |
@@ -66,6 +67,7 @@ Each tab is its own module under `tabs/`, with `maak_layout()` for the layout an
 
 | Tab | Module | Key callback | What it shows |
 |---|---|---|---|
+| Introductie | `tabs/intro.py` | (none) | Static, accessible welcome page: what the tool answers, how it works in three steps, the groups (gestart-zonder-vervolg vs studiesucces), and a per-tab guide. First tab, active by default. |
 | Wat valt op | `tabs/bevindingen.py` | `update_bevindingen` | Auto-generated findings from `shared.genereer_bevindingen`. Every line follows from a measured effect size or p-value, nothing invented. |
 | Selectiescores | `tabs/scores.py` | `update_scores_tab` | Boxplots per item per group, mean/SD table. "Groepeer op" dropdown: gestart, doorstroom, or a demographic dimension (geslacht, vooropleiding). Filters: instrument, criterium, item, schaal/bereik (cascading, via `update_score_filters`). |
 | Demografie | `tabs/demografie.py` | `update_demografie_tab` | Per background dimension (geslacht, vooropleiding), crosstab of the dimension against doorstroom outcome. |
@@ -98,15 +100,16 @@ Kaleido 1.x spawns a new headless Chromium per `to_image()` call, taking ~4-5s e
 
 ## Config wizard (config_wizard.py)
 
-Lets users skip the manual config Excel. Upload a selectiedata file, click "Of: config automatisch genereren", and the wizard detects:
+Lets users skip the manual config Excel. The wizard lives in the upload overlay but opens as its own **full-screen page** (`wiz-overlay`, styled `.wiz-overlay`/`.wiz-card`) via the "Config automatisch genereren" button (`wiz-open-btn`); a red "Sluiten" button (`wiz-close-btn`) closes it. It is a single flat page (not stepwise); `toon_wizard` toggles the overlay's display. After uploading a selectiedata file it detects:
 
 - Which sheet contains data and where the header row is
 - Which column is the student ID (keyword scan: studentnummer, aanvraagnummer, etc.)
 - Which columns are numeric scores (filters out text, dates, rankings)
 - Instrument grouping from column name prefixes
+- A suggested scale per score column (`_raad_schaal`, rounded to a tidy range like 1-7 or 0-100)
 - Opleiding, instelling, and jaar from the filename
 
-The user reviews everything in an editable DataTable, removes unwanted rows, renames instruments, then confirms. The resulting config dict is identical to what `lees_config()` returns, so the rest of the pipeline works unchanged.
+The user reviews everything in an editable DataTable. Inclusion is a **checkbox per row** (`row_selectable="multi"`, not a Meenemen-dropdown or row delete); the column name is read-only, instrument/item/criterium/schaal are editable. `bevestig_config` keeps only the checked rows. The resulting config dict is identical to what `lees_config()` returns, so the rest of the pipeline works unchanged.
 
 All component IDs are prefixed `wiz-` to avoid collisions with dashboard components.
 
@@ -117,7 +120,7 @@ All component IDs are prefixed `wiz-` to avoid collisions with dashboard compone
 The config Excel has two sheets:
 
 - **instellingen**: key-value pairs (koppel_id_kolom, opleiding, instellingscode, jaar, blad_naam, header_rij, totaalscore_kolom, etc.)
-- **kolommen**: one row per score column with fields: kolom_naam, instrument, item, criterium
+- **kolommen**: one row per score column with fields: kolom_naam, instrument, item, criterium, schaal. `schaal` is optional (a range like `1-7` or `0-100`); `lees_config` reads it when present, so older four-column configs still work.
 
 ## Demo data
 
@@ -269,6 +272,18 @@ This session audited the full codebase for bugs, dead code, and data safety. All
 - Confirmed data/demo/ only contains fictive data generated by scripts/eenmalig/maak_fictief_*.py
 - Fixed over-broad gitignore that was blocking config.xlsx and demo data from being committed
 - Added path-specific gitignore rules instead of global `*.csv` / `*.xlsx` blocks
+
+## Recent changes (2026-06-25, accessibility session)
+
+Focused on making the tool clearer for non-technical users. All committed.
+
+- **Introductie tab** (`tabs/intro.py`): new static, accessible welcome page, first tab and active by default. Explains what the tool answers, three steps, the groups, and a per-tab guide. No callbacks, so it stays out of the `registreer_callbacks` loop. Group labels/colors come from `shared.GROEP_KLEUREN`. The intro compares only started students (gestart-zonder-vervolg vs studiesucces); "Niet gestart" is not shown as a comparison group.
+- **Config wizard is now a flat full-screen page** (was an inline collapse, briefly a stepwise flow). Opened by a clear outlined "Config automatisch genereren" button, closed by a red "Sluiten" button. The explanation is rewritten around the build-up of a selection procedure (instruments → items/criteria → scores → linking column).
+- **Wizard column table uses checkboxes** (`row_selectable="multi"`) instead of a Meenemen-dropdown; the column name is read-only.
+- **Schaal field added** to the config: a per-column range like `1-7`/`0-100`. The wizard auto-suggests it via `_raad_schaal` (rounds the observed max up to a tidy bound 3/5/7/10/20/25/50/100 or tens; lower bound 0 or 1). `lees_config`/`exporteer_config_excel` read/write it; older four-column configs still load.
+- **`bouw_data_stores` helper** (helpers.py) runs the parse→transform→join pipeline once, shared by the upload and demo load paths to prevent drift.
+- **"Univariate regressie" relabeled** to "Elk onderdeel apart" in the Wat valt op tab.
+- **Configuratie tab was built and then removed** at the user's request, along with its `config-store`/`raw-selectie-store`/`raw-cho-store` stores. Don't re-add those stores unless that feature comes back.
 
 ## Known issues (not yet fixed)
 
