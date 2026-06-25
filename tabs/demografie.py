@@ -10,6 +10,8 @@ from shared import (
     PERSPECTIEF_DOORSTROOM,
     binair_kleur_map,
     DEMO_DIMENSIES,
+    chi2_per_dimensie,
+    fmt_p,
 )
 
 from helpers import (
@@ -178,6 +180,27 @@ def registreer_callbacks(app):
             legend=dict(orientation="h", y=1.12),
         )
 
+        chi2 = chi2_per_dimensie(df, perspectief).get(dim_label)
+        if chi2 is not None:
+            p = chi2["p"]
+            significant = p < 0.05
+            chi_tekst = (
+                "Chi-kwadraattoets: de uitkomstverdeling verschilt significant "
+                if significant
+                else "Chi-kwadraattoets: geen significant verschil in "
+                "uitkomstverdeling "
+            ) + f"tussen de {dim_label.lower()}-groepen (p = {fmt_p(p)})."
+            chi_element = dbc.Alert(
+                chi_tekst,
+                color="warning" if significant else "light",
+                className="small py-2 mt-2 mb-0 border",
+            )
+        else:
+            chi_element = html.P(
+                "Te weinig groepen voor een chi-kwadraattoets.",
+                className="text-muted small fst-italic mt-2 mb-0",
+            )
+
         n_buiten = int((~df["groep"].isin(perspectief["populatie"])).sum())
         voetnoot = []
         if n_buiten > 0:
@@ -197,6 +220,7 @@ def registreer_callbacks(app):
                 style_data_conditional=tabel_stijl,
                 **TABLE_STYLE,
             ),
+            chi_element,
             dcc.Graph(figure=fig),
             *voetnoot,
         ]

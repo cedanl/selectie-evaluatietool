@@ -380,7 +380,7 @@ def registreer_callbacks(app):
             )
         secties.append(
             _bevindingen_lijst(
-                "Eerlijkheid: verschillen in scores",
+                "Verschiltoets: eerlijkheid",
                 bevindingen["fairness"],
                 "Geen demografische gegevens beschikbaar om te vergelijken.",
                 uitleg=(
