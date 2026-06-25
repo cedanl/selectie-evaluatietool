@@ -109,7 +109,7 @@ Lets users skip the manual config Excel. The wizard lives in the upload overlay 
 - A suggested scale per score column (`_raad_schaal`, rounded to a tidy range like 1-7 or 0-100)
 - Opleiding, instelling, and jaar from the filename
 
-The user reviews everything in an editable DataTable. Inclusion is a **checkbox per row** (`row_selectable="multi"`, not a Meenemen-dropdown or row delete); the column name is read-only, instrument/item/criterium/schaal are editable. `bevestig_config` keeps only the checked rows. The resulting config dict is identical to what `lees_config()` returns, so the rest of the pipeline works unchanged.
+`detecteer_alle_kolommen` returns **one row per column** in the sheet, with `_meenemen` pre-set True for the detected score columns and False for the rest (ID/text/date columns, with blank instrument/item/schaal). The user reviews everything in an editable DataTable where inclusion is a **checkbox per row** (`row_selectable="multi"`); the column name is read-only, instrument/item/criterium/schaal are editable. `bevestig_config` writes **all** rows to the config, each with `meenemen` set from the checkbox, so the config carries every column. `exporteer_config_excel` writes the `meenemen` column. The pipeline (via `meegenomen_kolommen`) analyzes only the checked rows.
 
 All component IDs are prefixed `wiz-` to avoid collisions with dashboard components.
 
@@ -120,7 +120,7 @@ All component IDs are prefixed `wiz-` to avoid collisions with dashboard compone
 The config Excel has two sheets:
 
 - **instellingen**: key-value pairs (koppel_id_kolom, opleiding, instellingscode, jaar, blad_naam, header_rij, totaalscore_kolom, etc.)
-- **kolommen**: one row per score column with fields: kolom_naam, instrument, item, criterium, schaal. `schaal` is optional (a range like `1-7` or `0-100`); `lees_config` reads it when present, so older four-column configs still work.
+- **kolommen**: one row per **every** column in the selection sheet, with fields: `meenemen` (boolean, first column), kolom_naam, instrument, item, criterium, schaal. `meenemen` (TRUE/FALSE, also Ja/Nee, 1/0) flags which columns are score items; only those are analyzed. `lees_config` keeps all rows with a `meenemen` key, and `transformatie.meegenomen_kolommen()` / the pipeline filter on it (`transformeer_naar_lang`, `valideer_config`). `schaal` is the score range (e.g. `1-7`, `0-100`). Backward compatible: an older config whose first column is `kolom_naam` (no `meenemen`) is read with every row defaulting to meenemen=True.
 
 ## Demo data
 

@@ -71,7 +71,7 @@ kolommen uit het selectiebestand belangrijk zijn en hoe ze in het dashboard
 moeten heten.
 
 Het makkelijkst is om dit bestand automatisch te laten maken. Klik in het
-uploadscherm op "Of: config automatisch genereren". De tool leest dan je
+uploadscherm op "Config automatisch genereren". De tool leest dan je
 selectiebestand, zoekt zelf de scorekolommen op, en laat je het resultaat
 controleren en bijschaven. Daarna kun je het bestand downloaden als Excel,
 zodat je het de volgende keer meteen kunt gebruiken.

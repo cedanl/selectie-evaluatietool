@@ -95,9 +95,12 @@ invult:
 
 - **Instellingen**: welke kolom het studentnummer is, op welke regel de
   kolomnamen staan, en welke kolom de totaalscore bevat.
-- **Kolommen**: voor elke scorekolom een regel met de kolomnaam, een
-  instrumentnaam, een itemnaam, eventueel een criterium en de schaal
-  (het bereik van de scores, bijvoorbeeld 1-7 of 0-100).
+- **Kolommen**: een regel voor elke kolom uit je selectiebestand. De eerste
+  kolom Meenemen (WAAR/ONWAAR) bepaalt of een kolom meetelt: zet je
+  scorekolommen op WAAR en de rest (studentnummer, naam, datums) op ONWAAR.
+  Voor de meegenomen kolommen vul je verder een instrumentnaam, een itemnaam,
+  eventueel een criterium en de schaal in (het bereik van de scores,
+  bijvoorbeeld 1-7 of 0-100).
 
 In elke cel van het template staat een toelichting die uitlegt wat je
 moet invullen.
