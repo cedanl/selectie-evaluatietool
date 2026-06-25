@@ -170,8 +170,14 @@ style_header_row(ws_uitleg, 17, 4)
 
 kolommen_uitleg = [
     [
+        "meenemen",
+        "WAAR of ONWAAR: telt deze kolom mee in de analyse? Zet alle scorekolommen op WAAR en de rest (studentnummer, naam, datums) op ONWAAR.",
+        "WAAR\nONWAAR",
+        "Zet hier elke kolom uit je bestand neer, ook de kolommen die je niet meeneemt.",
+    ],
+    [
         "kolom_naam",
-        "De exacte kolomnaam uit je selectiebestand. Alleen kolommen die hier staan worden meegenomen.",
+        "De exacte kolomnaam uit je selectiebestand.",
         "ctb_reflecteren_Schaalscore\nWI SCORE",
         "Kopieer exact uit je bestand.",
     ],
@@ -192,6 +198,12 @@ kolommen_uitleg = [
         "De eigenschap die het item meet. Laat leeg als niet van toepassing.",
         "Reflectievermogen\nVakkennis wiskunde",
         "Meerdere items mogen hetzelfde criterium meten.",
+    ],
+    [
+        "schaal (optioneel)",
+        "Het bereik van de scores op deze kolom.",
+        "1-7\n0-100",
+        "Alleen relevant voor meegenomen scorekolommen.",
     ],
 ]
 
@@ -317,17 +329,26 @@ for ri, (veld, default, comment_text) in enumerate(velden, 2):
 ws_kol = wb.create_sheet("kolommen")
 ws_kol.sheet_properties.tabColor = ORANGE
 
-ws_kol.column_dimensions["A"].width = 40
-ws_kol.column_dimensions["B"].width = 25
-ws_kol.column_dimensions["C"].width = 35
-ws_kol.column_dimensions["D"].width = 25
+ws_kol.column_dimensions["A"].width = 14
+ws_kol.column_dimensions["B"].width = 40
+ws_kol.column_dimensions["C"].width = 25
+ws_kol.column_dimensions["D"].width = 35
+ws_kol.column_dimensions["E"].width = 25
+ws_kol.column_dimensions["F"].width = 14
 
 headers_info = [
     (
+        "meenemen",
+        "WAAR of ONWAAR: telt deze kolom mee in de analyse?\n\n"
+        "Zet hier ALLE kolommen uit je selectiebestand neer, ook de kolommen "
+        "die je niet meeneemt. Scorekolommen krijgen WAAR, de rest "
+        "(studentnummer, naam, datums, vrije tekst) ONWAAR.\n\n"
+        "Voorbeelden:\n- WAAR\n- ONWAAR",
+    ),
+    (
         "kolom_naam",
         "De exacte kolomnaam uit je selectiebestand.\n"
-        "De tool zoekt deze kolom op in de data.\n"
-        "Alleen kolommen die hier staan worden meegenomen.\n\n"
+        "De tool zoekt deze kolom op in de data.\n\n"
         "Kopieer exact, inclusief hoofdletters, spaties en regelafbrekingen.\n\n"
         "Voorbeelden:\n- ctb_reflecteren_Schaalscore\n- WI SCORE\n- C_B1_Sc_NL_Docs",
     ),
@@ -352,17 +373,24 @@ headers_info = [
         "Meerdere items mogen hetzelfde criterium meten.\n\n"
         "Voorbeelden:\n- Reflectievermogen\n- Vakkennis wiskunde\n- Communicatievaardigheid\n- Stressbestendigheid",
     ),
+    (
+        "schaal (optioneel)",
+        "Het bereik van de scores op deze kolom.\n"
+        "Alleen relevant voor meegenomen scorekolommen.\n\n"
+        "Voorbeelden:\n- 1-7\n- 0-100",
+    ),
 ]
 
+n_kol = len(headers_info)
 for ci, (header, comment_text) in enumerate(headers_info, 1):
     cell = ws_kol.cell(row=1, column=ci, value=header)
     cell.comment = Comment(comment_text, AUTHOR)
     cell.comment.width = 350
     cell.comment.height = 250
-style_header_row(ws_kol, 1, 4)
+style_header_row(ws_kol, 1, n_kol)
 
 for ri in range(2, 52):
-    for ci in range(1, 5):
+    for ci in range(1, n_kol + 1):
         c = ws_kol.cell(row=ri, column=ci)
         c.border = thin_border
         c.font = normal_font
