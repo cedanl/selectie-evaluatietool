@@ -343,9 +343,6 @@ def registreer_callbacks(app):
     @app.callback(
         Output("data-store", "data"),
         Output("scores-store", "data"),
-        Output("config-store", "data"),
-        Output("raw-selectie-store", "data"),
-        Output("raw-cho-store", "data"),
         Input("btn-open-dashboard", "n_clicks"),
         Input("btn-demodata", "n_clicks"),
         Input("btn-reset", "n_clicks"),
@@ -371,7 +368,7 @@ def registreer_callbacks(app):
         trigger = ctx.triggered_id
 
         if trigger == "btn-reset":
-            return None, None, None, None, None
+            return None, None
 
         if trigger == "btn-demodata":
             return _laad_demodata(demo_dataset)
@@ -387,19 +384,13 @@ def registreer_callbacks(app):
                 config = lees_config(cfg_contents)
             else:
                 config = json.loads(wiz_config)
-            cho_fn_safe = cho_fn or "data.csv"
-            data_json, scores_json = bouw_data_stores(
-                config, sel_contents, parse_csv_or_excel(cho_contents, cho_fn_safe)
-            )
-            return (
-                data_json,
-                scores_json,
-                json.dumps(config),
+            return bouw_data_stores(
+                config,
                 sel_contents,
-                json.dumps({"contents": cho_contents, "filename": cho_fn_safe}),
+                parse_csv_or_excel(cho_contents, cho_fn or "data.csv"),
             )
 
-        return (dash.no_update,) * 5
+        return dash.no_update, dash.no_update
 
     @app.callback(
         Output("cohort-stats", "children"),

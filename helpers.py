@@ -6,7 +6,6 @@ shared.py."""
 
 import base64
 import io
-import json
 from pathlib import Path
 
 import numpy as np
@@ -136,10 +135,10 @@ def bouw_data_stores(
 ) -> tuple[str, str]:
     """Draai de pijplijn en geef de JSON voor data-store en scores-store terug.
 
-    Eén plek voor de volgorde parse -> transformeer -> koppel, zodat de drie
-    laadpaden (upload, demo, en de Configuratie-tab die herberekent) niet uiteen
-    kunnen lopen. De ruwe 1CHO komt al geparseerd binnen, omdat de paden hem
-    verschillend inlezen (demo via read_csv, uploads via parse_csv_or_excel)."""
+    Eén plek voor de volgorde parse -> transformeer -> koppel, zodat de twee
+    laadpaden (upload en demo) niet uiteen kunnen lopen. De ruwe 1CHO komt al
+    geparseerd binnen, omdat de paden hem verschillend inlezen (demo via
+    read_csv, uploads via parse_csv_or_excel)."""
     scores_df = transformeer_naar_lang(parse_selectiedata(sel_contents, config), config)
     joined = koppel_data(transformeer_cho(cho_ruw), scores_df)
     return (
@@ -149,9 +148,7 @@ def bouw_data_stores(
 
 
 def _laad_demodata(dataset_name=None):
-    """Laad een demoset. Returnt vijf stores: de gekoppelde data, de scores, de
-    config en de ruwe selectie- en 1CHO-bestanden, zodat de Configuratie-tab de
-    config kan tonen en met aangepaste instellingen kan herberekenen."""
+    """Laad een demoset en geef de JSON voor data-store en scores-store terug."""
     demo_subdir = DEMO_DIR / dataset_name if dataset_name else DEMO_DIR
 
     sel_path = demo_subdir / "selectiedata.xlsx"
@@ -159,21 +156,11 @@ def _laad_demodata(dataset_name=None):
     cho_path = demo_subdir / "1cho_data.csv"
 
     if not all(p.exists() for p in [sel_path, cfg_path, cho_path]):
-        return (dash.no_update,) * 5
+        return dash.no_update, dash.no_update
 
     config = lees_config(_file_to_data_uri(cfg_path))
-    sel_contents = _file_to_data_uri(sel_path)
-    cho_contents = _file_to_data_uri(cho_path)
-
-    data_json, scores_json = bouw_data_stores(
-        config, sel_contents, pd.read_csv(cho_path, sep=";")
-    )
-    return (
-        data_json,
-        scores_json,
-        json.dumps(config),
-        sel_contents,
-        json.dumps({"contents": cho_contents, "filename": cho_path.name}),
+    return bouw_data_stores(
+        config, _file_to_data_uri(sel_path), pd.read_csv(cho_path, sep=";")
     )
 
 
