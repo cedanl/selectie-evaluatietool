@@ -161,9 +161,9 @@ def registreer_callbacks(app):
         if bevindingen.get("regressie"):
             secties.append(
                 _bevindingen_lijst(
-                    "Univariate regressie",
+                    "Elk onderdeel apart",
                     bevindingen["regressie"],
-                    "Geen univariate regressieresultaten beschikbaar.",
+                    "Geen onderdelen die op zichzelf doorstroom voorspellen.",
                     uitleg=(
                         "Onderdelen die op zichzelf de kans op doorstroom "
                         "voorspellen. Komt van het tabblad Regressie, waar elk "
