@@ -120,6 +120,22 @@ body {
     padding: 0 1rem;
 }
 
+/* Tweekoloms-startscherm: inleiding links, uploaden rechts, zodat het scherm
+   niet te lang wordt. */
+.upload-shell {
+    width: 100%;
+    max-width: 1040px;
+    padding: 0 1.5rem;
+}
+
+.upload-actie {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
 .upload-zone {
     border: 2px dashed #cbd5e1;
     border-radius: 8px;

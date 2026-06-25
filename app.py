@@ -33,7 +33,7 @@ from tabs import (
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
-    title="Evaluatietool Selectie",
+    title="Selectie Evaluatietool",
     suppress_callback_exceptions=True,
 )
 
@@ -61,7 +61,7 @@ app.layout = html.Div(
                 SIDEBAR,
                 html.Div(
                     [
-                        html.H4("Evaluatietool Selectie", className="app-title"),
+                        html.H4("Selectie Evaluatietool", className="app-title"),
                         html.P(
                             id="app-subtitle",
                             className="text-muted mb-3",

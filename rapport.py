@@ -106,7 +106,7 @@ class RapportPDF(FPDF):
         self.set_y(-15)
         self.set_font("Helvetica", "I", 7)
         self.set_text_color(*GRAY)
-        self.cell(0, 10, "Evaluatietool Selectie | CEDA", align="C")
+        self.cell(0, 10, "Selectie Evaluatietool | CEDA", align="C")
 
     def cover_page(self, n_per_groep: dict, n_totaal: int):
         self.add_page()
@@ -119,8 +119,8 @@ class RapportPDF(FPDF):
 
         self.set_font("Helvetica", "B", 32)
         self.set_text_color(*BLUE)
-        self.cell(0, 14, "Evaluatierapport", align="C", new_x="LMARGIN", new_y="NEXT")
         self.cell(0, 14, "Selectie", align="C", new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 14, "Evaluatierapport", align="C", new_x="LMARGIN", new_y="NEXT")
 
         self.ln(10)
         self.set_font("Helvetica", "", 18)
@@ -340,19 +340,32 @@ def _build_figures(
             )
 
     try:
-        corr_matrix = item_pivot[score_cols].corr().round(2)
+        corr_matrix = item_pivot[score_cols].corr().round(3)
+        # Spiegelt de correlatietab: de matrix is symmetrisch, dus we tonen alleen
+        # de onderste driehoek (inclusief diagonaal) om dubbelingen te vermijden.
+        boven = np.triu(np.ones(corr_matrix.shape, dtype=bool), k=1)
+        z = corr_matrix.to_numpy(dtype=float).copy()
+        z[boven] = np.nan
+        tekst = [
+            [
+                "" if boven[i, j] else f"{corr_matrix.iat[i, j]:.2f}"
+                for j in range(z.shape[1])
+            ]
+            for i in range(z.shape[0])
+        ]
         fig_corr = go.Figure(
             data=go.Heatmap(
-                z=corr_matrix.values,
+                z=z,
                 x=corr_matrix.columns.tolist(),
                 y=corr_matrix.index.tolist(),
                 colorscale="RdBu_r",
                 zmid=0,
                 zmin=-1,
                 zmax=1,
-                text=corr_matrix.values,
+                text=tekst,
                 texttemplate="%{text}",
                 textfont={"size": 10},
+                hoverongaps=False,
             )
         )
         fig_corr.update_layout(
@@ -497,6 +510,95 @@ def _run_regression(
         reg_text = f"Regressie kon niet worden uitgevoerd: {e}"
 
     return reg_rows, pseudo_r2, reg_text
+
+
+def _beleidsconclusies(bevindingen: dict, model_stats: dict | None) -> list[str]:
+    """Beleidsgerichte vervolgstappen, gekoppeld aan de bevindingen. Spiegelt het
+    'Vervolgstappen voor beleid'-blok op de 'Wat valt op'-tab van het dashboard, zodat
+    het rapport dezelfde conclusie trekt: een significant verschil betekent
+    voorspellende waarde, geen verschil betekent dat de selectie studiesucces niet
+    voorspelt."""
+
+    def aantal(n, ev, mv):
+        return f"{n} {ev if n == 1 else mv}"
+
+    def namen(items):
+        items = list(items)
+        if len(items) == 1:
+            return items[0]
+        return ", ".join(items[:-1]) + " en " + items[-1]
+
+    def kracht(r2):
+        if r2 < 0.05:
+            return "zeer beperkt"
+        if r2 < 0.15:
+            return "beperkt"
+        if r2 < 0.30:
+            return "matig"
+        return "substantieel"
+
+    stappen = []
+    n_valide = len(bevindingen.get("validiteit", []))
+    if n_valide:
+        stappen.append(
+            f"De verschiltoets vindt {aantal(n_valide, 'item', 'items')} waarop "
+            "doorstromers duidelijk anders scoorden dan uitvallers. Dat is een "
+            "aanwijzing dat deze items studiesucces helpen voorspellen. Beleidsmatig: "
+            "behoud ze of laat ze zwaarder meewegen, en bevestig het patroon eerst op "
+            "een volgend cohort voordat je de procedure aanpast."
+        )
+    else:
+        stappen.append(
+            "De verschiltoets vindt geen enkel item waarop doorstromers en uitvallers "
+            "significant verschillen. Beleidsmatig betekent dit dat de selectie in deze "
+            "data geen studiesucces voorspelt: ga na of de items iets anders meten dat "
+            "je bewust wilt behouden (motivatie, passendheid), of dat de procedure "
+            "eenvoudiger en goedkoper kan."
+        )
+
+    if model_stats and model_stats.get("pseudo_r2") is not None:
+        r2 = model_stats["pseudo_r2"]
+        sig = model_stats.get("sig_items", [])
+        if sig:
+            ww = "levert" if len(sig) == 1 else "leveren"
+            eigen = f"Vooral {namen(sig)} {ww} een eigen bijdrage bovenop de rest. "
+        else:
+            eigen = "Geen item springt eruit als je ze samen bekijkt. "
+        stappen.append(
+            f"Alle items samen verklaren een {kracht(r2)} deel van het verschil in "
+            f"studiesucces (regressie, pseudo R-kwadraat = {r2:.2f}). "
+            + eigen
+            + "Dit gezamenlijke model is bij kleine groepen wankel, dus leun voor "
+            "beleid vooral op de verschiltoets."
+        )
+
+    n_fair = len(bevindingen.get("fairness", []))
+    if n_fair:
+        stappen.append(
+            f"Bij {aantal(n_fair, 'item', 'items')} scoorden achtergrondgroepen "
+            "(geslacht, vooropleiding) verschillend. Beleidsmatig: onderzoek of dat "
+            "verschil inhoudelijk te rechtvaardigen is of op onbedoelde vertekening "
+            "wijst."
+        )
+
+    n_corr = len(bevindingen.get("correlatie", []))
+    if n_corr:
+        stappen.append(
+            "De correlatie vindt "
+            f"{aantal(n_corr, 'sterke samenhang', 'sterke samenhangen')} tussen items "
+            "die deels hetzelfde meten. Beleidsmatig: je kunt er een laten vallen om de "
+            "selectie korter en goedkoper te maken zonder veel informatie te verliezen."
+        )
+
+    stappen.append(
+        "Herhaal de analyse met een nieuw cohort voordat je de procedure echt aanpast. "
+        "Een enkel jaar is een momentopname, zeker bij kleine groepen."
+    )
+    stappen.append(
+        "Combineer deze cijfers met vakkennis en eerder onderzoek. Doorstroom naar "
+        "jaar 2 is maar een van de manieren om studiesucces te meten."
+    )
+    return stappen
 
 
 def genereer_rapport(
@@ -653,8 +755,9 @@ def genereer_rapport(
     pdf.body_text(
         f"De selectiedata bevat {len(instrumenten)} instrument(en) met in "
         f"totaal {len(items)} item(s). Een instrument is bijvoorbeeld een "
-        f"toets of een gesprek, en de items zijn de onderdelen daarvan. "
-        f"Hieronder staat welke instrumenten en items er in de data zitten."
+        f"toets of een gesprek; de items zijn de afzonderlijke scores binnen "
+        f"zo'n instrument. Hieronder staat welke instrumenten en items er in "
+        f"de data zitten."
     )
 
     pdf.subsection_title("Instrumenten en items")
@@ -953,6 +1056,14 @@ def genereer_rapport(
         pdf.subsection_title("Demografie en uitkomst")
         for regel in bevindingen["demografie"]:
             pdf.body_text(f"  {regel}")
+
+    pdf.subsection_title("Vervolgstappen voor beleid")
+    pdf.body_text(
+        "De punten hieronder volgen uit de bevindingen en zijn bedoeld als richting "
+        "voor het gesprek, niet als kant-en-klaar oordeel."
+    )
+    for regel in _beleidsconclusies(bevindingen, model_stats):
+        pdf.body_text(f"  - {regel}")
 
     buf = io.BytesIO()
     pdf.output(buf)

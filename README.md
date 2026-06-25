@@ -1,4 +1,4 @@
-# Evaluatietool Selectie
+# Selectie Evaluatietool
 
 Veel opleidingen laten niet zomaar iedereen toe. Ze laten kandidaten eerst
 een soort toelatingsronde doen: een test, een gesprek, een vragenlijst. Op

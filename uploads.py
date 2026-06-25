@@ -21,6 +21,7 @@ from cho_transform import (
     transformeer_cho,
 )
 from config_wizard import maak_wizard_layout
+from tabs.intro import maak_upload_intro
 from rapport import genereer_rapport
 from shared import PERSPECTIEF_DOORSTROOM, GROEP_INGESCHREVEN, GROEP_SUCCES
 from helpers import (
@@ -57,91 +58,109 @@ def _upload_card(title, description, upload_id, status_id, accept):
     )
 
 
+_INLEIDING_KOLOM = dbc.Col(
+    [
+        html.Img(
+            src="/assets/nko-logo.svg",
+            style={"height": "48px", "marginBottom": "20px"},
+        ),
+        html.H3("Selectie Evaluatietool", className="mb-2"),
+        html.P(
+            "Deze tool laat zien of je selectieprocedure studiesucces "
+            "voorspelt: doen kandidaten die hoog scoorden bij de selectie "
+            "het later ook beter in hun studie? Je hebt geen statistiek "
+            "nodig. Je laadt je data en het dashboard rekent de "
+            "vergelijkingen uit en legt in gewone taal uit wat eruit komt.",
+            className="text-muted small mb-3",
+        ),
+        maak_upload_intro(),
+    ],
+    md=6,
+    className="text-start",
+)
+
+_UPLOAD_KOLOM = dbc.Col(
+    html.Div(
+        [
+            html.H5("Aan de slag", className="mb-1"),
+            html.P(
+                "Upload de drie bestanden om te beginnen, of probeer onderaan "
+                "een voorbeeldset.",
+                className="text-muted small mb-3",
+            ),
+            _upload_card(
+                "Selectiedata",
+                "Het Excel-bestand met de selectieresultaten.",
+                "upload-selectiedata",
+                "selectiedata-status",
+                ".xlsx,.xls",
+            ),
+            _upload_card(
+                "Configuratiebestand",
+                "Beschrijft welke kolommen uit het selectiebestand worden meegenomen.",
+                "upload-config",
+                "config-status",
+                ".xlsx",
+            ),
+            maak_wizard_layout(),
+            html.Div(id="validatie-resultaat", className="mb-3"),
+            _upload_card(
+                "1CHO-data",
+                "Studiesuccesdata met groepindeling per kandidaat.",
+                "upload-1cho",
+                "cho-status",
+                ".csv,.xlsx,.xls",
+            ),
+            dbc.Button(
+                "Open dashboard",
+                id="btn-open-dashboard",
+                color="primary",
+                size="lg",
+                className="w-100 mb-3",
+                disabled=True,
+            ),
+            html.Hr(className="my-3"),
+            html.P("Nog geen eigen data?", className="text-muted small mb-2"),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dcc.Dropdown(
+                            id="demo-dataset-picker",
+                            options=DEMO_DATASETS,
+                            value=DEMO_DATASETS[0]["value"] if DEMO_DATASETS else None,
+                            clearable=False,
+                        ),
+                        width=8,
+                    ),
+                    dbc.Col(
+                        dbc.Button(
+                            "Laden",
+                            id="btn-demodata",
+                            color="secondary",
+                            size="sm",
+                            className="w-100",
+                            style={"height": "36px"},
+                        ),
+                        width=4,
+                    ),
+                ],
+                className="g-2 align-items-center",
+            ),
+        ],
+        className="upload-actie text-start",
+    ),
+    md=6,
+)
+
 UPLOAD_OVERLAY = html.Div(
     id="upload-overlay",
     children=[
         html.Div(
-            [
-                html.Img(
-                    src="/assets/nko-logo.svg",
-                    style={"height": "48px", "marginBottom": "24px"},
-                ),
-                html.H3("Evaluatietool Selectie", className="mb-1"),
-                html.P(
-                    "Deze tool laat zien of je selectieprocedure studiesucces "
-                    "voorspelt: doen kandidaten die hoog scoorden bij de selectie "
-                    "het later ook beter in hun studie? Je hebt geen statistiek "
-                    "nodig. Je laadt je data en het dashboard rekent de "
-                    "vergelijkingen uit en legt in gewone taal uit wat eruit komt.",
-                    className="text-muted small mb-2 text-start",
-                ),
-                html.P(
-                    "Upload de drie bestanden hieronder om te beginnen, of probeer "
-                    "onderaan eerst een voorbeeldset.",
-                    className="text-muted mb-4",
-                ),
-                _upload_card(
-                    "Selectiedata",
-                    "Het Excel-bestand met de selectieresultaten.",
-                    "upload-selectiedata",
-                    "selectiedata-status",
-                    ".xlsx,.xls",
-                ),
-                _upload_card(
-                    "Configuratiebestand",
-                    "Beschrijft welke kolommen uit het selectiebestand worden meegenomen.",
-                    "upload-config",
-                    "config-status",
-                    ".xlsx",
-                ),
-                maak_wizard_layout(),
-                html.Div(id="validatie-resultaat", className="mb-3"),
-                _upload_card(
-                    "1CHO-data",
-                    "Studiesuccesdata met groepindeling per kandidaat.",
-                    "upload-1cho",
-                    "cho-status",
-                    ".csv,.xlsx,.xls",
-                ),
-                dbc.Button(
-                    "Open dashboard",
-                    id="btn-open-dashboard",
-                    color="primary",
-                    size="lg",
-                    className="w-100 mb-3",
-                    disabled=True,
-                ),
-                html.Hr(className="my-3"),
-                html.P("Nog geen eigen data?", className="text-muted small mb-2"),
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            dcc.Dropdown(
-                                id="demo-dataset-picker",
-                                options=DEMO_DATASETS,
-                                value=DEMO_DATASETS[0]["value"]
-                                if DEMO_DATASETS
-                                else None,
-                                clearable=False,
-                            ),
-                            width=8,
-                        ),
-                        dbc.Col(
-                            dbc.Button(
-                                "Laden",
-                                id="btn-demodata",
-                                color="secondary",
-                                size="sm",
-                                className="w-100",
-                                style={"height": "36px"},
-                            ),
-                            width=4,
-                        ),
-                    ],
-                    className="g-2 align-items-center",
-                ),
-            ],
-            className="upload-card",
+            dbc.Row(
+                [_INLEIDING_KOLOM, _UPLOAD_KOLOM],
+                className="g-4 align-items-start",
+            ),
+            className="upload-shell",
         )
     ],
     className="upload-overlay",
@@ -494,8 +513,15 @@ def registreer_callbacks(app):
         pdf_bytes = genereer_rapport(df, scores_df, perspectief=perspectief)
         opleiding = ""
         if "opleiding" in df.columns and df["opleiding"].notna().any():
-            opleiding = str(df["opleiding"].dropna().iloc[0]).replace(" ", "_")
+            opleiding = str(df["opleiding"].dropna().iloc[0]).strip()
+        jaar = ""
+        if "selectiejaar" in df.columns and df["selectiejaar"].notna().any():
+            jaren = sorted(df["selectiejaar"].dropna().unique())
+            jaar = " ".join(str(int(j)) for j in jaren)
+        staart = " ".join(deel for deel in [opleiding, jaar] if deel).strip()
         filename = (
-            f"evaluatierapport_{opleiding}.pdf" if opleiding else "evaluatierapport.pdf"
+            f"Selectie evaluatierapport - {staart}.pdf"
+            if staart
+            else "Selectie evaluatierapport.pdf"
         )
         return dcc.send_bytes(pdf_bytes, filename)

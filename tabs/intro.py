@@ -1,4 +1,11 @@
-"""Tab 'Introductie': toegankelijke uitleg en context van het dashboard."""
+"""Introductie op twee plekken.
+
+De uitgebreide inleiding (hoe werkt het, welke groepen worden vergeleken) hoort
+op het uploadscherm, want wie op het dashboard zit heeft de data al geladen.
+`maak_upload_intro()` levert dat blok voor de upload-overlay. Op het dashboard
+zelf blijft een slanke Introductie-tab over met alleen het tabbladoverzicht en
+de kanttekening (`maak_layout()`).
+"""
 
 from dash import html
 import dash_bootstrap_components as dbc
@@ -9,7 +16,7 @@ from shared import (
     GROEP_DOORGESTROOMD,
 )
 
-# De groepen zoals we ze in de introductie uitleggen. De tool vergelijkt alleen
+# De groepen zoals we ze in de inleiding uitleggen. De tool vergelijkt alleen
 # studenten die daadwerkelijk aan de opleiding zijn begonnen: wie studiesucces
 # had tegenover wie uitviel. De vergelijking 'gestart vs niet gestart' en de
 # losse 'Niet gestart'-groep zitten niet in het dashboard, dus die tonen we hier
@@ -70,6 +77,68 @@ def _tab_uitleg(naam, tekst):
     return html.Li([html.Strong(naam + ": "), tekst], className="mb-1")
 
 
+def maak_upload_intro():
+    """Inleiding voor het uploadscherm: hoe werkt het en welke groepen worden
+    vergeleken. Het welkom en de waarom-tekst staan al boven in de upload-overlay,
+    dus die herhalen we hier niet."""
+    return html.Div(
+        [
+            html.H6("Hoe werkt het?"),
+            dbc.ListGroup(
+                [
+                    _stap(
+                        1,
+                        "Data toevoegen",
+                        "Je laadt de selectiescores, een korte configuratie en de "
+                        "studievoortgang (1CHO). De configuratie kun je ook in de tool "
+                        "laten maken. Geen eigen data bij de hand? Kies onderaan een "
+                        "voorbeeldset.",
+                    ),
+                    _stap(
+                        2,
+                        "Koppelen",
+                        "De tool koppelt elke kandidaat aan de 1CHO-gegevens. Alleen "
+                        "kandidaten die zich daadwerkelijk bij de opleiding inschreven "
+                        "komen in 1CHO voor; daarvan bepaalt de tool of ze "
+                        "doorstroomden of een diploma haalden.",
+                    ),
+                    _stap(
+                        3,
+                        "Bekijken",
+                        "In de tabbladen zie je per item of hogere scores samenhangen "
+                        "met meer studiesucces, met uitleg erbij.",
+                    ),
+                ],
+                flush=True,
+                className="mb-4",
+            ),
+            html.H6("De groepen"),
+            html.P(
+                "Deze tool kijkt alleen naar studenten die zich daadwerkelijk bij de "
+                "instelling en opleiding inschreven en daardoor in het 1CHO-bestand "
+                "terechtkomen. Binnen die groep vergelijkt de tool wie studiesucces "
+                "had met wie uitviel:",
+                className="text-muted small",
+            ),
+            dbc.Row(
+                [
+                    _groep_kaart(kleur, titel, tekst)
+                    for kleur, titel, tekst in GROEP_KAARTEN
+                ],
+                className="mb-2",
+            ),
+            html.P(
+                "Kandidaten die niet werden geselecteerd, of die wel een plek kregen "
+                "maar niet aan de opleiding begonnen, staan niet in 1CHO. Zij worden "
+                "uit de analyse gehaald en niet met de ingeschreven studenten "
+                "vergeleken.",
+                className="text-muted small mb-0",
+            ),
+        ],
+        className="intro-tab text-start",
+    )
+
+
 def maak_layout():
     return dbc.Tab(
         label="Introductie",
@@ -77,72 +146,11 @@ def maak_layout():
         children=[
             html.Div(
                 [
-                    html.H5("Welkom bij de evaluatietool selectie"),
+                    html.H5("Over dit dashboard"),
                     html.P(
-                        "Deze tool helpt je een simpele maar belangrijke vraag te "
-                        "beantwoorden: doen studenten die hoog scoorden bij de "
-                        "selectie het later ook beter in hun studie? Met andere "
-                        "woorden, voorspelt jouw selectieprocedure studiesucces?",
+                        "De data is ingeladen. Hieronder zie je wat elk tabblad laat "
+                        "zien.",
                         className="text-muted",
-                    ),
-                    html.P(
-                        "Je hoeft geen statistiek te kennen om de tool te gebruiken. "
-                        "Je laadt je eigen data of een voorbeeldset, en het dashboard "
-                        "rekent de vergelijkingen voor je uit en legt in gewone taal "
-                        "uit wat eruit komt.",
-                        className="text-muted",
-                    ),
-                    html.Hr(className="my-4"),
-                    html.H6("Hoe werkt het?"),
-                    dbc.ListGroup(
-                        [
-                            _stap(
-                                1,
-                                "Data toevoegen",
-                                "Je laadt de selectiescores, een korte configuratie "
-                                "en de studievoortgang (1CHO). Geen eigen data bij de "
-                                "hand? Kies links een voorbeeldset.",
-                            ),
-                            _stap(
-                                2,
-                                "Koppelen",
-                                "De tool koppelt elke kandidaat aan de 1CHO-gegevens. "
-                                "Alleen kandidaten die zich daadwerkelijk bij de "
-                                "opleiding inschreven komen in 1CHO voor; daarvan "
-                                "bepaalt de tool of ze doorstroomden of een diploma "
-                                "haalden.",
-                            ),
-                            _stap(
-                                3,
-                                "Bekijken",
-                                "In de tabbladen zie je per item of hogere scores "
-                                "samenhangen met meer studiesucces, met uitleg erbij.",
-                            ),
-                        ],
-                        flush=True,
-                        className="mb-4",
-                    ),
-                    html.H6("De groepen"),
-                    html.P(
-                        "Deze tool kijkt alleen naar studenten die zich daadwerkelijk "
-                        "bij de instelling en opleiding inschreven en daardoor in het "
-                        "1CHO-bestand terechtkomen. Binnen die groep vergelijkt de tool "
-                        "wie studiesucces had met wie uitviel:",
-                        className="text-muted small",
-                    ),
-                    dbc.Row(
-                        [
-                            _groep_kaart(kleur, titel, tekst)
-                            for kleur, titel, tekst in GROEP_KAARTEN
-                        ],
-                        className="mb-2",
-                    ),
-                    html.P(
-                        "Kandidaten die niet werden geselecteerd, of die wel een plek "
-                        "kregen maar niet aan de opleiding begonnen, staan niet in 1CHO. "
-                        "Zij worden uit de analyse gehaald en niet met de ingeschreven "
-                        "studenten vergeleken.",
-                        className="text-muted small mb-4",
                     ),
                     html.H6("Wat vind je in de tabbladen?"),
                     html.Ul(
