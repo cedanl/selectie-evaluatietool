@@ -21,12 +21,14 @@ from helpers import DEMO_DATASETS, _laad_demodata
 from uploads import UPLOAD_OVERLAY, SIDEBAR
 from uploads import registreer_callbacks as registreer_uploads
 from tabs import (
+    intro,
     bevindingen,
     scores,
     demografie,
     verschiltoets,
     correlatie,
     regressie,
+    configuratie,
 )
 
 app = dash.Dash(
@@ -38,7 +40,15 @@ app = dash.Dash(
 
 registreer_wizard(app)
 registreer_uploads(app)
-for tab in (bevindingen, scores, demografie, verschiltoets, correlatie, regressie):
+for tab in (
+    bevindingen,
+    scores,
+    demografie,
+    verschiltoets,
+    correlatie,
+    regressie,
+    configuratie,
+):
     tab.registreer_callbacks(app)
 
 app.layout = html.Div(
@@ -46,6 +56,9 @@ app.layout = html.Div(
         dcc.Location(id="url", refresh=False),
         dcc.Store(id="data-store", storage_type="memory"),
         dcc.Store(id="scores-store", storage_type="memory"),
+        dcc.Store(id="config-store", storage_type="memory"),
+        dcc.Store(id="raw-selectie-store", storage_type="memory"),
+        dcc.Store(id="raw-cho-store", storage_type="memory"),
         dbc.Toast(
             "Rapport wordt gegenereerd, dit kan even duren...",
             id="rapport-toast",
@@ -68,15 +81,17 @@ app.layout = html.Div(
                         ),
                         dbc.Tabs(
                             [
+                                intro.maak_layout(),
                                 bevindingen.maak_layout(),
                                 scores.maak_layout(),
                                 demografie.maak_layout(),
                                 verschiltoets.maak_layout(),
                                 correlatie.maak_layout(),
                                 regressie.maak_layout(),
+                                configuratie.maak_layout(),
                             ],
                             id="main-tabs",
-                            active_tab="tab-scores",
+                            active_tab="tab-intro",
                         ),
                     ],
                     className="main-wrapper",
@@ -91,6 +106,9 @@ app.layout = html.Div(
 @app.callback(
     Output("data-store", "data", allow_duplicate=True),
     Output("scores-store", "data", allow_duplicate=True),
+    Output("config-store", "data", allow_duplicate=True),
+    Output("raw-selectie-store", "data", allow_duplicate=True),
+    Output("raw-cho-store", "data", allow_duplicate=True),
     Output("main-tabs", "active_tab"),
     Input("url", "search"),
     prevent_initial_call="initial_duplicate",
@@ -99,21 +117,22 @@ def laad_via_url(search):
     """Maakt het dashboard embedbaar per tab. Een URL als
     ?demo=leiden&tab=correlatie laadt de demodata en opent meteen het
     gevraagde tabblad, zodat een iframe direct die tab toont."""
+    leeg = (dash.no_update,) * 5
     if not search:
-        return dash.no_update, dash.no_update, dash.no_update
+        return (*leeg, dash.no_update)
 
     params = parse_qs(urlsplit(search).query)
     demo = (params.get("demo") or [None])[0]
     tab = (params.get("tab") or [None])[0]
 
-    data_out, scores_out = dash.no_update, dash.no_update
+    stores = leeg
     if demo:
         match = next((d["value"] for d in DEMO_DATASETS if demo in d["value"]), None)
         if match:
-            data_out, scores_out = _laad_demodata(match)
+            stores = _laad_demodata(match)
 
     tab_out = f"tab-{tab}" if tab else dash.no_update
-    return data_out, scores_out, tab_out
+    return (*stores, tab_out)
 
 
 if __name__ == "__main__":

@@ -162,3 +162,29 @@ body {
     line-height: 1.4;
     color: #64748b;
 }
+
+/* Introductietab: toegankelijke welkomst- en contextpagina. */
+.intro-tab {
+    max-width: 820px;
+}
+
+.intro-stap-nummer {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #1d4ed8;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.intro-groep-stip {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    margin-bottom: 8px;
+}

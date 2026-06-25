@@ -6,6 +6,7 @@ shared.py."""
 
 import base64
 import io
+import json
 from pathlib import Path
 
 import numpy as np
@@ -131,6 +132,9 @@ def _file_to_data_uri(path: Path) -> str:
 
 
 def _laad_demodata(dataset_name=None):
+    """Laad een demoset. Returnt vijf stores: de gekoppelde data, de scores, de
+    config en de ruwe selectie- en 1CHO-bestanden, zodat de Configuratie-tab de
+    config kan tonen en met aangepaste instellingen kan herberekenen."""
     demo_subdir = DEMO_DIR / dataset_name if dataset_name else DEMO_DIR
 
     sel_path = demo_subdir / "selectiedata.xlsx"
@@ -138,12 +142,13 @@ def _laad_demodata(dataset_name=None):
     cho_path = demo_subdir / "1cho_data.csv"
 
     if not all(p.exists() for p in [sel_path, cfg_path, cho_path]):
-        return dash.no_update, dash.no_update
+        return (dash.no_update,) * 5
 
     cfg_contents = _file_to_data_uri(cfg_path)
     config = lees_config(cfg_contents)
 
     sel_contents = _file_to_data_uri(sel_path)
+    cho_contents = _file_to_data_uri(cho_path)
     sel_df = parse_selectiedata(sel_contents, config)
     scores_df = transformeer_naar_lang(sel_df, config)
     cho_df = transformeer_cho(pd.read_csv(cho_path, sep=";"))
@@ -153,6 +158,9 @@ def _laad_demodata(dataset_name=None):
     return (
         joined.to_json(orient="split", date_format="iso"),
         scores_df.to_json(orient="split", date_format="iso"),
+        json.dumps(config),
+        sel_contents,
+        json.dumps({"contents": cho_contents, "filename": cho_path.name}),
     )
 
 

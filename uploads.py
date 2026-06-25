@@ -64,7 +64,16 @@ UPLOAD_OVERLAY = html.Div(
                 ),
                 html.H3("Evaluatietool Selectie", className="mb-1"),
                 html.P(
-                    "Upload drie bestanden om het dashboard te openen.",
+                    "Deze tool laat zien of je selectieprocedure studiesucces "
+                    "voorspelt: doen kandidaten die hoog scoorden bij de selectie "
+                    "het later ook beter in hun studie? Je hebt geen statistiek "
+                    "nodig. Je laadt je data en het dashboard rekent de "
+                    "vergelijkingen uit en legt in gewone taal uit wat eruit komt.",
+                    className="text-muted small mb-2 text-start",
+                ),
+                html.P(
+                    "Upload de drie bestanden hieronder om te beginnen, of probeer "
+                    "onderaan eerst een voorbeeldset.",
                     className="text-muted mb-4",
                 ),
                 _upload_card(
@@ -334,6 +343,9 @@ def registreer_callbacks(app):
     @app.callback(
         Output("data-store", "data"),
         Output("scores-store", "data"),
+        Output("config-store", "data"),
+        Output("raw-selectie-store", "data"),
+        Output("raw-cho-store", "data"),
         Input("btn-open-dashboard", "n_clicks"),
         Input("btn-demodata", "n_clicks"),
         Input("btn-reset", "n_clicks"),
@@ -359,7 +371,7 @@ def registreer_callbacks(app):
         trigger = ctx.triggered_id
 
         if trigger == "btn-reset":
-            return None, None
+            return None, None, None, None, None
 
         if trigger == "btn-demodata":
             return _laad_demodata(demo_dataset)
@@ -378,16 +390,18 @@ def registreer_callbacks(app):
             scores_df = transformeer_naar_lang(
                 parse_selectiedata(sel_contents, config), config
             )
-            cho_df = transformeer_cho(
-                parse_csv_or_excel(cho_contents, cho_fn or "data.csv")
-            )
+            cho_fn_safe = cho_fn or "data.csv"
+            cho_df = transformeer_cho(parse_csv_or_excel(cho_contents, cho_fn_safe))
             joined = koppel_data(cho_df, scores_df)
             return (
                 joined.to_json(orient="split", date_format="iso"),
                 scores_df.to_json(orient="split", date_format="iso"),
+                json.dumps(config),
+                sel_contents,
+                json.dumps({"contents": cho_contents, "filename": cho_fn_safe}),
             )
 
-        return dash.no_update, dash.no_update
+        return (dash.no_update,) * 5
 
     @app.callback(
         Output("cohort-stats", "children"),
