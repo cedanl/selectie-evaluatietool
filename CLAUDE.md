@@ -23,14 +23,14 @@ app.py was split into modules per responsibility (pitch [#15](https://github.com
 | `helpers.py` | ~360 | Shared app-level helpers: `koppel_data`, `bouw_data_stores` (runs parse→transform→join, shared by the upload and demo load paths), `df_from_store`, `_laad_demodata`, `TABLE_STYLE`, `GROEPEER_OPTIES`, the groep-/kleur-helpers (`_scores_per_groep`, `_aantallen_per_groep`, `_groep_tabel_stijl`, `_meng_met_wit`), `_bereken_model_stats`, `DEMO_DATASETS`. |
 | `uploads.py` | ~450 | Upload overlay + sidebar layout and the upload/validation/demodata-load/cohort/download callbacks. |
 | `tabs/intro.py` | ~190 | "Introductie"-tab: static, accessible welcome/context page. No callbacks (kept out of the `registreer_callbacks` loop). First tab, active by default. Group labels/colors come from `shared.GROEP_KLEUREN`. |
-| `tabs/bevindingen.py` | ~190 | "Wat valt op"-tab: layout + `update_bevindingen`. |
+| `tabs/bevindingen.py` | ~315 | "Wat valt op"-tab: layout + `update_bevindingen`. |
 | `tabs/scores.py` | ~430 | Selectiescores-tab: layout + cascading score-filters + `update_scores_tab`. |
 | `tabs/demografie.py` | ~200 | Demografie-tab: layout + `update_demografie_tab`. |
 | `tabs/verschiltoets.py` | ~165 | Verschiltoets-tab: layout + `update_verschiltoets_tab`. |
 | `tabs/correlatie.py` | ~245 | Correlatie-tab: layout + `update_correlatie_tab` + the data-change callback that fills the correlatie filters and the app-subtitle. |
 | `tabs/regressie.py` | ~395 | Regressie-tab: layout + `update_regressie_tab`. |
 | `rapport.py` | ~960 | PDF report generation. Uses fpdf2 + kaleido. Called from uploads.py download button. |
-| `config_wizard.py` | ~830 | Auto-detection of columns from uploaded Excel. Wired in app.py via `registreer_callbacks`. |
+| `config_wizard.py` | ~895 | Auto-detection of columns from uploaded Excel. Wired in app.py via `registreer_callbacks`. |
 | `transformatie.py` | ~240 | File parsing, config reading, data validation, wide-to-long transformation. |
 | `cho_transform.py` | ~240 | Raw 1CHO handling. `transformeer_cho()` derives the doorstroom group from long-format enrollment rows; `bouw_ruwe_cho()` builds synthetic raw 1CHO for the data scripts. |
 | `shared.py` | ~850 | Shared constants and analysis functions used by the tabs and rapport.py (perspectieven, effectgroottes, `vergelijk_succes_per_item`, `toets_verschil_per_item`, `bereken_univariaat`, `chi2_per_dimensie`, `genereer_bevindingen`, demografie-helpers). |
@@ -59,7 +59,7 @@ The group labels and the helper lists `GROEP_INGESCHREVEN` (all started) and `GR
 
 The required raw 1CHO columns are `persoonsgebonden_nummer`, `inschrijvingsjaar`, and `eerste_jaar_aan_deze_opleiding_instelling` (see `cho_transform.RUWE_CHO_KOLOMMEN`). Optional passthrough columns: geslacht, herkomst, `hoogste_vooropleiding_omschrijving_vooropleiding` (shortened to VWO/HAVO/MBO/HO), gem_eindcijfer_vo, `diploma_behaald`.
 
-The data scripts choose the outcome by `opleidingsfase`: masters (`"M"`, e.g. biomed demo) generate `diploma_behaald`; bachelors (`"B"`, e.g. bewegingswetenschappen demo) generate year-2 doorstroom.
+The data scripts choose the outcome by `opleidingsfase`: masters (`"M"`, e.g. the Leiden/Farmacie demo) generate `diploma_behaald`; bachelors (`"B"`, e.g. the Radboud/Psychologie demo) generate year-2 doorstroom.
 
 ## Dashboard tabs
 
@@ -243,7 +243,7 @@ This session did the bulk of the multi-programme work:
 - **Samenhang tab filters**: own instrument/criterium dropdowns. Filters only affect the correlation matrix, not the regression.
 - **Regression robustness**: items with >30% missing data excluded, multicollinear items auto-removed (matrix rank check). Both dashboard and PDF report show which items were dropped and why.
 - **Toelichtingen**: all explanatory text rewritten for a broad audience. Collapsible interpretation guides for correlation (Cohen 1988), regression table, and VO-cijfer. Demographic tab explains 1CHO data origin and how doorstroom is determined.
-- **Fictive demo data**: Gezondheidskunde Univ Noordstad 2026 (master, 120 candidates, 90 columns) and Sportkunde HS Westland 2026 (bachelor, 80 candidates, 37 columns, header_rij=3). Demo picker shows only fictive data.
+- **Fictive demo data**: an early master + bachelor pair, later replaced by the current `demo_leiden_2026` (Farmacie master) and `demo_radboud_2026` (Psychologie bachelor). The demo picker shows only fictive data.
 - **Pitch created**: [#14](https://github.com/cedanl/evaluatietool-voorbeeld/issues/14) Diploma as alternative outcome measure for 1-year masters.
 
 ## Recent changes (2026-06-05, audit session)
@@ -291,15 +291,7 @@ These were identified during the audit but left unfixed. Pick them up when relev
 
 ### Code quality
 - **rapport.py partly duplicates analysis logic**: the joint logistic regression (`_run_regression`) is still implemented separately from app.py. Most other analysis (univariate regression, per-item verschiltoets, findings) now lives in shared.py and is reused by both, which prevents drift.
-- **Silent except blocks in config_wizard.py**: callbacks at lines ~596 and ~641 swallow all exceptions with bare `except Exception`. Should at minimum log the error.
+- **Silent except blocks in config_wizard.py**: the detection callbacks (`detecteer_blad_en_header`, `detecteer_kolommen`) swallow all exceptions with bare `except Exception`. Should at minimum log the error. Several broad catches in rapport.py and tabs/regressie.py do the same.
 - **detecteer_totaalscore second loop too broad**: matches any column containing "totaal" in the name, which can pick up unrelated columns.
-- **Hardcoded group strings**: `"Niet gestart"`, `"Gestart, niet naar jaar 2"`, `"Doorgestroomd naar jaar 2"` appear as raw strings throughout app.py instead of referencing `GROEP_VOLGORDE` from shared.py.
 - **Large callbacks**: `update_regressie_tab` and `update_verschiltoets_tab` still do a lot of work inline. Splitting data prep from layout would improve readability. (The old `update_samenhang_tab`/`update_vo_tab` were already split: Samenhang became the Correlatie + Regressie tabs and the VO-cijfer tab was removed.)
 - **No encoding fallback**: `parse_csv_or_excel()` in transformatie.py decodes CSV as utf-8 only. Dutch institutional files sometimes use latin-1 or cp1252.
-
-### Uncommitted work from other sessions
-
-As of 2026-06-05:
-
-- **app.py + rapport.py**: regression z-score standardization (uncommitted, from session A). Note: the `else 0` in `lambda s: (s - s.mean()) / s.std() if s.std() > 0 else 0` returns a scalar. This is the same pattern that caused the koppel_data z-score crash. Should be `pd.Series(0, index=s.index)` for safety.
-- **assets/nko-logo.png**: untracked. Converted from SVG for PDF rendering. Needs to be committed.

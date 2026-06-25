@@ -95,7 +95,8 @@ invult:
 - **Instellingen**: welke kolom het studentnummer is, op welke regel de
   kolomnamen staan, en welke kolom de totaalscore bevat.
 - **Kolommen**: voor elke scorekolom een regel met de kolomnaam, een
-  instrumentnaam, een itemnaam en eventueel een criterium.
+  instrumentnaam, een itemnaam, eventueel een criterium en de schaal
+  (het bereik van de scores, bijvoorbeeld 1-7 of 0-100).
 
 In elke cel van het template staat een toelichting die uitlegt wat je
 moet invullen.
@@ -103,8 +104,9 @@ moet invullen.
 
 ## Wat zie je in het dashboard?
 
-Het dashboard heeft zes tabbladen. Hieronder staat per tabblad wat je
-ziet en hoe je het leest.
+Het dashboard opent op een Introductie-tab met uitleg en context, gevolgd
+door zes inhoudelijke tabbladen. Hieronder staat per inhoudelijk tabblad
+wat je ziet en hoe je het leest.
 
 ### Wat valt op
 
@@ -116,7 +118,7 @@ losse tabbladen induikt.
 
 ### Selectiescores
 
-Hier zie je per onderdeel van de selectie hoe de verschillende groepen
+Hier zie je per item van de selectie hoe de verschillende groepen
 studenten scoorden. Dat gebeurt met een boxplot. Een boxplot is een
 manier om in een oogopslag te laten zien hoe een groep scoorde: waar de
 meeste mensen zitten, en hoe ver de uitschieters uit elkaar liggen.
@@ -127,7 +129,7 @@ achtergrondkenmerk zoals geslacht of vooropleiding.
 
 De vraag die je jezelf stelt: scoorden de studenten die het later goed
 deden, ook hoger bij de selectie? Als de groep doorstromers duidelijk
-hoger ligt dan de groep uitvallers, dan zegt dat onderdeel van de
+hoger ligt dan de groep uitvallers, dan zegt dat item van de
 selectie kennelijk iets zinnigs.
 
 ### Demografie
@@ -139,12 +141,12 @@ voor de ene groep anders uitpakt dan voor de andere.
 
 ### Verschiltoets
 
-Dit tabblad toetst per onderdeel of de scores echt verschillen tussen
+Dit tabblad toetst per item of de scores echt verschillen tussen
 groepen, of dat het toeval kan zijn. Je kiest of je kijkt naar doorstroom
-naar jaar 2 (voorspelt het onderdeel studiesucces?) of naar een
-achtergrondkenmerk (maakt het onderdeel onbedoeld onderscheid?).
+naar jaar 2 (voorspelt het item studiesucces?) of naar een
+achtergrondkenmerk (maakt het item onbedoeld onderscheid?).
 
-Per onderdeel zie je hoe groot het verschil is, hoe sterk dat effect is, en
+Per item zie je hoe groot het verschil is, hoe sterk dat effect is, en
 of het significant is. Een ster betekent dat het verschil waarschijnlijk
 niet op toeval berust.
 
@@ -152,17 +154,17 @@ niet op toeval berust.
 
 "Correlatie" betekent: hangen twee dingen met elkaar samen, gaan ze samen
 op en neer? Dit tabblad laat met een kleurenkaart zien welke
-selectie-onderdelen op elkaar lijken. Als twee onderdelen sterk
+selectie-items op elkaar lijken. Als twee items sterk
 samenhangen, meten ze waarschijnlijk bijna hetzelfde, en hoef je ze
 misschien niet allebei af te nemen. Hangen ze juist weinig samen, dan
 vullen ze elkaar aan.
 
 ### Regressie
 
-Dit tabblad laat zien welke onderdelen van de selectie het sterkst
+Dit tabblad laat zien welke items van de selectie het sterkst
 voorspellen of een student de opleiding succesvol vervolgt: doorstroom naar
 het tweede jaar, of een diploma bij eenjarige opleidingen. Bovenaan staan
-de onderdelen die er het meest toe lijken te doen.
+de items die er het meest toe lijken te doen.
 
 Let op: dit werkt het best bij grote groepen. Bij kleine groepen (denk aan
 enkele tientallen studenten) zijn de uitkomsten wankel en moet je ze zien
