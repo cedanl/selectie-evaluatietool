@@ -372,7 +372,9 @@ def registreer_callbacks(app):
                     "",
                     uitleg=(
                         "Hangt een achtergrondkenmerk (geslacht, vooropleiding) "
-                        "samen met de kans op doorstroom?"
+                        "samen met de kans op doorstroom? Getoetst met een "
+                        "chi-kwadraattoets op de kruistabel van het kenmerk tegen "
+                        "de uitkomst."
                     ),
                 )
             )
@@ -383,8 +385,8 @@ def registreer_callbacks(app):
                 "Geen demografische gegevens beschikbaar om te vergelijken.",
                 uitleg=(
                     "Items waar achtergrondgroepen verschillend scoorden. "
-                    "Kan wijzen op onbedoelde vertekening. Komt van het tabblad "
-                    "Verschiltoets."
+                    "Kan wijzen op onbedoelde vertekening. Per item getoetst met "
+                    "een Kruskal-Wallis-toets, net als op het tabblad Verschiltoets."
                 ),
             )
         )
