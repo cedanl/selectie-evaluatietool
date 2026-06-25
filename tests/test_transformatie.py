@@ -4,7 +4,13 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from transformatie import lees_config, parse_selectiedata, transformeer_naar_lang
+from transformatie import (
+    lees_config,
+    parse_selectiedata,
+    transformeer_naar_lang,
+    _parse_bool,
+    meegenomen_kolommen,
+)
 
 DEMO_DIR = Path(__file__).parent.parent / "data" / "demo"
 
@@ -27,6 +33,35 @@ def sportkunde():
     if not d.exists():
         pytest.skip("demo data not present")
     return d
+
+
+class TestParseBool:
+    @pytest.mark.parametrize("waar", [True, "TRUE", "true", "Waar", "Ja", "1", 1, "x"])
+    def test_waar(self, waar):
+        assert _parse_bool(waar) is True
+
+    @pytest.mark.parametrize(
+        "onwaar", [False, "FALSE", "Nee", "0", "", None, float("nan")]
+    )
+    def test_onwaar(self, onwaar):
+        assert _parse_bool(onwaar) is False
+
+
+class TestMeegenomenKolommen:
+    def test_filtert_op_meenemen(self):
+        config = {
+            "kolommen": [
+                {"kolom_naam": "a", "meenemen": True},
+                {"kolom_naam": "b", "meenemen": False},
+                {"kolom_naam": "c", "meenemen": True},
+            ]
+        }
+        namen = [k["kolom_naam"] for k in meegenomen_kolommen(config)]
+        assert namen == ["a", "c"]
+
+    def test_zonder_meenemen_telt_alles_mee(self):
+        config = {"kolommen": [{"kolom_naam": "a"}, {"kolom_naam": "b"}]}
+        assert len(meegenomen_kolommen(config)) == 2
 
 
 class TestLeesConfig:
