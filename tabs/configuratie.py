@@ -4,19 +4,15 @@ dashboard opnieuw worden doorgerekend, of als Excel worden gedownload."""
 
 import io
 import json
+import re
 
 import pandas as pd
 import dash
 from dash import dcc, html, dash_table, Input, Output, State
 import dash_bootstrap_components as dbc
 
-from transformatie import (
-    parse_selectiedata,
-    parse_csv_or_excel,
-    transformeer_naar_lang,
-)
-from cho_transform import transformeer_cho
-from helpers import koppel_data, TABLE_STYLE
+from transformatie import parse_csv_or_excel
+from helpers import bouw_data_stores, df_from_store, TABLE_STYLE
 from config_wizard import bouw_config_dict, exporteer_config_excel
 
 # Bewerkbare instellingen-velden: (configsleutel, label). De volgorde bepaalt
@@ -212,14 +208,13 @@ def maak_layout():
     )
 
 
-def _tabel_inhoud(df: pd.DataFrame):
+def _tabel_inhoud(df: pd.DataFrame) -> tuple[list[dict], list[dict]]:
     """Kolomdefinities en (afgekapte) rijen voor een preview-tabel."""
     if df.empty:
         return [], []
     kolommen = [{"name": str(c), "id": str(c)} for c in df.columns]
-    data = (
-        df.head(PREVIEW_RIJEN).astype(object).where(pd.notna(df), "").to_dict("records")
-    )
+    sub = df.head(PREVIEW_RIJEN).astype(object)
+    data = sub.where(pd.notna(sub), "").to_dict("records")
     return kolommen, data
 
 
@@ -249,16 +244,14 @@ def registreer_callbacks(app):
         Input("data-store", "data"),
     )
     def vul_previews(scores_json, data_json):
+        # scores_df heeft geen 'groep'-kolom, dus df_from_store (dat een
+        # categorische groep verwacht) kan alleen op de gekoppelde data-store.
         scores_df = (
             pd.read_json(io.StringIO(scores_json), orient="split")
             if scores_json
             else pd.DataFrame()
         )
-        data_df = (
-            pd.read_json(io.StringIO(data_json), orient="split")
-            if data_json
-            else pd.DataFrame()
-        )
+        data_df = df_from_store(data_json) if data_json else pd.DataFrame()
         scores_kol, scores_data = _tabel_inhoud(scores_df)
         data_kol, data_data = _tabel_inhoud(data_df)
         return scores_kol, scores_data, data_kol, data_data
@@ -298,14 +291,10 @@ def registreer_callbacks(app):
 
         try:
             config = _config_uit_velden(veld_waarden, tabel_data or [])
-            scores_df = transformeer_naar_lang(
-                parse_selectiedata(raw_sel, config), config
-            )
             cho = json.loads(raw_cho)
-            cho_df = transformeer_cho(
-                parse_csv_or_excel(cho["contents"], cho["filename"])
+            data_json, scores_json = bouw_data_stores(
+                config, raw_sel, parse_csv_or_excel(cho["contents"], cho["filename"])
             )
-            joined = koppel_data(cho_df, scores_df)
         except Exception as e:
             return (
                 no,
@@ -317,8 +306,8 @@ def registreer_callbacks(app):
             )
 
         return (
-            joined.to_json(orient="split", date_format="iso"),
-            scores_df.to_json(orient="split", date_format="iso"),
+            data_json,
+            scores_json,
             json.dumps(config),
             dbc.Alert(
                 "Dashboard opnieuw doorgerekend met de aangepaste configuratie.",
@@ -341,5 +330,7 @@ def registreer_callbacks(app):
         config = _config_uit_velden(veld_waarden, tabel_data or [])
         excel_bytes = exporteer_config_excel(config)
         opleiding = config.get("opleiding", "config") or "config"
-        bestandsnaam = f"config_{opleiding}.xlsx".replace(" ", "_")
-        return dcc.send_bytes(lambda buf: buf.write(excel_bytes), bestandsnaam)
+        veilig = re.sub(r"[^\w.-]", "_", opleiding)
+        return dcc.send_bytes(
+            lambda buf: buf.write(excel_bytes), f"config_{veilig}.xlsx"
+        )

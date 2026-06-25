@@ -23,7 +23,7 @@ from shared import PERSPECTIEF_DOORSTROOM, GROEP_INGESCHREVEN, GROEP_SUCCES
 from helpers import (
     DEMO_DATASETS,
     df_from_store,
-    koppel_data,
+    bouw_data_stores,
     _laad_demodata,
 )
 
@@ -387,15 +387,13 @@ def registreer_callbacks(app):
                 config = lees_config(cfg_contents)
             else:
                 config = json.loads(wiz_config)
-            scores_df = transformeer_naar_lang(
-                parse_selectiedata(sel_contents, config), config
-            )
             cho_fn_safe = cho_fn or "data.csv"
-            cho_df = transformeer_cho(parse_csv_or_excel(cho_contents, cho_fn_safe))
-            joined = koppel_data(cho_df, scores_df)
+            data_json, scores_json = bouw_data_stores(
+                config, sel_contents, parse_csv_or_excel(cho_contents, cho_fn_safe)
+            )
             return (
-                joined.to_json(orient="split", date_format="iso"),
-                scores_df.to_json(orient="split", date_format="iso"),
+                data_json,
+                scores_json,
                 json.dumps(config),
                 sel_contents,
                 json.dumps({"contents": cho_contents, "filename": cho_fn_safe}),

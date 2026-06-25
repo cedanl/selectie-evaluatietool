@@ -131,6 +131,23 @@ def _file_to_data_uri(path: Path) -> str:
     return f"data:application/octet-stream;base64,{b64}"
 
 
+def bouw_data_stores(
+    config: dict, sel_contents: str, cho_ruw: pd.DataFrame
+) -> tuple[str, str]:
+    """Draai de pijplijn en geef de JSON voor data-store en scores-store terug.
+
+    Eén plek voor de volgorde parse -> transformeer -> koppel, zodat de drie
+    laadpaden (upload, demo, en de Configuratie-tab die herberekent) niet uiteen
+    kunnen lopen. De ruwe 1CHO komt al geparseerd binnen, omdat de paden hem
+    verschillend inlezen (demo via read_csv, uploads via parse_csv_or_excel)."""
+    scores_df = transformeer_naar_lang(parse_selectiedata(sel_contents, config), config)
+    joined = koppel_data(transformeer_cho(cho_ruw), scores_df)
+    return (
+        joined.to_json(orient="split", date_format="iso"),
+        scores_df.to_json(orient="split", date_format="iso"),
+    )
+
+
 def _laad_demodata(dataset_name=None):
     """Laad een demoset. Returnt vijf stores: de gekoppelde data, de scores, de
     config en de ruwe selectie- en 1CHO-bestanden, zodat de Configuratie-tab de
@@ -144,20 +161,16 @@ def _laad_demodata(dataset_name=None):
     if not all(p.exists() for p in [sel_path, cfg_path, cho_path]):
         return (dash.no_update,) * 5
 
-    cfg_contents = _file_to_data_uri(cfg_path)
-    config = lees_config(cfg_contents)
-
+    config = lees_config(_file_to_data_uri(cfg_path))
     sel_contents = _file_to_data_uri(sel_path)
     cho_contents = _file_to_data_uri(cho_path)
-    sel_df = parse_selectiedata(sel_contents, config)
-    scores_df = transformeer_naar_lang(sel_df, config)
-    cho_df = transformeer_cho(pd.read_csv(cho_path, sep=";"))
 
-    joined = koppel_data(cho_df, scores_df)
-
+    data_json, scores_json = bouw_data_stores(
+        config, sel_contents, pd.read_csv(cho_path, sep=";")
+    )
     return (
-        joined.to_json(orient="split", date_format="iso"),
-        scores_df.to_json(orient="split", date_format="iso"),
+        data_json,
+        scores_json,
         json.dumps(config),
         sel_contents,
         json.dumps({"contents": cho_contents, "filename": cho_path.name}),
