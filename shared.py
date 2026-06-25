@@ -675,7 +675,7 @@ def _bevindingen_univariaat(
 
     sig_items.sort(key=lambda x: x[2])
     resultaten.append(
-        f"{len(sig_items)} van de {len(uni_data)} onderdelen voorspellen "
+        f"{len(sig_items)} van de {len(uni_data)} items voorspellen "
         f"'{pos_label}' significant als je ze afzonderlijk bekijkt."
     )
     for item, odds, p in sig_items[:top]:

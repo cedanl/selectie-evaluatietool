@@ -115,7 +115,7 @@ def maak_layout():
                             _stap(
                                 3,
                                 "Bekijken",
-                                "In de tabbladen zie je per onderdeel of hogere scores "
+                                "In de tabbladen zie je per item of hogere scores "
                                 "samenhangen met meer studiesucces, met uitleg erbij.",
                             ),
                         ],
@@ -154,8 +154,7 @@ def maak_layout():
                             ),
                             _tab_uitleg(
                                 "Selectiescores",
-                                "hoe de scores per onderdeel verschillen tussen de "
-                                "groepen.",
+                                "hoe de scores per item verschillen tussen de groepen.",
                             ),
                             _tab_uitleg(
                                 "Demografie",
@@ -164,17 +163,16 @@ def maak_layout():
                             ),
                             _tab_uitleg(
                                 "Verschiltoets",
-                                "per onderdeel een toets of het verschil tussen "
+                                "per item een toets of het verschil tussen "
                                 "groepen toeval kan zijn of niet.",
                             ),
                             _tab_uitleg(
                                 "Correlatie",
-                                "in hoeverre de onderdelen onderling hetzelfde meten.",
+                                "in hoeverre de items onderling hetzelfde meten.",
                             ),
                             _tab_uitleg(
                                 "Regressie",
-                                "welke onderdelen samen het beste studiesucces "
-                                "voorspellen.",
+                                "welke items samen het beste studiesucces voorspellen.",
                             ),
                         ],
                         className="small text-muted",

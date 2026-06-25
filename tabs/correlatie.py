@@ -26,8 +26,8 @@ def maak_layout():
                 [
                     html.H5("Correlatiematrix tussen items"),
                     html.P(
-                        "Meten de verschillende onderdelen van de selectie allemaal iets anders, "
-                        "of meten sommige onderdelen eigenlijk hetzelfde? Een hoog getal (dicht bij 1) "
+                        "Meten de verschillende items van de selectie allemaal iets anders, "
+                        "of meten sommige items eigenlijk hetzelfde? Een hoog getal (dicht bij 1) "
                         "betekent dat twee items sterk samenhangen. Een laag getal (dicht bij 0) betekent "
                         "dat ze iets anders meten en elkaar dus aanvullen.",
                         className="text-muted small",
@@ -230,7 +230,10 @@ def registreer_callbacks(app):
         z = corr_matrix.to_numpy(dtype=float).copy()
         z[boven] = np.nan
         tekst = [
-            ["" if boven[i, j] else f"{corr_matrix.iat[i, j]:.2f}" for j in range(z.shape[1])]
+            [
+                "" if boven[i, j] else f"{corr_matrix.iat[i, j]:.2f}"
+                for j in range(z.shape[1])
+            ]
             for i in range(z.shape[0])
         ]
 

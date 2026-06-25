@@ -49,9 +49,9 @@ def _uitleg_verschil_uitkomst(perspectief):
     pos = perspectief["positief_label"]
     neg = perspectief["negatief_label"]
     return _uitleg_details(
-        f"Per onderdeel vergelijken we of de groep '{pos}' hoger scoorde dan "
+        f"Per item vergelijken we of de groep '{pos}' hoger scoorde dan "
         f"'{neg}'. Een sterretje betekent dat het verschil waarschijnlijk niet "
-        "op toeval berust; dan heeft het onderdeel voorspellende waarde. De "
+        "op toeval berust; dan heeft het item voorspellende waarde. De "
         "kolom Effectgrootte zegt hoe groot het verschil is (niet hoeveel keer "
         "groter de kans is, dat staat op het tabblad Regressie).",
         f"We toetsen het verschil met een verdelingsvrije toets (Mann-Whitney U), "
@@ -66,7 +66,7 @@ def _uitleg_verschil_uitkomst(perspectief):
 def _uitleg_verschil_demografisch(label):
     laag = label.lower()
     return _uitleg_details(
-        f"Per onderdeel kijken we of de scores verschillen tussen {laag}-groepen. "
+        f"Per item kijken we of de scores verschillen tussen {laag}-groepen. "
         "Een sterretje betekent een verschil dat waarschijnlijk niet op toeval "
         "berust; dat kan wijzen op onbedoelde vertekening. Staat er 'vergelijkbaar', "
         f"dan is er geen aangetoond verschil. De {laag} komt uit 1CHO en is alleen "

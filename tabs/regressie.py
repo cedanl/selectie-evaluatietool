@@ -28,7 +28,7 @@ def maak_layout():
                 [
                     html.H5("Regressie-analyse: voorspelling studiesucces"),
                     html.P(
-                        "Welke onderdelen van de selectie voorspellen het beste of een student "
+                        "Welke items van de selectie voorspellen het beste of een student "
                         "de opleiding succesvol vervolgt (doorstroom naar jaar 2, of een diploma "
                         "bij eenjarige opleidingen)?",
                         className="text-muted small",
@@ -69,11 +69,11 @@ def maak_layout():
                                         className="small text-muted mb-1",
                                     ),
                                     html.P(
-                                        "Het univariate model toetst elk onderdeel afzonderlijk: voorspelt dit "
-                                        "onderdeel op zichzelf studiesucces? Het gezamenlijke model zet alle "
-                                        "onderdelen tegelijk in en laat zien welk onderdeel bovenop de andere "
+                                        "Het univariate model toetst elk item afzonderlijk: voorspelt dit "
+                                        "item op zichzelf studiesucces? Het gezamenlijke model zet alle "
+                                        "items tegelijk in en laat zien welk item bovenop de andere "
                                         "nog een eigen bijdrage levert. Bij weinig studenten worden de zwakste "
-                                        "onderdelen automatisch weggelaten: per onderdeel in het model zijn "
+                                        "items automatisch weggelaten: per item in het model zijn "
                                         "ongeveer vijf studenten met de uitkomst nodig, anders worden de "
                                         "schattingen onbetrouwbaar.",
                                         className="small text-muted mb-0",
@@ -90,10 +90,10 @@ def maak_layout():
                                 id="regressie-samenvatting",
                                 className="mb-3",
                             ),
-                            html.H6("Elk onderdeel los getoetst"),
+                            html.H6("Elk item los getoetst"),
                             html.P(
-                                "Voorspelt dit onderdeel op zichzelf studiesucces? Hier "
-                                "wordt elk onderdeel afzonderlijk bekeken; alle onderdelen "
+                                "Voorspelt dit item op zichzelf studiesucces? Hier "
+                                "wordt elk item afzonderlijk bekeken; alle items "
                                 "blijven staan, er valt niets weg.",
                                 className="text-muted small",
                             ),
@@ -107,8 +107,8 @@ def maak_layout():
                                 className="mt-4",
                             ),
                             html.P(
-                                "Alle onderdelen tegelijk in een model. Een onderdeel kan hier "
-                                "niet-significant worden als het sterk overlapt met een ander onderdeel.",
+                                "Alle items tegelijk in een model. Een item kan hier "
+                                "niet-significant worden als het sterk overlapt met een ander item.",
                                 className="text-muted small",
                             ),
                             dash_table.DataTable(
@@ -330,7 +330,7 @@ def registreer_callbacks(app):
                 msg_parts.append(html.Br())
                 msg_parts.append(
                     html.Span(
-                        f"Onderdelen niet meegenomen (>30% ontbrekend): {', '.join(verwijderd_nan)}",
+                        f"Items niet meegenomen (>30% ontbrekend): {', '.join(verwijderd_nan)}",
                         className="small text-muted",
                     )
                 )
@@ -338,7 +338,7 @@ def registreer_callbacks(app):
                 msg_parts.append(html.Br())
                 msg_parts.append(
                     html.Span(
-                        f"Onderdelen niet meegenomen (te veel overlap): {', '.join(verwijderd_collinear)}",
+                        f"Items niet meegenomen (te veel overlap): {', '.join(verwijderd_collinear)}",
                         className="small text-muted",
                     )
                 )
@@ -346,7 +346,7 @@ def registreer_callbacks(app):
                 msg_parts.append(html.Br())
                 msg_parts.append(
                     html.Span(
-                        f"Onderdelen niet meegenomen (te weinig studenten met de uitkomst; "
+                        f"Items niet meegenomen (te weinig studenten met de uitkomst; "
                         f"de {len(joint_cols)} sterkste behouden): "
                         f"{', '.join(verwijderd_epv)}",
                         className="small text-muted",
