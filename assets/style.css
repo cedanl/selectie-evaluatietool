@@ -189,6 +189,32 @@ body {
     margin-bottom: 8px;
 }
 
+/* Vervolgstappen-blok op 'Wat valt op': beleidsconclusies die opvallen tussen de
+   neutrale bevindingen, zodat een beleidsmedewerker in een oogopslag ziet wat de
+   uitkomsten betekenen. Blauw accent in de huisstijlkleur. */
+.vervolg-blok {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-left: 4px solid #1d4ed8;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.vervolg-blok .vervolg-kop {
+    color: #1e3a8a;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+
+.vervolg-blok ul {
+    margin-bottom: 0;
+}
+
+.vervolg-blok li {
+    margin-bottom: 0.4rem;
+}
+
 /* Config wizard als schermvullende, stapsgewijze pagina (boven het uploadscherm). */
 .wiz-overlay {
     position: fixed;

@@ -13,6 +13,9 @@ data/*.xlsx
 data/demo/selectiedata.xlsx
 data/demo/*/selectiedata.xlsx
 
+# Echte testdata van Radboud en Leiden (bevat persoonsgegevens): hele map negeren
+/testen met echte data/
+
 # Brondata en configs in root (duplicaten van data/)
 dummy data selectie*.xlsx
 config_*.xlsx
