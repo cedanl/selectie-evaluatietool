@@ -5,26 +5,22 @@ import dash_bootstrap_components as dbc
 
 from shared import (
     GROEP_KLEUREN,
-    GROEP_NIET_GESTART,
     GROEP_GESTART_GEEN_VERVOLG,
     GROEP_DOORGESTROOMD,
 )
 
-# De groepen zoals we ze in de introductie uitleggen. Studiesucces is per
-# opleiding ofwel doorstroom naar jaar 2 ofwel een diploma (eenjarige opleidingen
-# zoals masters), dus die twee tonen we als een gecombineerde succesgroep in
-# plaats van twee losse. De kleur komt uit shared.py zodat hij gelijkloopt met de
-# grafieken (doorstroom-groen, ook gebruikt voor de diplomavariant).
+# De groepen zoals we ze in de introductie uitleggen. De tool vergelijkt alleen
+# studenten die daadwerkelijk aan de opleiding zijn begonnen: wie studiesucces
+# had tegenover wie uitviel. De vergelijking 'gestart vs niet gestart' en de
+# losse 'Niet gestart'-groep zitten niet in het dashboard, dus die tonen we hier
+# ook niet als vergelijkingsgroep. Studiesucces is per opleiding ofwel doorstroom
+# naar jaar 2 ofwel een diploma (eenjarige opleidingen zoals masters); die twee
+# tonen we als een gecombineerde succesgroep. De kleur komt uit shared.py zodat
+# hij gelijkloopt met de grafieken.
 GROEP_KAARTEN = [
     (
-        GROEP_KLEUREN[GROEP_NIET_GESTART],
-        GROEP_NIET_GESTART,
-        "Wel geselecteerd of afgewezen, maar uiteindelijk niet aan deze opleiding "
-        "begonnen.",
-    ),
-    (
         GROEP_KLEUREN[GROEP_GESTART_GEEN_VERVOLG],
-        GROEP_GESTART_GEEN_VERVOLG,
+        "Gestart, geen vervolg",
         "Begonnen aan het eerste jaar, maar niet doorgestroomd en geen diploma "
         "gehaald.",
     ),
@@ -64,7 +60,7 @@ def _groep_kaart(kleur, titel, tekst):
             ),
             className="h-100",
         ),
-        md=4,
+        md=6,
         className="mb-3",
     )
 
@@ -110,9 +106,11 @@ def maak_layout():
                             _stap(
                                 2,
                                 "Koppelen",
-                                "De tool koppelt elke kandidaat aan zijn of haar "
-                                "studieresultaat, en bepaalt of iemand is gestart, "
-                                "doorgestroomd of een diploma haalde.",
+                                "De tool koppelt elke kandidaat aan de 1CHO-gegevens. "
+                                "Alleen kandidaten die zich daadwerkelijk bij de "
+                                "opleiding inschreven komen in 1CHO voor; daarvan "
+                                "bepaalt de tool of ze doorstroomden of een diploma "
+                                "haalden.",
                             ),
                             _stap(
                                 3,
@@ -126,8 +124,10 @@ def maak_layout():
                     ),
                     html.H6("De groepen"),
                     html.P(
-                        "De tool vergelijkt kandidaten op basis van wat er na de "
-                        "selectie gebeurde. Iedereen valt in een van deze groepen:",
+                        "Deze tool kijkt alleen naar studenten die zich daadwerkelijk "
+                        "bij de instelling en opleiding inschreven en daardoor in het "
+                        "1CHO-bestand terechtkomen. Binnen die groep vergelijkt de tool "
+                        "wie studiesucces had met wie uitviel:",
                         className="text-muted small",
                     ),
                     dbc.Row(
@@ -135,7 +135,14 @@ def maak_layout():
                             _groep_kaart(kleur, titel, tekst)
                             for kleur, titel, tekst in GROEP_KAARTEN
                         ],
-                        className="mb-4",
+                        className="mb-2",
+                    ),
+                    html.P(
+                        "Kandidaten die niet werden geselecteerd, of die wel een plek "
+                        "kregen maar niet aan de opleiding begonnen, staan niet in 1CHO. "
+                        "Zij worden uit de analyse gehaald en niet met de ingeschreven "
+                        "studenten vergeleken.",
+                        className="text-muted small mb-4",
                     ),
                     html.H6("Wat vind je in de tabbladen?"),
                     html.Ul(
