@@ -15,7 +15,7 @@ import re
 import pandas as pd
 from openpyxl import Workbook
 
-from dash import dcc, html, dash_table, Input, Output, State
+from dash import dcc, html, dash_table, Input, Output, State, ctx
 import dash
 import dash_bootstrap_components as dbc
 
@@ -384,263 +384,336 @@ def maak_wizard_layout() -> html.Div:
         [
             dcc.Store(id="wiz-config-store", storage_type="memory"),
             dcc.Store(id="wiz-raw-store", storage_type="memory"),
+            dcc.Store(id="wiz-stap", storage_type="memory", data=0),
             dcc.Download(id="wiz-download"),
-            html.A(
+            dbc.Button(
                 "Of: config automatisch genereren",
-                id="wiz-toggle-link",
-                href="#",
-                className="small text-primary",
-                style={"cursor": "pointer", "display": "block", "marginBottom": "8px"},
+                id="wiz-open-btn",
+                color="link",
+                size="sm",
+                className="p-0",
             ),
-            dbc.Collapse(
-                id="wiz-collapse",
-                is_open=False,
-                children=dbc.Card(
-                    dbc.CardBody(
-                        [
-                            html.P(
-                                "Het dashboard heeft een korte configuratie nodig: welke "
-                                "kolommen in je selectiebestand scores zijn, en welke kolom "
-                                "de student identificeert om aan de 1CHO-data te koppelen. "
-                                "Normaal leg je dat vast in een apart Excel-bestand; deze "
-                                "wizard genereert het voor je.",
-                                className="wiz-uitleg mb-2",
+            html.Div(
+                id="wiz-overlay",
+                className="wiz-overlay",
+                style={"display": "none"},
+                children=html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.Div(
+                                    [
+                                        html.H5(
+                                            "Config automatisch genereren",
+                                            className="mb-1",
+                                        ),
+                                        html.Div(
+                                            id="wiz-stap-label",
+                                            className="text-muted small",
+                                        ),
+                                    ]
+                                ),
+                                dbc.Button(
+                                    "Sluiten",
+                                    id="wiz-close-btn",
+                                    color="link",
+                                    size="sm",
+                                    className="text-muted p-0",
+                                ),
+                            ],
+                            className=(
+                                "d-flex justify-content-between align-items-start mb-3"
                             ),
-                            html.P(
-                                "De wizard leest je selectiebestand en raadt de instellingen. "
-                                "Loop de velden hieronder na, pas aan waar nodig, en klik op "
-                                "'Bevestig config'. Daarna upload je de 1CHO-data om het "
-                                "dashboard te openen.",
-                                className="wiz-uitleg mb-3",
-                            ),
-                            # Blad en headerrij
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        [
-                                            dbc.Label("Blad", className="small"),
-                                            dcc.Dropdown(
-                                                id="wiz-sheet-dropdown",
-                                                placeholder="Upload eerst selectiedata",
-                                                clearable=False,
-                                                className="mb-2",
-                                            ),
-                                        ]
-                                    ),
-                                    dbc.Col(
-                                        [
-                                            dbc.Label("Headerrij", className="small"),
-                                            dbc.Input(
-                                                id="wiz-header-rij",
-                                                type="number",
-                                                min=1,
-                                                max=20,
-                                                value=1,
-                                                size="sm",
-                                            ),
-                                        ],
-                                        width=4,
-                                    ),
-                                ],
-                                className="mb-2",
-                            ),
-                            # Opleiding en jaar
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        [
-                                            dbc.Label("Opleiding", className="small"),
-                                            dbc.Input(
-                                                id="wiz-opleiding",
-                                                placeholder="bijv. Farmacie",
-                                                size="sm",
-                                            ),
-                                        ]
-                                    ),
-                                    dbc.Col(
-                                        [
-                                            dbc.Label("Instelling", className="small"),
-                                            dbc.Input(
-                                                id="wiz-instelling",
-                                                placeholder="bijv. LUMC",
-                                                size="sm",
-                                            ),
-                                        ]
-                                    ),
-                                    dbc.Col(
-                                        [
-                                            dbc.Label(
-                                                "Selectiejaar", className="small"
-                                            ),
-                                            dbc.Input(
-                                                id="wiz-jaar",
-                                                placeholder="bijv. 2026",
-                                                size="sm",
-                                                type="number",
-                                            ),
-                                        ],
-                                        width=3,
-                                    ),
-                                ],
-                                className="mb-2",
-                            ),
-                            # ID-kolom en totaalscore
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        [
-                                            dbc.Label("ID-kolom", className="small"),
-                                            dcc.Dropdown(
-                                                id="wiz-id-kolom",
-                                                placeholder="Wordt automatisch gedetecteerd",
-                                                clearable=False,
-                                            ),
-                                            dbc.FormText(
-                                                "De kolom die een student herkent (bijv. "
-                                                "studentnummer). Hiermee koppelen we de "
-                                                "scores aan de 1CHO-data."
-                                            ),
-                                        ]
-                                    ),
-                                    dbc.Col(
-                                        [
-                                            dbc.Label(
-                                                "Totaalscore-kolom", className="small"
-                                            ),
-                                            dcc.Dropdown(
-                                                id="wiz-totaalscore",
-                                                placeholder="Wordt automatisch gedetecteerd",
-                                                clearable=True,
-                                            ),
-                                            dbc.FormText(
-                                                "Optioneel: de kolom met de eindscore, "
-                                                "als die in je bestand staat."
-                                            ),
-                                        ]
-                                    ),
-                                ],
-                                className="mb-2",
-                            ),
-                            # Kolommen tabel
-                            html.Div(
-                                id="wiz-tabel-container",
-                                children=[
-                                    dbc.Label("Scorekolommen", className="small"),
-                                    html.P(
-                                        [
-                                            "Elke rij is een kolom die de wizard als "
-                                            "score herkent. Het ",
-                                            html.Strong("vinkje vooraan elke rij"),
-                                            " bepaalt of die kolom meegaat in de analyse. "
-                                            "Alle herkende kolommen staan standaard "
-                                            "aangevinkt; haal het vinkje weg bij kolommen "
-                                            "die geen selectiescore zijn (bijv. een "
-                                            "volgnummer of een tekstveld dat toch als "
-                                            "getal binnenkomt). Instrument is het "
-                                            "meetinstrument (bijv. een test of "
-                                            "beoordeling), Item is wat het meet, "
-                                            "Criterium is een optionele groepering, en "
-                                            "Schaal is het bereik van de scores (bijv. "
-                                            "1-7 of 0-100). De wizard stelt een nette "
-                                            "schaal voor op basis van de scores; pas de "
-                                            "teksten aan waar nodig.",
-                                        ],
-                                        className="wiz-uitleg mb-2",
-                                    ),
-                                    html.P(
-                                        "Upload selectiedata om kolommen te detecteren.",
-                                        id="wiz-tabel-placeholder",
-                                        className="small text-muted",
-                                    ),
-                                    dash_table.DataTable(
-                                        id="wiz-kolommen-tabel",
-                                        columns=[
-                                            {
-                                                "name": "Kolom",
-                                                "id": "kolom_naam",
-                                                "editable": False,
+                        ),
+                        dbc.Progress(
+                            id="wiz-progress",
+                            value=25,
+                            style={"height": "6px"},
+                            className="mb-4",
+                        ),
+                        html.Div(
+                            id="wiz-step-0",
+                            children=[
+                                html.P(
+                                    "Kies het werkblad in je Excel-bestand en geef aan "
+                                    "op welke rij de kolomkoppen staan. De wizard raadt "
+                                    "dit vast voor; pas het aan als het niet klopt.",
+                                    className="wiz-uitleg mb-3",
+                                ),
+                                # Blad en headerrij
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            [
+                                                dbc.Label("Blad", className="small"),
+                                                dcc.Dropdown(
+                                                    id="wiz-sheet-dropdown",
+                                                    placeholder="Upload eerst selectiedata",
+                                                    clearable=False,
+                                                    className="mb-2",
+                                                ),
+                                            ]
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                dbc.Label(
+                                                    "Headerrij", className="small"
+                                                ),
+                                                dbc.Input(
+                                                    id="wiz-header-rij",
+                                                    type="number",
+                                                    min=1,
+                                                    max=20,
+                                                    value=1,
+                                                    size="sm",
+                                                ),
+                                            ],
+                                            width=4,
+                                        ),
+                                    ],
+                                    className="mb-2",
+                                ),
+                            ],
+                        ),
+                        html.Div(
+                            id="wiz-step-1",
+                            style={"display": "none"},
+                            children=[
+                                # Opleiding en jaar
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            [
+                                                dbc.Label(
+                                                    "Opleiding", className="small"
+                                                ),
+                                                dbc.Input(
+                                                    id="wiz-opleiding",
+                                                    placeholder="bijv. Farmacie",
+                                                    size="sm",
+                                                ),
+                                            ]
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                dbc.Label(
+                                                    "Instelling", className="small"
+                                                ),
+                                                dbc.Input(
+                                                    id="wiz-instelling",
+                                                    placeholder="bijv. LUMC",
+                                                    size="sm",
+                                                ),
+                                            ]
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                dbc.Label(
+                                                    "Selectiejaar", className="small"
+                                                ),
+                                                dbc.Input(
+                                                    id="wiz-jaar",
+                                                    placeholder="bijv. 2026",
+                                                    size="sm",
+                                                    type="number",
+                                                ),
+                                            ],
+                                            width=3,
+                                        ),
+                                    ],
+                                    className="mb-2",
+                                ),
+                                # ID-kolom en totaalscore
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            [
+                                                dbc.Label(
+                                                    "ID-kolom", className="small"
+                                                ),
+                                                dcc.Dropdown(
+                                                    id="wiz-id-kolom",
+                                                    placeholder="Wordt automatisch gedetecteerd",
+                                                    clearable=False,
+                                                ),
+                                                dbc.FormText(
+                                                    "De kolom die een student herkent (bijv. "
+                                                    "studentnummer). Hiermee koppelen we de "
+                                                    "scores aan de 1CHO-data."
+                                                ),
+                                            ]
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                dbc.Label(
+                                                    "Totaalscore-kolom",
+                                                    className="small",
+                                                ),
+                                                dcc.Dropdown(
+                                                    id="wiz-totaalscore",
+                                                    placeholder="Wordt automatisch gedetecteerd",
+                                                    clearable=True,
+                                                ),
+                                                dbc.FormText(
+                                                    "Optioneel: de kolom met de eindscore, "
+                                                    "als die in je bestand staat."
+                                                ),
+                                            ]
+                                        ),
+                                    ],
+                                    className="mb-2",
+                                ),
+                            ],
+                        ),
+                        html.Div(
+                            id="wiz-step-2",
+                            style={"display": "none"},
+                            children=[
+                                # Kolommen tabel
+                                html.Div(
+                                    id="wiz-tabel-container",
+                                    children=[
+                                        dbc.Label("Scorekolommen", className="small"),
+                                        html.P(
+                                            [
+                                                "Elke rij is een kolom die de wizard als "
+                                                "score herkent. Het ",
+                                                html.Strong("vinkje vooraan elke rij"),
+                                                " bepaalt of die kolom meegaat in de analyse. "
+                                                "Alle herkende kolommen staan standaard "
+                                                "aangevinkt; haal het vinkje weg bij kolommen "
+                                                "die geen selectiescore zijn (bijv. een "
+                                                "volgnummer of een tekstveld dat toch als "
+                                                "getal binnenkomt). Instrument is het "
+                                                "meetinstrument (bijv. een test of "
+                                                "beoordeling), Item is wat het meet, "
+                                                "Criterium is een optionele groepering, en "
+                                                "Schaal is het bereik van de scores (bijv. "
+                                                "1-7 of 0-100). De wizard stelt een nette "
+                                                "schaal voor op basis van de scores; pas de "
+                                                "teksten aan waar nodig.",
+                                            ],
+                                            className="wiz-uitleg mb-2",
+                                        ),
+                                        html.P(
+                                            "Upload selectiedata om kolommen te detecteren.",
+                                            id="wiz-tabel-placeholder",
+                                            className="small text-muted",
+                                        ),
+                                        dash_table.DataTable(
+                                            id="wiz-kolommen-tabel",
+                                            columns=[
+                                                {
+                                                    "name": "Kolom",
+                                                    "id": "kolom_naam",
+                                                    "editable": False,
+                                                },
+                                                {
+                                                    "name": "Instrument",
+                                                    "id": "instrument",
+                                                    "editable": True,
+                                                },
+                                                {
+                                                    "name": "Item",
+                                                    "id": "item",
+                                                    "editable": True,
+                                                },
+                                                {
+                                                    "name": "Criterium",
+                                                    "id": "criterium",
+                                                    "editable": True,
+                                                },
+                                                {
+                                                    "name": "Schaal",
+                                                    "id": "schaal",
+                                                    "editable": True,
+                                                },
+                                            ],
+                                            data=[],
+                                            editable=True,
+                                            row_deletable=False,
+                                            row_selectable="multi",
+                                            selected_rows=[],
+                                            style_table={
+                                                "overflowX": "auto",
+                                                "fontSize": "13px",
                                             },
-                                            {
-                                                "name": "Instrument",
-                                                "id": "instrument",
-                                                "editable": True,
-                                            },
-                                            {
-                                                "name": "Item",
-                                                "id": "item",
-                                                "editable": True,
-                                            },
-                                            {
-                                                "name": "Criterium",
-                                                "id": "criterium",
-                                                "editable": True,
-                                            },
-                                            {
-                                                "name": "Schaal",
-                                                "id": "schaal",
-                                                "editable": True,
-                                            },
-                                        ],
-                                        data=[],
-                                        editable=True,
-                                        row_deletable=False,
-                                        row_selectable="multi",
-                                        selected_rows=[],
-                                        style_table={
-                                            "overflowX": "auto",
-                                            "fontSize": "13px",
-                                        },
-                                        style_header={
-                                            "backgroundColor": "#f8f9fa",
-                                            "fontWeight": "600",
-                                            "fontSize": "12px",
-                                        },
-                                        style_cell={
-                                            "textAlign": "left",
-                                            "padding": "4px 8px",
-                                            "whiteSpace": "normal",
-                                            "height": "auto",
-                                        },
-                                        style_data_conditional=[
-                                            {
-                                                "if": {"column_id": "kolom_naam"},
+                                            style_header={
                                                 "backgroundColor": "#f8f9fa",
-                                                "color": "#6c757d",
+                                                "fontWeight": "600",
+                                                "fontSize": "12px",
                                             },
-                                        ],
-                                    ),
-                                ],
-                            ),
-                            html.Div(id="wiz-tip", className="mt-2"),
-                            html.Div(id="wiz-status", className="mt-2 mb-2"),
-                            dbc.Row(
-                                [
-                                    dbc.Col(
+                                            style_cell={
+                                                "textAlign": "left",
+                                                "padding": "4px 8px",
+                                                "whiteSpace": "normal",
+                                                "height": "auto",
+                                            },
+                                            style_data_conditional=[
+                                                {
+                                                    "if": {"column_id": "kolom_naam"},
+                                                    "backgroundColor": "#f8f9fa",
+                                                    "color": "#6c757d",
+                                                },
+                                            ],
+                                        ),
+                                    ],
+                                ),
+                                html.Div(id="wiz-tip", className="mt-2"),
+                            ],
+                        ),
+                        html.Div(
+                            id="wiz-step-3",
+                            style={"display": "none"},
+                            children=[
+                                html.P(
+                                    "Controleer de instellingen en kolommen in de "
+                                    "vorige stappen en bevestig hieronder. Daarna sluit "
+                                    "dit scherm en kun je de 1CHO-data uploaden om het "
+                                    "dashboard te openen.",
+                                    className="wiz-uitleg mb-3",
+                                ),
+                                html.Div(id="wiz-status", className="mt-2 mb-2"),
+                                dbc.Button(
+                                    "Download als Excel",
+                                    id="wiz-download-btn",
+                                    color="secondary",
+                                    size="sm",
+                                    outline=True,
+                                    style={"display": "none"},
+                                    className="mt-2",
+                                ),
+                            ],
+                        ),
+                        html.Div(
+                            [
+                                dbc.Button(
+                                    "Vorige",
+                                    id="wiz-prev-btn",
+                                    color="secondary",
+                                    outline=True,
+                                ),
+                                html.Div(
+                                    [
+                                        dbc.Button(
+                                            "Volgende",
+                                            id="wiz-next-btn",
+                                            color="primary",
+                                        ),
                                         dbc.Button(
                                             "Bevestig config",
                                             id="wiz-bevestig-btn",
-                                            color="primary",
-                                            size="sm",
-                                            className="w-100",
-                                        ),
-                                    ),
-                                    dbc.Col(
-                                        dbc.Button(
-                                            "Download als Excel",
-                                            id="wiz-download-btn",
-                                            color="secondary",
-                                            size="sm",
-                                            outline=True,
-                                            className="w-100",
+                                            color="success",
                                             style={"display": "none"},
                                         ),
-                                    ),
-                                ],
-                                className="mt-3 g-2",
-                            ),
-                        ]
-                    ),
-                    className="border-0 bg-light",
+                                    ],
+                                    className="d-flex gap-2",
+                                ),
+                            ],
+                            className="d-flex justify-content-between mt-4",
+                        ),
+                    ],
+                    className="wiz-card",
                 ),
             ),
         ],
@@ -655,14 +728,61 @@ def maak_wizard_layout() -> html.Div:
 
 def registreer_callbacks(app: dash.Dash) -> None:
 
+    # De stappen in volgorde; de index in deze lijst is de waarde van wiz-stap.
+    WIZ_STAPPEN = ["Bestand en blad", "Instellingen", "Scorekolommen", "Bevestigen"]
+
     @app.callback(
-        Output("wiz-collapse", "is_open"),
-        Input("wiz-toggle-link", "n_clicks"),
-        State("wiz-collapse", "is_open"),
+        Output("wiz-overlay", "style"),
+        Input("wiz-open-btn", "n_clicks"),
+        Input("wiz-close-btn", "n_clicks"),
         prevent_initial_call=True,
     )
-    def toggle_wizard(n, is_open):
-        return not is_open
+    def toon_wizard(_open, _close):
+        return {"display": "none" if ctx.triggered_id == "wiz-close-btn" else "flex"}
+
+    @app.callback(
+        Output("wiz-stap", "data"),
+        Input("wiz-open-btn", "n_clicks"),
+        Input("wiz-next-btn", "n_clicks"),
+        Input("wiz-prev-btn", "n_clicks"),
+        State("wiz-stap", "data"),
+        prevent_initial_call=True,
+    )
+    def navigeer_wizard(_open, _next, _prev, stap):
+        stap = stap or 0
+        if ctx.triggered_id == "wiz-open-btn":
+            return 0
+        if ctx.triggered_id == "wiz-next-btn":
+            return min(stap + 1, len(WIZ_STAPPEN) - 1)
+        return max(stap - 1, 0)
+
+    @app.callback(
+        Output("wiz-step-0", "style"),
+        Output("wiz-step-1", "style"),
+        Output("wiz-step-2", "style"),
+        Output("wiz-step-3", "style"),
+        Output("wiz-stap-label", "children"),
+        Output("wiz-progress", "value"),
+        Output("wiz-prev-btn", "disabled"),
+        Output("wiz-next-btn", "style"),
+        Output("wiz-bevestig-btn", "style"),
+        Input("wiz-stap", "data"),
+    )
+    def render_wizard_stap(stap):
+        stap = stap or 0
+        laatste = stap == len(WIZ_STAPPEN) - 1
+        stap_stijlen = [
+            {"display": "block" if i == stap else "none"}
+            for i in range(len(WIZ_STAPPEN))
+        ]
+        return (
+            *stap_stijlen,
+            f"Stap {stap + 1} van {len(WIZ_STAPPEN)}: {WIZ_STAPPEN[stap]}",
+            int((stap + 1) / len(WIZ_STAPPEN) * 100),
+            stap == 0,
+            {"display": "none" if laatste else "inline-block"},
+            {"display": "inline-block" if laatste else "none"},
+        )
 
     @app.callback(
         Output("wiz-raw-store", "data"),
@@ -682,12 +802,11 @@ def registreer_callbacks(app: dash.Dash) -> None:
         Output("wiz-instelling", "value"),
         Output("wiz-jaar", "value"),
         Input("wiz-raw-store", "data"),
-        Input("wiz-collapse", "is_open"),
         State("upload-selectiedata", "filename"),
         prevent_initial_call=True,
     )
-    def detecteer_blad_en_header(raw_contents, is_open, filename):
-        if not is_open or not raw_contents:
+    def detecteer_blad_en_header(raw_contents, filename):
+        if not raw_contents:
             return [], None, 1, None, None, None
 
         try:
