@@ -73,8 +73,9 @@ wat betekent. Er zijn twee manieren om er een te maken.
 
 ### Automatisch (makkelijkst)
 
-Klik in het uploadscherm op "Of: config automatisch genereren". De tool
-bekijkt dan zelf je selectiebestand en probeert uit te zoeken:
+Klik in het uploadscherm op "Config automatisch genereren". De wizard opent
+dan als een eigen pagina, bekijkt zelf je selectiebestand en probeert uit te
+zoeken:
 
 - op welk tabblad de gegevens staan en op welke regel de kolomnamen staan;
 - welke kolom het studentnummer bevat;
