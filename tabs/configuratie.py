@@ -28,13 +28,16 @@ INSTELLING_VELDEN = [
 KOLOM_VELDEN = ["kolom_naam", "instrument", "item", "criterium", "schaal"]
 
 
-def _config_uit_velden(waarden: list, tabel_data: list[dict]) -> dict:
-    """Bouw een config-dict uit de ingevulde velden en de kolommen-tabel."""
+def _config_uit_velden(
+    waarden: list, tabel_data: list[dict], selected_rows: list[int]
+) -> dict:
+    """Bouw een config-dict uit de ingevulde velden en de aangevinkte kolommen."""
     inst = dict(zip([sleutel for sleutel, _ in INSTELLING_VELDEN], waarden))
+    gekozen = set(selected_rows or [])
     kolommen = [
         {veld: str(rij.get(veld, "")).strip() for veld in KOLOM_VELDEN}
-        for rij in tabel_data
-        if str(rij.get("kolom_naam", "")).strip()
+        for i, rij in enumerate(tabel_data)
+        if i in gekozen and str(rij.get("kolom_naam", "")).strip()
     ]
     return bouw_config_dict(
         blad_naam=inst["blad_naam"],
@@ -94,15 +97,24 @@ def maak_layout():
                             [
                                 html.H6("Kolommen", className="mb-1"),
                                 html.P(
-                                    "De scorekolommen die worden meegenomen. Verwijder "
-                                    "een rij met het kruisje, of pas instrument, item, "
-                                    "criterium en schaal aan.",
+                                    [
+                                        "Het ",
+                                        html.Strong("vinkje vooraan elke rij"),
+                                        " bepaalt of die kolom wordt meegenomen. Haal "
+                                        "het vinkje weg om een kolom buiten de analyse "
+                                        "te laten, of pas instrument, item, criterium "
+                                        "en schaal aan.",
+                                    ],
                                     className="text-muted small",
                                 ),
                                 dash_table.DataTable(
                                     id="cfg-kolommen-tabel",
                                     columns=[
-                                        {"name": "Kolom", "id": "kolom_naam"},
+                                        {
+                                            "name": "Kolom",
+                                            "id": "kolom_naam",
+                                            "editable": False,
+                                        },
                                         {"name": "Instrument", "id": "instrument"},
                                         {"name": "Item", "id": "item"},
                                         {"name": "Criterium", "id": "criterium"},
@@ -110,13 +122,21 @@ def maak_layout():
                                     ],
                                     data=[],
                                     editable=True,
-                                    row_deletable=True,
+                                    row_selectable="multi",
+                                    selected_rows=[],
                                     style_table={"overflowX": "auto"},
                                     style_header=TABLE_STYLE["style_header"],
                                     style_cell={
                                         **TABLE_STYLE["style_cell"],
                                         "minWidth": "110px",
                                     },
+                                    style_data_conditional=[
+                                        {
+                                            "if": {"column_id": "kolom_naam"},
+                                            "backgroundColor": "#f8f9fa",
+                                            "color": "#6c757d",
+                                        },
+                                    ],
                                 ),
                             ]
                         ),
@@ -160,19 +180,22 @@ def maak_layout():
 def registreer_callbacks(app):
     @app.callback(
         [Output(f"cfg-inst-{sleutel}", "value") for sleutel, _ in INSTELLING_VELDEN]
-        + [Output("cfg-kolommen-tabel", "data")],
+        + [
+            Output("cfg-kolommen-tabel", "data"),
+            Output("cfg-kolommen-tabel", "selected_rows"),
+        ],
         Input("config-store", "data"),
     )
     def vul_config(config_json):
         if not config_json:
-            return ["" for _ in INSTELLING_VELDEN] + [[]]
+            return ["" for _ in INSTELLING_VELDEN] + [[], []]
         config = json.loads(config_json)
         waarden = [config.get(sleutel, "") for sleutel, _ in INSTELLING_VELDEN]
         kolommen = [
             {veld: kol.get(veld, "") for veld in KOLOM_VELDEN}
             for kol in config.get("kolommen", [])
         ]
-        return waarden + [kolommen]
+        return waarden + [kolommen, list(range(len(kolommen)))]
 
     @app.callback(
         Output("data-store", "data", allow_duplicate=True),
@@ -183,6 +206,7 @@ def registreer_callbacks(app):
         [State(f"cfg-inst-{sleutel}", "value") for sleutel, _ in INSTELLING_VELDEN]
         + [
             State("cfg-kolommen-tabel", "data"),
+            State("cfg-kolommen-tabel", "selected_rows"),
             State("raw-selectie-store", "data"),
             State("raw-cho-store", "data"),
         ],
@@ -193,7 +217,7 @@ def registreer_callbacks(app):
         if not n:
             return no, no, no, no
 
-        *veld_waarden, tabel_data, raw_sel, raw_cho = args
+        *veld_waarden, tabel_data, selected_rows, raw_sel, raw_cho = args
         if not raw_sel or not raw_cho:
             return (
                 no,
@@ -208,7 +232,7 @@ def registreer_callbacks(app):
             )
 
         try:
-            config = _config_uit_velden(veld_waarden, tabel_data or [])
+            config = _config_uit_velden(veld_waarden, tabel_data or [], selected_rows)
             cho = json.loads(raw_cho)
             data_json, scores_json = bouw_data_stores(
                 config, raw_sel, parse_csv_or_excel(cho["contents"], cho["filename"])
@@ -238,14 +262,17 @@ def registreer_callbacks(app):
         Output("cfg-download", "data"),
         Input("cfg-download-btn", "n_clicks"),
         [State(f"cfg-inst-{sleutel}", "value") for sleutel, _ in INSTELLING_VELDEN]
-        + [State("cfg-kolommen-tabel", "data")],
+        + [
+            State("cfg-kolommen-tabel", "data"),
+            State("cfg-kolommen-tabel", "selected_rows"),
+        ],
         prevent_initial_call=True,
     )
     def download_config(n, *args):
         if not n:
             return dash.no_update
-        *veld_waarden, tabel_data = args
-        config = _config_uit_velden(veld_waarden, tabel_data or [])
+        *veld_waarden, tabel_data, selected_rows = args
+        config = _config_uit_velden(veld_waarden, tabel_data or [], selected_rows)
         excel_bytes = exporteer_config_excel(config)
         opleiding = config.get("opleiding", "config") or "config"
         veilig = re.sub(r"[^\w.-]", "_", opleiding)
