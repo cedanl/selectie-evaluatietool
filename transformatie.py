@@ -25,7 +25,7 @@ def _find_col(headers: list[str], naam: str) -> str | None:
 _WAAR_WAARDEN = {"true", "waar", "ja", "yes", "y", "1", "1.0", "x"}
 
 
-def _parse_bool(val) -> bool:
+def parse_bool(val) -> bool:
     """Lees een Meenemen-cel (TRUE/FALSE, Ja/Nee, 1/0, ...) als boolean."""
     if isinstance(val, bool):
         return val
@@ -38,6 +38,15 @@ def meegenomen_kolommen(config: dict) -> list[dict]:
     """De kolommen waarvoor Meenemen aan staat. Oudere configs zonder
     Meenemen-kolom hebben dit veld niet, dus die tellen standaard mee."""
     return [k for k in config.get("kolommen", []) if k.get("meenemen", True)]
+
+
+def normaliseer_studentnummer(serie: pd.Series) -> pd.Series:
+    """Breng studentnummers naar een vergelijkbare vorm, zodat het koppelen van
+    selectiedata en 1CHO robuust is tegen verschillen in type en opmaak: tekst
+    versus getal, spaties eromheen, en het '123.0'-artefact dat Excel en CSV van
+    gehele getallen maken. Lege waarden worden <NA>."""
+    s = serie.astype("string").str.strip().str.replace(r"\.0$", "", regex=True)
+    return s.mask(s.isin(["", "nan", "NaN", "<NA>", "None"]))
 
 
 def parse_csv_or_excel(contents: str, filename: str) -> pd.DataFrame:
@@ -101,7 +110,7 @@ def lees_config(contents: str) -> dict:
         for i, veld in enumerate(veld_volgorde):
             waarde = rij.iloc[i] if i < len(rij) else None
             if veld == "meenemen":
-                entry["meenemen"] = _parse_bool(waarde)
+                entry["meenemen"] = parse_bool(waarde)
             else:
                 entry[veld] = str(waarde).strip() if pd.notna(waarde) else ""
         kolommen.append(entry)
@@ -249,6 +258,8 @@ def transformeer_naar_lang(selectiedata_df: pd.DataFrame, config: dict) -> pd.Da
     melted = melted.dropna(subset=["score"])
     melted["score"] = melted["score"].astype(float)
     melted = melted.rename(columns={id_col_actual: "studentnummer"})
+    melted["studentnummer"] = normaliseer_studentnummer(melted["studentnummer"])
+    melted = melted.dropna(subset=["studentnummer"])
 
     # Map metadata from config onto each melted row
     meta_lookup = {dc: kol for dc, kol in col_mapping}

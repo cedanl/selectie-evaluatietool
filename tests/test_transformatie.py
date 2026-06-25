@@ -8,8 +8,9 @@ from transformatie import (
     lees_config,
     parse_selectiedata,
     transformeer_naar_lang,
-    _parse_bool,
+    parse_bool,
     meegenomen_kolommen,
+    normaliseer_studentnummer,
 )
 
 DEMO_DIR = Path(__file__).parent.parent / "data" / "demo"
@@ -38,13 +39,30 @@ def sportkunde():
 class TestParseBool:
     @pytest.mark.parametrize("waar", [True, "TRUE", "true", "Waar", "Ja", "1", 1, "x"])
     def test_waar(self, waar):
-        assert _parse_bool(waar) is True
+        assert parse_bool(waar) is True
 
     @pytest.mark.parametrize(
         "onwaar", [False, "FALSE", "Nee", "0", "", None, float("nan")]
     )
     def test_onwaar(self, onwaar):
-        assert _parse_bool(onwaar) is False
+        assert parse_bool(onwaar) is False
+
+
+class TestNormaliseerStudentnummer:
+    def test_int_float_en_tekst_worden_gelijk(self):
+        assert list(normaliseer_studentnummer(pd.Series([123]))) == ["123"]
+        assert list(normaliseer_studentnummer(pd.Series([123.0]))) == ["123"]
+        assert list(normaliseer_studentnummer(pd.Series([" 123 "]))) == ["123"]
+
+    def test_int_en_string_bron_koppelen(self):
+        # selectiedata int 123 en 1CHO tekst "123" moeten matchen
+        sel = set(normaliseer_studentnummer(pd.Series([123, 124])).dropna())
+        cho = set(normaliseer_studentnummer(pd.Series(["123", "124.0"])).dropna())
+        assert sel & cho == {"123", "124"}
+
+    def test_lege_waarden_worden_na(self):
+        out = normaliseer_studentnummer(pd.Series(["", None]))
+        assert out.isna().all()
 
 
 class TestMeegenomenKolommen:

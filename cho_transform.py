@@ -28,6 +28,7 @@ from shared import (
     GROEP_DOORGESTROOMD,
     GROEP_GESTART_GEEN_VERVOLG,
 )
+from transformatie import parse_bool, normaliseer_studentnummer
 
 # Kolommen die een ruw 1CHO-bestand minimaal moet bevatten om de
 # doorstroomgroep te kunnen afleiden.
@@ -37,13 +38,18 @@ RUWE_CHO_KOLOMMEN = [
     "eerste_jaar_aan_deze_opleiding_instelling",
 ]
 
+_VOOROPL_OMSCHRIJVING_KOLOM = "hoogste_vooropleiding_omschrijving_vooropleiding"
+
+# Achtergrondkolommen die nodig zijn voor de demografie- en
+# eerlijkheidsanalyses (vergelijking per achtergrondgroep). Zonder deze kan de
+# tool niet nagaan of de selectie voor verschillende groepen anders uitpakt.
+VEREISTE_DEMO_KOLOMMEN = ["geslacht", _VOOROPL_OMSCHRIJVING_KOLOM]
+
 # Demografische kolommen die we ongewijzigd meenemen als ze aanwezig zijn.
 _DEMO_KOLOMMEN = ["geslacht"]
 
 # Optionele passthrough-kolommen die de rest van de tool nog kan gebruiken.
 _META_KOLOMMEN = ["opleiding", "instellingscode"]
-
-_VOOROPL_OMSCHRIJVING_KOLOM = "hoogste_vooropleiding_omschrijving_vooropleiding"
 
 # Optionele kolom die aangeeft of de student in het cohortjaar een diploma
 # haalde. Aanwezig bij eenjarige opleidingen (masters) waar succes 'diploma'
@@ -54,6 +60,12 @@ _DIPLOMA_KOLOM = "diploma_behaald"
 def ontbrekende_cho_kolommen(df: pd.DataFrame) -> list[str]:
     """Geef de verplichte ruwe 1CHO-kolommen die in df ontbreken."""
     return [c for c in RUWE_CHO_KOLOMMEN if c not in df.columns]
+
+
+def ontbrekende_demografie_kolommen(df: pd.DataFrame) -> list[str]:
+    """Geef de achtergrondkolommen die ontbreken. Die zijn nodig voor de
+    demografie- en eerlijkheidsanalyses."""
+    return [c for c in VEREISTE_DEMO_KOLOMMEN if c not in df.columns]
 
 
 def _classificeer_vooropleiding(omschrijving: object) -> str:
@@ -99,9 +111,21 @@ def transformeer_cho(ruwe_df: pd.DataFrame) -> pd.DataFrame:
         )
 
     df = ruwe_df.rename(columns={"persoonsgebonden_nummer": "studentnummer"})
-    df["inschrijvingsjaar"] = pd.to_numeric(df["inschrijvingsjaar"], errors="coerce")
-    df["eerste_jaar_aan_deze_opleiding_instelling"] = pd.to_numeric(
-        df["eerste_jaar_aan_deze_opleiding_instelling"], errors="coerce"
+    df["studentnummer"] = normaliseer_studentnummer(df["studentnummer"])
+
+    for jaarkolom in ("inschrijvingsjaar", "eerste_jaar_aan_deze_opleiding_instelling"):
+        df[jaarkolom] = pd.to_numeric(df[jaarkolom], errors="coerce")
+        if df[jaarkolom].notna().sum() == 0:
+            raise ValueError(
+                f"Ruwe 1CHO-data: kolom '{jaarkolom}' bevat geen geldige jaartallen."
+            )
+
+    df = df.dropna(
+        subset=[
+            "studentnummer",
+            "inschrijvingsjaar",
+            "eerste_jaar_aan_deze_opleiding_instelling",
+        ]
     )
 
     # Retentie wordt per opleiding-spell bepaald, niet alleen per student: een
@@ -126,7 +150,9 @@ def transformeer_cho(ruwe_df: pd.DataFrame) -> pd.DataFrame:
     # van de rijen een diploma?
     heeft_diploma_kolom = _DIPLOMA_KOLOM in df.columns
     if heeft_diploma_kolom:
-        df["_diploma_bool"] = df[_DIPLOMA_KOLOM].fillna(False).astype(bool)
+        # Robuust parsen: een CSV kan "True"/"False", "Ja"/"Nee" of 1/0 bevatten;
+        # een kale astype(bool) maakt van "False" en "Nee" ten onrechte True.
+        df["_diploma_bool"] = df[_DIPLOMA_KOLOM].map(parse_bool)
         df["_diploma"] = df.groupby(spell_sleutel)["_diploma_bool"].transform("any")
 
     # Houd alleen de eerstejaars-rij per spell over.

@@ -15,7 +15,11 @@ from transformatie import (
     transformeer_naar_lang,
     valideer_config,
 )
-from cho_transform import ontbrekende_cho_kolommen, transformeer_cho
+from cho_transform import (
+    ontbrekende_cho_kolommen,
+    ontbrekende_demografie_kolommen,
+    transformeer_cho,
+)
 from config_wizard import maak_wizard_layout
 from rapport import genereer_rapport
 from shared import PERSPECTIEF_DOORSTROOM, GROEP_INGESCHREVEN, GROEP_SUCCES
@@ -293,6 +297,16 @@ def registreer_callbacks(app):
                     if missing:
                         cho_status = dbc.Alert(
                             f"Ontbrekende kolommen in 1CHO: {', '.join(missing)}",
+                            color="danger",
+                            className="small py-1",
+                        )
+                        return sel_status, cfg_status, validatie, cho_status, True
+
+                    demo_missing = ontbrekende_demografie_kolommen(cho_ruw)
+                    if demo_missing:
+                        cho_status = dbc.Alert(
+                            "Ontbrekende achtergrondkolommen in 1CHO (nodig voor de "
+                            f"demografie- en eerlijkheidsanalyse): {', '.join(demo_missing)}",
                             color="danger",
                             className="small py-1",
                         )

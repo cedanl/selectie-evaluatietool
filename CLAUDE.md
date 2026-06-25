@@ -57,7 +57,12 @@ Raw 1CHO data has no ready-made group column. It is enrollment data in long form
 
 The group labels and the helper lists `GROEP_INGESCHREVEN` (all started) and `GROEP_SUCCES` (doorstroom or diploma) live in `shared.py`. Regression and VO analyses use `GROEP_INGESCHREVEN` (students who actually started) and treat `GROEP_SUCCES` as the positive outcome, so they work for both multi-year and one-year programmes.
 
-The required raw 1CHO columns are `persoonsgebonden_nummer`, `inschrijvingsjaar`, and `eerste_jaar_aan_deze_opleiding_instelling` (see `cho_transform.RUWE_CHO_KOLOMMEN`). Optional passthrough columns: geslacht, herkomst, `hoogste_vooropleiding_omschrijving_vooropleiding` (shortened to VWO/HAVO/MBO/HO), gem_eindcijfer_vo, `diploma_behaald`.
+1CHO columns fall into three groups:
+- **Structurally required** (`cho_transform.RUWE_CHO_KOLOMMEN`, needed to derive the group): `persoonsgebonden_nummer`, `inschrijvingsjaar`, `eerste_jaar_aan_deze_opleiding_instelling`. `transformeer_cho` raises if missing.
+- **Required for the analyses** (`cho_transform.VEREISTE_DEMO_KOLOMMEN`): `geslacht` and `hoogste_vooropleiding_omschrijving_vooropleiding` (shortened to VWO/HAVO/MBO/HO). The demografie- and eerlijkheidsanalyses need these, so the upload flow blocks opening the dashboard if they're missing (`ontbrekende_demografie_kolommen`, checked in `uploads.valideer_uploads`). They're enforced at the validation layer, not in `transformeer_cho`, so group-derivation still works without them (e.g. in the data scripts).
+- **Conditional / optional passthrough**: `diploma_behaald` is master-only (one-year programmes; bachelors have no diploma column and use year-2 doorstroom), so it is **not** universally required. `opleiding`, `instellingscode` pass through if present.
+
+Robustness: studentnummers are normalized on both sides (`transformatie.normaliseer_studentnummer`: int/float/text → trimmed string, `123.0` → `123`) so the selectiedata↔1CHO join and the upload overlap check don't fail on type/format mismatches. Year columns are coerced with `pd.to_numeric` and `transformeer_cho` raises if a year column has no valid values; `diploma_behaald` is parsed with `transformatie._parse_bool` (so a text `"False"`/`"Nee"` is not silently truthy).
 
 The data scripts choose the outcome by `opleidingsfase`: masters (`"M"`, e.g. the Leiden/Farmacie demo) generate `diploma_behaald`; bachelors (`"B"`, e.g. the Radboud/Psychologie demo) generate year-2 doorstroom.
 
