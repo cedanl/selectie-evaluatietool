@@ -19,6 +19,8 @@ from transformatie import lees_config, parse_selectiedata, transformeer_naar_lan
 from cho_transform import transformeer_cho
 from shared import (
     GROEP_VOLGORDE,
+    GROEP_NIET_GESTART,
+    GROEP_NIET_IN_VERGELIJKING,
     GROEP_INGESCHREVEN,
     GROEP_KLEUREN,
     UITKOMST_PERSPECTIEVEN,
@@ -78,7 +80,7 @@ def koppel_data(cho_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.DataFrame:
             df = df.drop(columns=[cho_col])
 
     df["groep"] = pd.Categorical(
-        df["groep"].fillna("Niet gestart"),
+        df["groep"].fillna(GROEP_NIET_GESTART),
         categories=GROEP_VOLGORDE,
         ordered=True,
     )
@@ -205,7 +207,7 @@ def _groep_tabel_stijl(groepeer, kleur_map, volgorde) -> list:
     ]
     stijlen.append(
         {
-            "if": {"filter_query": '{Groep} = "Niet in vergelijking"'},
+            "if": {"filter_query": f'{{Groep}} = "{GROEP_NIET_IN_VERGELIJKING}"'},
             "backgroundColor": "#f1f5f9",
             "fontStyle": "italic",
             "color": "#64748b",
@@ -248,7 +250,7 @@ def _aantallen_per_groep(df, groepeer):
         for groep, n in telling.items()
     ]
     if n_buiten > 0:
-        rijen.append({"Groep": "Niet in vergelijking", "n": n_buiten, "%": ""})
+        rijen.append({"Groep": GROEP_NIET_IN_VERGELIJKING, "n": n_buiten, "%": ""})
     return pd.DataFrame(rijen)
 
 

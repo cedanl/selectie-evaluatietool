@@ -10,6 +10,10 @@ GROEP_DOORGESTROOMD = "Doorgestroomd naar jaar 2"
 # het halen van het diploma in het cohortjaar.
 GROEP_DIPLOMA = "Gestart, diploma gehaald"
 
+# Label voor studenten die buiten het gekozen perspectief vallen (bijv. de
+# diplomagroep bij een doorstroomvergelijking). Wordt in tabellen apart gekleurd.
+GROEP_NIET_IN_VERGELIJKING = "Niet in vergelijking"
+
 GROEP_VOLGORDE = [
     GROEP_NIET_GESTART,
     GROEP_GESTART_GEEN_VERVOLG,
