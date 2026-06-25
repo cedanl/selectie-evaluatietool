@@ -56,7 +56,7 @@ def lees_config(contents: str) -> dict:
     kolommen_df = kolommen_df.dropna(subset=[kolommen_df.columns[0]])
     kolommen_df = kolommen_df[kolommen_df.iloc[:, 0].astype(str).str.strip() != ""]
 
-    veld_namen = ["kolom_naam", "instrument", "item", "criterium"]
+    veld_namen = ["kolom_naam", "instrument", "item", "criterium", "schaal"]
     kolommen = []
     for idx, rij in kolommen_df.iterrows():
         entry = {}

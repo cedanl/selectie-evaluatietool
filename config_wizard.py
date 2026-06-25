@@ -9,6 +9,7 @@ Bevat drie onderdelen:
 
 import io
 import json
+import math
 import re
 
 import pandas as pd
@@ -216,6 +217,35 @@ def _maak_item_naam(kolom: str) -> str:
     return naam
 
 
+# Nette bovengrenzen waar de schaalsuggestie naar afrondt. Daarboven naar tientallen.
+_NETTE_MAXIMA = [3, 5, 7, 10, 20, 25, 50, 100]
+
+
+def _rond_schaal_max(hoog: float) -> int:
+    """Rond de hoogste waarde omhoog naar een nette bovengrens."""
+    for n in _NETTE_MAXIMA:
+        if hoog <= n:
+            return n
+    return math.ceil(hoog / 10) * 10
+
+
+def _raad_schaal(waarden: pd.Series) -> str:
+    """Raad een nette schaal 'min-max' uit de scorewaardes.
+
+    Het ruwe databereik is meestal niet de bedoelde schaal (niemand scoort de
+    uitersten), dus rondt de suggestie af: de bovengrens omhoog naar een nette
+    waarde (1-7, 0-100, ...), de ondergrens naar 0 of 1. Geeft "" terug als er
+    geen bruikbaar bereik is.
+    """
+    getallen = pd.to_numeric(waarden, errors="coerce").dropna()
+    if getallen.empty or getallen.min() == getallen.max():
+        return ""
+
+    hoog = _rond_schaal_max(getallen.max())
+    laag = 0 if getallen.min() <= 0 or hoog > 10 else 1
+    return f"{laag}-{hoog}"
+
+
 def detecteer_score_kolommen(
     df: pd.DataFrame,
     id_kolom: str | None,
@@ -236,11 +266,11 @@ def detecteer_score_kolommen(
 
         resultaat.append(
             {
-                "meenemen": "Ja",
                 "kolom_naam": col_str,
                 "instrument": _raad_instrument(col_str, alle_kolommen),
                 "item": _maak_item_naam(col_str),
                 "criterium": "",
+                "schaal": _raad_schaal(df[col]),
             }
         )
 
@@ -255,17 +285,12 @@ def _instrument_tip(score_kols: list[dict]):
     """
     instrumenten = {}
     for rij in score_kols:
-        if rij.get("meenemen", "Ja") != "Ja":
-            continue
         inst = rij.get("instrument", "").strip()
         if inst:
             instrumenten.setdefault(inst, []).append(rij["kolom_naam"])
 
     if not instrumenten:
-        geen_instrument = [
-            r for r in score_kols
-            if r.get("meenemen", "Ja") == "Ja" and not r.get("instrument", "").strip()
-        ]
+        geen_instrument = [r for r in score_kols if not r.get("instrument", "").strip()]
         if geen_instrument:
             return dbc.Alert(
                 [
@@ -337,7 +362,7 @@ def exporteer_config_excel(config: dict) -> bytes:
         ws_inst.cell(row=r, column=2, value=val)
 
     ws_kol = wb.create_sheet("kolommen")
-    kol_headers = ["kolom_naam", "instrument", "item", "criterium"]
+    kol_headers = ["kolom_naam", "instrument", "item", "criterium", "schaal"]
     for c, h in enumerate(kol_headers, start=1):
         ws_kol.cell(row=1, column=c, value=h)
     for r, kol in enumerate(config.get("kolommen", []), start=2):
@@ -502,12 +527,24 @@ def maak_wizard_layout() -> html.Div:
                                 children=[
                                     dbc.Label("Scorekolommen", className="small"),
                                     html.P(
-                                        "Elke rij is een kolom die de wizard als score "
-                                        "herkent. Zet 'Meenemen' op Nee voor kolommen die "
-                                        "geen selectiescore zijn. Instrument is het "
-                                        "meetinstrument (bijv. een test of beoordeling), "
-                                        "Item is wat het meet, en Criterium is een optionele "
-                                        "groepering. Pas de teksten aan waar nodig.",
+                                        [
+                                            "Elke rij is een kolom die de wizard als "
+                                            "score herkent. Het ",
+                                            html.Strong("vinkje vooraan elke rij"),
+                                            " bepaalt of die kolom meegaat in de analyse. "
+                                            "Alle herkende kolommen staan standaard "
+                                            "aangevinkt; haal het vinkje weg bij kolommen "
+                                            "die geen selectiescore zijn (bijv. een "
+                                            "volgnummer of een tekstveld dat toch als "
+                                            "getal binnenkomt). Instrument is het "
+                                            "meetinstrument (bijv. een test of "
+                                            "beoordeling), Item is wat het meet, "
+                                            "Criterium is een optionele groepering, en "
+                                            "Schaal is het bereik van de scores (bijv. "
+                                            "1-7 of 0-100). De wizard stelt een nette "
+                                            "schaal voor op basis van de scores; pas de "
+                                            "teksten aan waar nodig.",
+                                        ],
                                         className="wiz-uitleg mb-2",
                                     ),
                                     html.P(
@@ -518,11 +555,6 @@ def maak_wizard_layout() -> html.Div:
                                     dash_table.DataTable(
                                         id="wiz-kolommen-tabel",
                                         columns=[
-                                            {
-                                                "name": "Meenemen",
-                                                "id": "meenemen",
-                                                "presentation": "dropdown",
-                                            },
                                             {
                                                 "name": "Kolom",
                                                 "id": "kolom_naam",
@@ -543,18 +575,17 @@ def maak_wizard_layout() -> html.Div:
                                                 "id": "criterium",
                                                 "editable": True,
                                             },
+                                            {
+                                                "name": "Schaal",
+                                                "id": "schaal",
+                                                "editable": True,
+                                            },
                                         ],
                                         data=[],
                                         editable=True,
                                         row_deletable=False,
-                                        dropdown={
-                                            "meenemen": {
-                                                "options": [
-                                                    {"label": "Ja", "value": "Ja"},
-                                                    {"label": "Nee", "value": "Nee"},
-                                                ],
-                                            }
-                                        },
+                                        row_selectable="multi",
+                                        selected_rows=[],
                                         style_table={
                                             "overflowX": "auto",
                                             "fontSize": "13px",
@@ -575,12 +606,6 @@ def maak_wizard_layout() -> html.Div:
                                                 "if": {"column_id": "kolom_naam"},
                                                 "backgroundColor": "#f8f9fa",
                                                 "color": "#6c757d",
-                                            },
-                                            {
-                                                "if": {
-                                                    "filter_query": '{meenemen} = "Nee"',
-                                                },
-                                                "opacity": "0.4",
                                             },
                                         ],
                                     ),
@@ -695,6 +720,7 @@ def registreer_callbacks(app: dash.Dash) -> None:
         Output("wiz-totaalscore", "options"),
         Output("wiz-totaalscore", "value"),
         Output("wiz-kolommen-tabel", "data"),
+        Output("wiz-kolommen-tabel", "selected_rows"),
         Output("wiz-tabel-placeholder", "style"),
         Output("wiz-tip", "children"),
         Input("wiz-sheet-dropdown", "value"),
@@ -703,7 +729,7 @@ def registreer_callbacks(app: dash.Dash) -> None:
         prevent_initial_call=True,
     )
     def detecteer_kolommen(blad, header_rij, raw_contents):
-        leeg = ([], None, [], None, [], {"display": "block"}, "")
+        leeg = ([], None, [], None, [], [], {"display": "block"}, "")
 
         if not blad or not raw_contents or not header_rij:
             return leeg
@@ -734,6 +760,7 @@ def registreer_callbacks(app: dash.Dash) -> None:
                 col_options,
                 totaal_kol,
                 score_kols,
+                list(range(len(score_kols))),
                 {"display": "none"} if score_kols else {"display": "block"},
                 tip,
             )
@@ -746,6 +773,7 @@ def registreer_callbacks(app: dash.Dash) -> None:
         Output("wiz-download-btn", "style"),
         Input("wiz-bevestig-btn", "n_clicks"),
         State("wiz-kolommen-tabel", "data"),
+        State("wiz-kolommen-tabel", "selected_rows"),
         State("wiz-sheet-dropdown", "value"),
         State("wiz-header-rij", "value"),
         State("wiz-id-kolom", "value"),
@@ -756,7 +784,16 @@ def registreer_callbacks(app: dash.Dash) -> None:
         prevent_initial_call=True,
     )
     def bevestig_config(
-        n, tabel_data, blad, header_rij, id_kol, totaal_kol, opleiding, instelling, jaar
+        n,
+        tabel_data,
+        selected_rows,
+        blad,
+        header_rij,
+        id_kol,
+        totaal_kol,
+        opleiding,
+        instelling,
+        jaar,
     ):
         if not n or not tabel_data:
             return dash.no_update, dash.no_update, {"display": "none"}
@@ -779,11 +816,8 @@ def registreer_callbacks(app: dash.Dash) -> None:
                 {"display": "none"},
             )
 
-        actieve_kolommen = [
-            {k: v for k, v in rij.items() if k != "meenemen"}
-            for rij in tabel_data
-            if rij.get("meenemen", "Ja") == "Ja"
-        ]
+        gekozen = set(selected_rows or [])
+        actieve_kolommen = [rij for i, rij in enumerate(tabel_data) if i in gekozen]
 
         if not actieve_kolommen:
             return (

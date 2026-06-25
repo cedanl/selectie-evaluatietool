@@ -1,6 +1,9 @@
+import pandas as pd
+
 from config_wizard import (
     _raad_instrument,
     _maak_item_naam,
+    _raad_schaal,
     detecteer_id_kolom,
     detecteer_metadata,
 )
@@ -42,6 +45,36 @@ class TestMaakItemNaam:
 
     def test_camel_case_split(self):
         assert _maak_item_naam("prefix_socialSkills") == "Social Skills"
+
+
+class TestRaadSchaal:
+    def test_rounds_max_up_to_nette_grens(self):
+        # niemand scoort het uiterste, dus 2-6 hoort bij een 1-7 schaal
+        assert _raad_schaal(pd.Series([2, 3, 6, 4, 5])) == "1-7"
+
+    def test_small_max_rounds_to_five(self):
+        assert _raad_schaal(pd.Series([1, 2, 4])) == "1-5"
+
+    def test_percentage_range(self):
+        assert _raad_schaal(pd.Series([23, 45, 87, 80])) == "0-100"
+
+    def test_grade_scale_rounds_to_ten(self):
+        assert _raad_schaal(pd.Series([5.5, 8.2, 6.0])) == "1-10"
+
+    def test_includes_zero_keeps_zero(self):
+        assert _raad_schaal(pd.Series([0, 4, 9])) == "0-10"
+
+    def test_large_scale_rounds_to_tens(self):
+        assert _raad_schaal(pd.Series([120, 250, 333])) == "0-340"
+
+    def test_constant_column_is_empty(self):
+        assert _raad_schaal(pd.Series([3, 3, 3])) == ""
+
+    def test_empty_column_is_empty(self):
+        assert _raad_schaal(pd.Series([None, None], dtype="float")) == ""
+
+    def test_ignores_non_numeric(self):
+        assert _raad_schaal(pd.Series([1, "x", 4])) == "1-5"
 
 
 class TestDetecteerIdKolom:
