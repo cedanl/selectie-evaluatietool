@@ -93,6 +93,16 @@ def df_from_store(store_data: str | None) -> pd.DataFrame:
     return df
 
 
+def scores_df_from_store(store_data: str | None) -> pd.DataFrame:
+    """Deserialiseer de scores-store (long-format scores, geen 'groep'-kolom).
+
+    Tegenhanger van df_from_store voor de scores-store, zodat de tabs het
+    orient/StringIO-contract niet elk los hoeven te herhalen."""
+    if not store_data:
+        return pd.DataFrame()
+    return pd.read_json(io.StringIO(store_data), orient="split")
+
+
 TABLE_STYLE = dict(
     style_cell={
         "padding": "8px 14px",

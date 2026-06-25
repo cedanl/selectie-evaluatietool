@@ -1,6 +1,5 @@
 """Upload-overlay, sidebar en de bijbehorende callbacks."""
 
-import io
 import json
 
 import pandas as pd
@@ -21,6 +20,7 @@ from config_wizard import maak_wizard_layout
 from rapport import genereer_rapport
 from shared import PERSPECTIEF_DOORSTROOM, GROEP_INGESCHREVEN, GROEP_SUCCES
 from helpers import (
+    scores_df_from_store,
     DEMO_DATASETS,
     df_from_store,
     bouw_data_stores,
@@ -475,7 +475,7 @@ def registreer_callbacks(app):
         df = df_from_store(store_data)
         if df.empty or not scores_store:
             return dash.no_update
-        scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+        scores_df = scores_df_from_store(scores_store)
         perspectief = PERSPECTIEF_DOORSTROOM
         pdf_bytes = genereer_rapport(df, scores_df, perspectief=perspectief)
         opleiding = ""

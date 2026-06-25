@@ -1,6 +1,5 @@
 """Tab 'Regressie': logistische regressie op studiesucces."""
 
-import io
 import numpy as np
 import pandas as pd
 from dash import dcc, html, dash_table, Input, Output, State
@@ -14,6 +13,7 @@ from shared import (
 )
 
 from helpers import (
+    scores_df_from_store,
     TABLE_STYLE,
     df_from_store,
 )
@@ -145,7 +145,7 @@ def registreer_callbacks(app):
             return leeg7
 
         perspectief = PERSPECTIEF_DOORSTROOM
-        scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+        scores_df = scores_df_from_store(scores_store)
 
         regressie_msg = ""
         uni_data = []

@@ -1,7 +1,5 @@
 """Tab 'Wat valt op': automatisch overzicht van bevindingen."""
 
-import io
-import pandas as pd
 import dash
 from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
@@ -19,6 +17,7 @@ from shared import (
 )
 
 from helpers import (
+    scores_df_from_store,
     df_from_store,
     _bereken_model_stats,
 )
@@ -236,7 +235,7 @@ def registreer_callbacks(app):
                 "Laad eerst data om de bevindingen te zien.", className="text-muted"
             )
 
-        scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+        scores_df = scores_df_from_store(scores_store)
 
         perspectief = PERSPECTIEF_DOORSTROOM
         pop = df[df["groep"].isin(perspectief["populatie"])]

@@ -1,7 +1,5 @@
 """Tab 'Selectiescores': boxplots per item per groep."""
 
-import io
-import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import dcc, html, dash_table, Input, Output, State
@@ -16,6 +14,7 @@ from shared import (
 )
 
 from helpers import (
+    scores_df_from_store,
     TABLE_STYLE,
     GROEPEER_OPTIES_SCORES,
     df_from_store,
@@ -213,7 +212,7 @@ def registreer_callbacks(app):
                 "Alle",
             )
 
-        scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+        scores_df = scores_df_from_store(scores_store)
         meta = scores_df[["instrument", "item", "criterium"]].drop_duplicates().copy()
         meta["bereik"] = meta["item"].map(bucket_per_item(scores_df))
 
@@ -317,7 +316,7 @@ def registreer_callbacks(app):
         if df.empty or not scores_store:
             return leeg, [], [], [], [], [], []
 
-        scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+        scores_df = scores_df_from_store(scores_store)
         basis = _scores_per_groep(df, scores_df, groepeer)
         if basis is None:
             return leeg, [], [], [], [], [], []

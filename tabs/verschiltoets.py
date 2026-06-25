@@ -1,7 +1,5 @@
 """Tab 'Verschiltoets': significantietoets per item."""
 
-import io
-import pandas as pd
 from dash import dcc, html, dash_table, Input, Output, State
 import dash_bootstrap_components as dbc
 
@@ -17,6 +15,7 @@ from shared import (
 )
 
 from helpers import (
+    scores_df_from_store,
     TABLE_STYLE,
     GROEPEER_OPTIES,
     df_from_store,
@@ -146,7 +145,7 @@ def registreer_callbacks(app):
         df = df_from_store(store_data)
         if df.empty or not scores_store:
             return [], [], ""
-        scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+        scores_df = scores_df_from_store(scores_store)
 
         perspectief = UITKOMST_PERSPECTIEVEN.get(niveau)
         if perspectief:

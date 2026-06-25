@@ -1,8 +1,6 @@
 """Tab 'Correlatie': correlatiematrix tussen items."""
 
-import io
 import numpy as np
-import pandas as pd
 import plotly.graph_objects as go
 from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
@@ -13,6 +11,7 @@ from shared import (
 )
 
 from helpers import (
+    scores_df_from_store,
     df_from_store,
 )
 
@@ -170,7 +169,7 @@ def registreer_callbacks(app):
         instrument_opties = [{"label": "Alle instrumenten", "value": "Alle"}]
         criterium_opties = [{"label": "Alle criteria", "value": "Alle"}]
         if scores_store:
-            scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+            scores_df = scores_df_from_store(scores_store)
             for inst in sorted(scores_df["instrument"].unique()):
                 instrument_opties.append({"label": inst, "value": inst})
             criteria = scores_df["criterium"].dropna().unique()
@@ -197,7 +196,7 @@ def registreer_callbacks(app):
         if not scores_store:
             return leeg
 
-        scores_df = pd.read_json(io.StringIO(scores_store), orient="split")
+        scores_df = scores_df_from_store(scores_store)
         scores = scores_df
 
         if sh_instrument and sh_instrument != "Alle":
