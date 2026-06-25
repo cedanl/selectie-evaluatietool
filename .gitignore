@@ -12,7 +12,6 @@ data/*.xls
 data/*.xlsx
 data/demo/selectiedata.xlsx
 data/demo/*/selectiedata.xlsx
-data/demo/EV_DEMO_farmacie.csv
 
 # Brondata en configs in root (duplicaten van data/)
 dummy data selectie*.xlsx
@@ -24,8 +23,6 @@ config_*.xlsx
 *.pptx
 *.doc
 *.parquet
-archive/
-doc/
 
 # Office lock files
 ~$*
