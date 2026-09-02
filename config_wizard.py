@@ -68,14 +68,22 @@ def detecteer_id_kolom(headers: list[str]) -> str | None:
 
 
 def detecteer_totaalscore(headers: list[str]) -> str | None:
+    _EXACT = {"totaal", "totaalscore", "total", "totalscore", "total score"}
+    candidates = []
     for h in headers:
-        lower = str(h).lower()
-        if "totaal" in lower and "score" in lower:
+        lower = str(h).lower().strip()
+        if lower in _EXACT:
             return h
-    for h in headers:
-        if "totaal" in str(h).lower():
-            return h
-    return None
+        if "totaal" in lower or "total" in lower:
+            candidates.append(h)
+    if not candidates:
+        return None
+    suffix_matches = [
+        h
+        for h in candidates
+        if str(h).lower().endswith(("totaal", "total", "totaalscore", "totalscore"))
+    ]
+    return suffix_matches[-1] if suffix_matches else candidates[-1]
 
 
 _SKIP_WOORDEN = {
