@@ -53,7 +53,16 @@ def parse_csv_or_excel(contents: str, filename: str) -> pd.DataFrame:
     raw = _decode_upload(contents)
     if filename.endswith((".xlsx", ".xls")):
         return pd.read_excel(io.BytesIO(raw))
-    decoded = raw.decode("utf-8")
+    for encoding in ("utf-8-sig", "latin-1", "cp1252"):
+        try:
+            decoded = raw.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:
+        raise ValueError(
+            "Het CSV-bestand kon niet worden gelezen. Sla het op als UTF-8 en probeer opnieuw."
+        )
     sep = ";" if decoded[:500].count(";") > decoded[:500].count(",") else ","
     return pd.read_csv(io.StringIO(decoded), sep=sep)
 
