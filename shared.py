@@ -815,8 +815,8 @@ def bereken_univariaat(
                     "p-waarde": fmt_p(float(m.pvalues.iloc[-1])),
                 }
             )
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[shared] bereken_univariaat item '{col}' mislukt: {e}", flush=True)
     return resultaten
 
 

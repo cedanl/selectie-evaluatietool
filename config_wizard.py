@@ -801,7 +801,8 @@ def registreer_callbacks(app: dash.Dash) -> None:
                 meta["instelling"] or None,
                 meta["jaar"] or None,
             )
-        except Exception:
+        except Exception as e:
+            print(f"[wizard] detecteer_blad_en_header mislukt: {e}", flush=True)
             return [], None, 1, None, None, None
 
     @app.callback(
@@ -859,7 +860,8 @@ def registreer_callbacks(app: dash.Dash) -> None:
                 {"display": "none"} if tabel_rijen else {"display": "block"},
                 tip,
             )
-        except Exception:
+        except Exception as e:
+            print(f"[wizard] detecteer_kolommen mislukt: {e}", flush=True)
             return leeg
 
     @app.callback(

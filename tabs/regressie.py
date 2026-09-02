@@ -241,7 +241,8 @@ def registreer_callbacks(app):
                         "Sig.": sig_sym(p),
                     }
                 )
-            except Exception:
+            except Exception as e:
+                print(f"[regressie] univariate fit '{col}' mislukt: {e}", flush=True)
                 uni_data.append(
                     {
                         "Item": col,

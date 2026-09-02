@@ -377,5 +377,6 @@ def _bereken_model_stats(df, scores_df, perspectief):
             "pseudo_r2": round(float(model.prsquared), 3),
             "sig_items": sig_items,
         }
-    except Exception:
+    except Exception as e:
+        print(f"[helpers] _bereken_model_stats mislukt: {e}", flush=True)
         return None
