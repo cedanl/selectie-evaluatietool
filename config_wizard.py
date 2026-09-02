@@ -14,6 +14,9 @@ import re
 
 import pandas as pd
 from openpyxl import Workbook
+from openpyxl.comments import Comment
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
 
 from dash import dcc, html, dash_table, Input, Output, State, ctx
 import dash
@@ -356,11 +359,48 @@ def bouw_config_dict(
     }
 
 
+_INST_UITLEG = {
+    "koppel_id_kolom": "Naam van de kolom in je selectiebestand die het studentnummer bevat. Dit is de kolom die gebruikt wordt om selectiedata aan 1CHO-data te koppelen.",
+    "opleiding": "Naam of code van de opleiding, bijvoorbeeld 'Psychologie' of 'B PSY'.",
+    "instellingscode": "BRIN-code van de instelling, bijvoorbeeld '21RI' voor Radboud.",
+    "jaar": "Selectiejaar (het jaar waarin de selectie heeft plaatsgevonden), bijvoorbeeld '2026'.",
+    "blad_naam": "Naam van het tabblad in je selectie-Excel dat de scores bevat.",
+    "header_rij": "Rijnummer van de kopregel in het selectiebestand (1 = eerste rij). Sommige bestanden hebben meerdere rijen boven de kolomnamen.",
+    "totaalscore_kolom": "Optioneel: naam van een kolom die al een totaalscore bevat. Laat leeg als er geen totaalscore-kolom is; de tool berekent dan zelf een totaalscore.",
+}
+
+_KOL_UITLEG = {
+    "meenemen": "TRUE = deze kolom wordt meegenomen als selectie-item in de analyses. FALSE = kolom wordt genegeerd (bijv. tekstkolommen of id-kolommen).",
+    "kolom_naam": "De exacte kolomnaam zoals die in je selectiebestand staat. Niet aanpassen.",
+    "instrument": "Het selectie-instrument waaronder dit item valt, bijv. 'Motivatiebrief' of 'Capaciteitentest'. Meerdere items kunnen hetzelfde instrument delen.",
+    "item": "De naam van dit specifieke onderdeel, bijv. 'Analytisch vermogen' of 'Totaalscore gesprek'.",
+    "criterium": "Optioneel groeperingsniveau tussen instrument en item, bijv. 'Cognitief' of 'Persoonlijkheid'. Laat leeg als je geen extra groepering wilt.",
+    "schaal": "Het scorebereik van dit item, bijv. '1-7' of '0-100'. Wordt gebruikt voor de visualisaties.",
+}
+
+_HEADER_FILL = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+_HEADER_FONT = Font(bold=True)
+_UITLEG_FONT = Font(color="595959", italic=True)
+_UITLEG_ALIGN = Alignment(wrap_text=True)
+_KOL_HEADERS = [
+    ("meenemen", 12),
+    ("kolom_naam", 35),
+    ("instrument", 22),
+    ("item", 30),
+    ("criterium", 18),
+    ("schaal", 10),
+]
+
+
 def exporteer_config_excel(config: dict) -> bytes:
     wb = Workbook()
 
     ws_inst = wb.active
     ws_inst.title = "instellingen"
+    ws_inst.column_dimensions["A"].width = 22
+    ws_inst.column_dimensions["B"].width = 35
+    ws_inst.column_dimensions["C"].width = 80
+
     inst_rijen = [
         ("koppel_id_kolom", config.get("koppel_id_kolom", "")),
         ("opleiding", config.get("opleiding", "")),
@@ -371,20 +411,21 @@ def exporteer_config_excel(config: dict) -> bytes:
         ("totaalscore_kolom", config.get("totaalscore_kolom", "")),
     ]
     for r, (key, val) in enumerate(inst_rijen, start=1):
-        ws_inst.cell(row=r, column=1, value=key)
+        ws_inst.cell(row=r, column=1, value=key).font = _HEADER_FONT
         ws_inst.cell(row=r, column=2, value=val)
+        uitleg_cel = ws_inst.cell(row=r, column=3, value=_INST_UITLEG.get(key, ""))
+        uitleg_cel.font = _UITLEG_FONT
+        uitleg_cel.alignment = _UITLEG_ALIGN
 
     ws_kol = wb.create_sheet("kolommen")
-    kol_headers = [
-        "meenemen",
-        "kolom_naam",
-        "instrument",
-        "item",
-        "criterium",
-        "schaal",
-    ]
-    for c, h in enumerate(kol_headers, start=1):
-        ws_kol.cell(row=1, column=c, value=h)
+    for c, (h, w) in enumerate(_KOL_HEADERS, start=1):
+        ws_kol.column_dimensions[get_column_letter(c)].width = w
+        header_cel = ws_kol.cell(row=1, column=c, value=h)
+        header_cel.font = _HEADER_FONT
+        header_cel.fill = _HEADER_FILL
+        header_cel.comment = Comment(_KOL_UITLEG.get(h, ""), "Config wizard")
+
+    kol_headers = [h for h, _ in _KOL_HEADERS]
     for r, kol in enumerate(config.get("kolommen", []), start=2):
         for c, veld in enumerate(kol_headers, start=1):
             if veld == "meenemen":
