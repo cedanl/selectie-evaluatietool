@@ -120,8 +120,8 @@ Bij meerjarige opleidingen draait de analyse om doorstroom naar jaar 2. Bij eenj
 
 Er zitten twee fictieve datasets in de repository:
 
-- **Farmacie master** (Universiteit Leiden, 140 kandidaten) — eenjarige opleiding, uitkomst is diploma
-- **Psychologie bachelor** (Radboud Universiteit, 200 kandidaten) — meerjarige opleiding, uitkomst is doorstroom naar jaar 2
+- **Farmacie master** (Universiteit Westerveld, 140 kandidaten) — eenjarige opleiding, uitkomst is diploma
+- **Psychologie bachelor** (Hogeschool Zandstad, 200 kandidaten) — meerjarige opleiding, uitkomst is doorstroom naar jaar 2
 
 Kies een van beide in het uploadscherm om het dashboard zonder eigen data te verkennen.
 
