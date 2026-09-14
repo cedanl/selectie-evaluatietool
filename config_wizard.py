@@ -25,6 +25,19 @@ import dash_bootstrap_components as dbc
 from transformatie import _decode_upload
 
 
+# XML 1.0 staat bepaalde controle-tekens niet toe. openpyxl schrijft ze zonder
+# fout, maar het gegenereerde bestand breekt dan bij het inlezen. We strippen
+# ze preventief uit alle celwaarden die de wizard schrijft.
+_ILLEGALE_XML_TEKENS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x84\x86-\x9f]")
+
+
+def _saniteer(waarde) -> str:
+    """Verwijder tekens die niet geldig zijn in XML 1.0 uit een celwaarde."""
+    if not isinstance(waarde, str):
+        return waarde
+    return _ILLEGALE_XML_TEKENS.sub("", waarde)
+
+
 # =============================================================================
 # 1. Detectiefuncties
 # =============================================================================
@@ -420,7 +433,7 @@ def exporteer_config_excel(config: dict) -> bytes:
     ]
     for r, (key, val) in enumerate(inst_rijen, start=1):
         ws_inst.cell(row=r, column=1, value=key).font = _HEADER_FONT
-        ws_inst.cell(row=r, column=2, value=val)
+        ws_inst.cell(row=r, column=2, value=_saniteer(val))
         uitleg_cel = ws_inst.cell(row=r, column=3, value=_INST_UITLEG.get(key, ""))
         uitleg_cel.font = _UITLEG_FONT
         uitleg_cel.alignment = _UITLEG_ALIGN
@@ -439,7 +452,7 @@ def exporteer_config_excel(config: dict) -> bytes:
             if veld == "meenemen":
                 ws_kol.cell(row=r, column=c, value=bool(kol.get("meenemen", True)))
             else:
-                ws_kol.cell(row=r, column=c, value=kol.get(veld, ""))
+                ws_kol.cell(row=r, column=c, value=_saniteer(kol.get(veld, "")))
 
     buf = io.BytesIO()
     wb.save(buf)
