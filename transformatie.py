@@ -5,8 +5,33 @@ config tegen selectiedata, en het omzetten van breed naar lang formaat.
 
 import base64
 import io
+import re
+import zipfile
 
 import pandas as pd
+
+# Tekens die niet geldig zijn in XML 1.0. Excel bewaart ze bij opslaan en
+# openpyxl's parser struikelt er dan over met "not well-formed (invalid token)".
+_ILLEGALE_XML_TEKENS = re.compile(rb"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
+
+def _repareer_xlsx(raw: bytes) -> bytes:
+    """Strip illegale XML 1.0-tekens uit alle XML-bestanden in een .xlsx ZIP.
+
+    Werkt in-memory: leest het ZIP-archief, verwijdert de tekens uit elk
+    .xml-bestand, en schrijft een schoon ZIP terug. Nodig wanneer een
+    Excel-bestand kolomnamen of celwaarden met controle-tekens bevat die
+    Excel bij opslaan gewoon bewaart maar die openpyxl's parser doen crashen.
+    """
+    src = zipfile.ZipFile(io.BytesIO(raw))
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as dst:
+        for item in src.infolist():
+            data = src.read(item.filename)
+            if item.filename.endswith(".xml"):
+                data = _ILLEGALE_XML_TEKENS.sub(b"", data)
+            dst.writestr(item, data)
+    return buf.getvalue()
 
 
 def _decode_upload(contents: str) -> bytes:
@@ -68,14 +93,14 @@ def parse_csv_or_excel(contents: str, filename: str) -> pd.DataFrame:
 
 
 def parse_selectiedata(contents: str, config: dict) -> pd.DataFrame:
-    raw = _decode_upload(contents)
+    raw = _repareer_xlsx(_decode_upload(contents))
     blad = config.get("blad_naam") or 0
     header_rij = int(config.get("header_rij") or 1) - 1
     return pd.read_excel(io.BytesIO(raw), sheet_name=blad, header=header_rij)
 
 
 def lees_config(contents: str) -> dict:
-    raw = _decode_upload(contents)
+    raw = _repareer_xlsx(_decode_upload(contents))
     xls = pd.ExcelFile(io.BytesIO(raw))
 
     instellingen_df = pd.read_excel(xls, sheet_name="instellingen", header=None)
@@ -129,7 +154,7 @@ def lees_config(contents: str) -> dict:
 
 def valideer_config(config: dict, selectiedata_contents: str) -> list[dict]:
     resultaten = []
-    raw = _decode_upload(selectiedata_contents)
+    raw = _repareer_xlsx(_decode_upload(selectiedata_contents))
     xls = pd.ExcelFile(io.BytesIO(raw))
 
     blad = config.get("blad_naam", "")
