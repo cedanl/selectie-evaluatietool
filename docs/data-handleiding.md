@@ -81,6 +81,20 @@ In de README staat hoe dat werkt.
 
 **Formaat:** Excel (.xlsx)
 
+### Geen dubbele informatie
+
+Neem geen kolommen mee die statistisch (bijna) hetzelfde zeggen over een
+kandidaat. Bijvoorbeeld: een toets die zowel "percentage goed" als "aantal
+goed" rapporteert, meet in de praktijk hetzelfde ten opzichte van de andere
+kandidaten (wie hoger scoort op de een, scoort ook hoger op de ander).
+Zulke kolommen allebei meenemen voegt geen nieuwe informatie toe, maar kan
+wel de samenhangsanalyse en regressie vertekenen. Kies een van de twee,
+meestal de kolom die het meest gangbaar is om te rapporteren.
+
+De config wizard signaleert kolomparen die zeer sterk met elkaar
+samenhangen (r ≥ 0,95) als waarschuwing, maar controleert dit niet
+uitputtend; gebruik ook je eigen kennis van hoe de scores zijn opgebouwd.
+
 
 ## 3. 1CHO-data (studiegegevens)
 
@@ -91,10 +105,19 @@ doorgegaan naar het tweede jaar.
 1CHO is een afkorting van "1 Cijfer Hoger Onderwijs". Het is een landelijke
 verzameling studiegegevens die door DUO wordt beheerd (DUO is de
 overheidsdienst die onder andere studiefinanciering en
-studentgegevens regelt). Je hogeschool of universiteit kan deze gegevens
-opvragen. Je kunt ook de
-[1cijferho tool](https://github.com/cedanl/1cijferho) van CEDA gebruiken om
-de juiste kolommen uit de 1CHO-bestanden te halen.
+studentgegevens regelt).
+
+**Let op: je uploadt hier niet het ruwe DUO-bestand.** DUO levert
+1CHO-data op BSN, niet op studentnummer, en in een andere vorm dan deze
+tool verwacht. Je hebt eerst een verwerkingsstap nodig die het BSN aan het
+studentnummer koppelt en de data omzet naar het formaat hieronder. Daarvoor
+gebruik je de [1cijferho tool](https://github.com/cedanl/1cijferho) van
+CEDA: die pipeline neemt het ruwe DUO-bestand en het
+BSN/studentnummer-koppelbestand van je instelling, en levert een bestand op
+met de kolommen die hieronder staan beschreven. **Dat uitvoerbestand van de
+1cijferho-pipeline upload je hier**, niet het ruwe DUO-bestand. Je
+hogeschool of universiteit (vaak de afdeling institutional research/BI)
+kan je hierbij helpen.
 
 **Formaat:** CSV of Excel (.csv, .xlsx, .xls)
 

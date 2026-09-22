@@ -45,8 +45,6 @@ for tab in (bevindingen, scores, demografie, verschiltoets, correlatie, regressi
 app.layout = html.Div(
     [
         dcc.Location(id="url", refresh=False),
-        dcc.Store(id="data-store", storage_type="memory"),
-        dcc.Store(id="scores-store", storage_type="memory"),
         dbc.Toast(
             "Rapport wordt gegenereerd, dit kan even duren...",
             id="rapport-toast",

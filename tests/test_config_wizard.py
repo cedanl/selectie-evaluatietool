@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 from config_wizard import (
     _raad_instrument,
@@ -6,7 +7,13 @@ from config_wizard import (
     _raad_schaal,
     detecteer_id_kolom,
     detecteer_metadata,
+    detecteer_mogelijke_duplicaten,
+    _duplicaat_tip,
 )
+
+
+def _score_kol(kolom_naam, meenemen=True):
+    return {"kolom_naam": kolom_naam, "_meenemen": meenemen}
 
 
 class TestRaadInstrument:
@@ -100,3 +107,100 @@ class TestDetecteerMetadata:
         )
         assert "Biomedische" in meta["opleiding"]
         assert meta["jaar"] == "2025"
+
+
+class TestDetecteerMogelijkeDuplicaten:
+    def test_perfect_correlation_flagged(self):
+        df = pd.DataFrame({"pct_goed": [10, 20, 30, 40], "aantal_goed": [1, 2, 3, 4]})
+        kols = [_score_kol("pct_goed"), _score_kol("aantal_goed")]
+        paren = detecteer_mogelijke_duplicaten(df, kols)
+        assert len(paren) == 1
+        a, b, r = paren[0]
+        assert {a, b} == {"pct_goed", "aantal_goed"}
+        assert r == pytest.approx(1.0)
+
+    def test_perfect_negative_correlation_flagged(self):
+        # bijv. rangnummer (laag = beter) tegenover score (hoog = beter)
+        df = pd.DataFrame({"rang": [1, 2, 3, 4], "score": [40, 30, 20, 10]})
+        kols = [_score_kol("rang"), _score_kol("score")]
+        paren = detecteer_mogelijke_duplicaten(df, kols)
+        assert len(paren) == 1
+        assert paren[0][2] == pytest.approx(-1.0)
+
+    def test_uncorrelated_columns_not_flagged(self):
+        df = pd.DataFrame({"a": [1, 2, 3, 4, 5], "b": [3, 1, 4, 1, 5]})
+        kols = [_score_kol("a"), _score_kol("b")]
+        assert detecteer_mogelijke_duplicaten(df, kols) == []
+
+    def test_below_threshold_not_flagged(self):
+        # sterk maar niet extreem gecorreleerd (r rond 0.8, onder de 0.95-drempel)
+        df = pd.DataFrame({"a": [1, 2, 3, 4, 5], "b": [1, 2, 2, 5, 4]})
+        kols = [_score_kol("a"), _score_kol("b")]
+        assert detecteer_mogelijke_duplicaten(df, kols) == []
+
+    def test_unchecked_column_excluded(self):
+        df = pd.DataFrame({"pct_goed": [10, 20, 30, 40], "aantal_goed": [1, 2, 3, 4]})
+        kols = [_score_kol("pct_goed"), _score_kol("aantal_goed", meenemen=False)]
+        assert detecteer_mogelijke_duplicaten(df, kols) == []
+
+    def test_column_missing_from_df_ignored(self):
+        df = pd.DataFrame({"a": [1, 2, 3, 4]})
+        kols = [_score_kol("a"), _score_kol("nooit_geuploaded")]
+        assert detecteer_mogelijke_duplicaten(df, kols) == []
+
+    def test_fewer_than_two_columns_returns_empty(self):
+        df = pd.DataFrame({"a": [1, 2, 3, 4]})
+        assert detecteer_mogelijke_duplicaten(df, [_score_kol("a")]) == []
+        assert detecteer_mogelijke_duplicaten(df, []) == []
+
+    def test_constant_column_does_not_crash(self):
+        # std=0 geeft een NaN-correlatie; dat mag niet als duplicaat tellen
+        df = pd.DataFrame({"a": [3, 3, 3, 3], "b": [1, 2, 3, 4]})
+        kols = [_score_kol("a"), _score_kol("b")]
+        assert detecteer_mogelijke_duplicaten(df, kols) == []
+
+    def test_missing_values_use_pairwise_deletion(self):
+        df = pd.DataFrame(
+            {
+                "pct_goed": [10, 20, 30, 40, None],
+                "aantal_goed": [1, 2, 3, 4, 5],
+            }
+        )
+        kols = [_score_kol("pct_goed"), _score_kol("aantal_goed")]
+        paren = detecteer_mogelijke_duplicaten(df, kols)
+        assert len(paren) == 1
+        assert paren[0][2] == pytest.approx(1.0)
+
+    def test_three_columns_flags_only_the_correlated_pair(self):
+        df = pd.DataFrame(
+            {
+                "pct_goed": [10, 20, 30, 40],
+                "aantal_goed": [1, 2, 3, 4],
+                "onafhankelijk": [5, 1, 9, 3],
+            }
+        )
+        kols = [
+            _score_kol("pct_goed"),
+            _score_kol("aantal_goed"),
+            _score_kol("onafhankelijk"),
+        ]
+        paren = detecteer_mogelijke_duplicaten(df, kols)
+        assert len(paren) == 1
+        assert {paren[0][0], paren[0][1]} == {"pct_goed", "aantal_goed"}
+
+
+class TestDuplicaatTip:
+    def test_no_pairs_returns_empty_string(self):
+        df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [3, 1, 4, 1]})
+        kols = [_score_kol("a"), _score_kol("b")]
+        assert _duplicaat_tip(df, kols) == ""
+
+    def test_pairs_render_names_and_correlation(self):
+        df = pd.DataFrame({"pct_goed": [10, 20, 30, 40], "aantal_goed": [1, 2, 3, 4]})
+        kols = [_score_kol("pct_goed"), _score_kol("aantal_goed")]
+        tip = _duplicaat_tip(df, kols)
+        assert tip != ""
+        # dbc.Alert-children bevatten de kolomnamen en de r-waarde
+        rendered = str(tip)
+        assert "pct_goed" in rendered
+        assert "aantal_goed" in rendered

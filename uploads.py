@@ -106,45 +106,73 @@ _UPLOAD_KOLOM = dbc.Col(
             html.Div(id="validatie-resultaat", className="mb-3"),
             _upload_card(
                 "1CHO-data",
-                "Studiesuccesdata met groepindeling per kandidaat.",
+                "Studiesuccesdata per kandidaat. Dit is de output van de "
+                "1cijferho-pipeline (BSN al gekoppeld aan studentnummer), "
+                "niet het ruwe DUO-bestand.",
                 "upload-1cho",
                 "cho-status",
                 ".csv,.xlsx,.xls",
             ),
-            dbc.Button(
-                "Open dashboard",
-                id="btn-open-dashboard",
-                color="primary",
-                size="lg",
-                className="w-100 mb-3",
-                disabled=True,
-            ),
-            html.Hr(className="my-3"),
-            html.P("Nog geen eigen data?", className="text-muted small mb-2"),
-            dbc.Row(
+            dcc.Loading(
                 [
-                    dbc.Col(
-                        dcc.Dropdown(
-                            id="demo-dataset-picker",
-                            options=DEMO_DATASETS,
-                            value=DEMO_DATASETS[0]["value"] if DEMO_DATASETS else None,
-                            clearable=False,
-                        ),
-                        width=8,
+                    # data-store/scores-store staan hier als kind van de Loading
+                    # (in plaats van boven in app.py) zodat target_components ze
+                    # als afstammeling kan herkennen: dcc.Loading laat de
+                    # spinner alleen zien voor callback-outputs die ergens
+                    # onder deze wrapper in de layout-boom hangen.
+                    dcc.Store(id="data-store", storage_type="memory"),
+                    dcc.Store(id="scores-store", storage_type="memory"),
+                    dbc.Button(
+                        "Open dashboard",
+                        id="btn-open-dashboard",
+                        color="primary",
+                        size="lg",
+                        className="w-100 mb-3",
+                        disabled=True,
                     ),
-                    dbc.Col(
-                        dbc.Button(
-                            "Laden",
-                            id="btn-demodata",
-                            color="secondary",
-                            size="sm",
-                            className="w-100",
-                            style={"height": "36px"},
-                        ),
-                        width=4,
+                    html.Hr(className="my-3"),
+                    html.P("Nog geen eigen data?", className="text-muted small mb-2"),
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                dcc.Dropdown(
+                                    id="demo-dataset-picker",
+                                    options=DEMO_DATASETS,
+                                    value=DEMO_DATASETS[0]["value"]
+                                    if DEMO_DATASETS
+                                    else None,
+                                    clearable=False,
+                                ),
+                                width=8,
+                            ),
+                            dbc.Col(
+                                dbc.Button(
+                                    "Laden",
+                                    id="btn-demodata",
+                                    color="secondary",
+                                    size="sm",
+                                    className="w-100",
+                                    style={"height": "36px"},
+                                ),
+                                width=4,
+                            ),
+                        ],
+                        className="g-2 align-items-center",
                     ),
                 ],
-                className="g-2 align-items-center",
+                target_components={"data-store": "data", "scores-store": "data"},
+                custom_spinner=html.Div(
+                    [
+                        dbc.Spinner(
+                            size="sm", color="primary", spinner_class_name="me-2"
+                        ),
+                        "Data wordt ingelezen, dit kan even duren...",
+                    ],
+                    className=(
+                        "d-flex align-items-center justify-content-center "
+                        "small text-muted py-3"
+                    ),
+                ),
             ),
         ],
         className="upload-actie text-start",
@@ -315,7 +343,13 @@ def registreer_callbacks(app):
                     missing = ontbrekende_cho_kolommen(cho_ruw)
                     if missing:
                         cho_status = dbc.Alert(
-                            f"Ontbrekende kolommen in 1CHO: {', '.join(missing)}",
+                            [
+                                f"Ontbrekende kolommen in 1CHO: {', '.join(missing)}. ",
+                                "Dit lijkt niet op de output van de "
+                                "1cijferho-pipeline; controleer of je het "
+                                "bewerkte 1CHO-bestand uploadt en niet het "
+                                "ruwe DUO-bestand.",
+                            ],
                             color="danger",
                             className="small py-1",
                         )

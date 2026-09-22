@@ -149,7 +149,9 @@ class TestRepareerXlsx:
             besmet = _injecteer_teken_in_xlsx(raw, teken)
             gerepareerd = _repareer_xlsx(besmet)
             zf = zipfile.ZipFile(io.BytesIO(gerepareerd))
-            xml_bytes = b"".join(zf.read(n) for n in zf.namelist() if n.endswith(".xml"))
+            xml_bytes = b"".join(
+                zf.read(n) for n in zf.namelist() if n.endswith(".xml")
+            )
             assert teken in xml_bytes
 
 

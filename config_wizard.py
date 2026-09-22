@@ -306,6 +306,63 @@ def detecteer_alle_kolommen(
     return resultaat
 
 
+# Correlatiedrempel waarboven twee kolommen als mogelijke duplicaten worden
+# gesignaleerd (bijv. percentage goed en aantal goed bij dezelfde toets).
+_DUPLICAAT_DREMPEL = 0.95
+
+
+def detecteer_mogelijke_duplicaten(
+    df: pd.DataFrame, score_kols: list[dict], drempel: float = _DUPLICAAT_DREMPEL
+) -> list[tuple[str, str, float]]:
+    """Zoek paren aangevinkte scorekolommen die vrijwel perfect correleren.
+
+    Zulke paren (bijv. percentage goed en aantal goed bij dezelfde toets)
+    zeggen relatief hetzelfde over kandidaten en voegen als koppel weinig
+    nieuwe informatie toe aan de analyses.
+    """
+    kolommen = [
+        r["kolom_naam"]
+        for r in score_kols
+        if r.get("_meenemen", True) and r["kolom_naam"] in df.columns
+    ]
+    if len(kolommen) < 2:
+        return []
+
+    corr = df[kolommen].apply(pd.to_numeric, errors="coerce").corr()
+
+    paren = []
+    for i, a in enumerate(kolommen):
+        for b in kolommen[i + 1 :]:
+            r = corr.loc[a, b]
+            if pd.notna(r) and abs(r) >= drempel:
+                paren.append((a, b, float(r)))
+    return paren
+
+
+def _duplicaat_tip(df: pd.DataFrame, score_kols: list[dict]):
+    """Waarschuw als aangevinkte kolommen vrijwel perfect met elkaar
+    correleren; dat wijst op dubbele informatie."""
+    paren = detecteer_mogelijke_duplicaten(df, score_kols)
+    if not paren:
+        return ""
+
+    return dbc.Alert(
+        [
+            html.Strong("Let op: mogelijk dubbele informatie. "),
+            "Deze kolomparen correleren zeer sterk en zeggen daardoor vaak "
+            "relatief hetzelfde over kandidaten (bijv. percentage goed en "
+            "aantal goed bij dezelfde toets). Overweeg om er een van uit te "
+            "vinken:",
+            html.Ul(
+                [html.Li(f"'{a}' en '{b}' (r = {r:.2f})") for a, b, r in paren],
+                className="mb-0 mt-1",
+            ),
+        ],
+        color="warning",
+        className="small py-2 mb-0",
+    )
+
+
 def _instrument_tip(score_kols: list[dict]):
     """Geef een tip als de data instrument-level scores heeft (1 kolom per instrument).
 
@@ -521,6 +578,21 @@ def maak_wizard_layout() -> html.Div:
                             "scorekolom geef je aan bij welk instrument hij hoort, wat "
                             "hij meet (het item), een eventueel criterium en op welke "
                             "schaal hij loopt.",
+                            className="wiz-uitleg mb-2",
+                        ),
+                        html.P(
+                            [
+                                html.Strong("Let op: "),
+                                "neem geen kolommen dubbel mee die in theorie "
+                                "hetzelfde over een kandidaat zeggen (bijv. "
+                                "'percentage goed' en 'aantal goed' bij "
+                                "dezelfde toets). Zulke kolommen zeggen "
+                                "relatief hetzelfde (ten opzichte van andere "
+                                "kandidaten) en kunnen de samenhangsanalyse "
+                                "vertekenen. De wizard waarschuwt hieronder "
+                                "als kolommen zeer sterk met elkaar "
+                                "samenhangen.",
+                            ],
                             className="wiz-uitleg mb-2",
                         ),
                         html.P(
@@ -862,7 +934,15 @@ def registreer_callbacks(app: dash.Dash) -> None:
 
             alle_kols = detecteer_alle_kolommen(df, id_kol, totaal_kol)
 
-            tip = _instrument_tip(alle_kols) if alle_kols else ""
+            tip_children = []
+            if alle_kols:
+                instrument_tip = _instrument_tip(alle_kols)
+                if instrument_tip:
+                    tip_children.append(instrument_tip)
+                duplicaat_tip = _duplicaat_tip(df, alle_kols)
+                if duplicaat_tip:
+                    tip_children.append(duplicaat_tip)
+            tip = html.Div(tip_children) if tip_children else ""
 
             # De checkboxes (selected_rows) zijn de Meenemen-vlag; vink de
             # herkende scorekolommen vast aan. _meenemen hoort niet in de tabel.
