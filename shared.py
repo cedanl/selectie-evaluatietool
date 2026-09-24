@@ -573,6 +573,8 @@ def genereer_bevindingen(
                 "groepen is dat niet ongebruikelijk."
             )
 
+    tellingen = _tel_bevindingen(succes_tabel, demo_tabellen, correlatie_matrix)
+
     if correlatie_matrix is not None and not correlatie_matrix.empty:
         _bevindingen_correlatie(correlatie_matrix, correlatie, top)
 
@@ -614,7 +616,168 @@ def genereer_bevindingen(
         "model": model,
         "fairness": fairness,
         "demografie": demografie,
+        "tellingen": tellingen,
     }
+
+
+# Correlatie vanaf waar twee items 'vrijwel hetzelfde' meten (zie
+# _bevindingen_correlatie).
+_HOGE_CORRELATIE = 0.70
+
+
+def _tel_bevindingen(
+    succes_tabel: pd.DataFrame | None,
+    demo_tabellen: dict[str, pd.DataFrame],
+    correlatie_matrix: pd.DataFrame | None,
+) -> dict[str, int]:
+    """Tel de echte bevindingen, voor de beleidsvervolgstappen.
+
+    - `n_getoetst`: items waarop de verschiltoets draaide.
+    - `n_sig_positief` / `n_sig_negatief`: significante items waarop de
+      positieve groep hoger resp. lager scoorde.
+    - `n_fair_sig`: items die in minstens één achtergronddimensie significant
+      verschillen.
+    - `n_corr_hoog`: itemparen met |r| >= 0.70.
+    """
+    tellingen = {
+        "n_getoetst": 0,
+        "n_sig_positief": 0,
+        "n_sig_negatief": 0,
+        "n_fair_sig": 0,
+        "n_corr_hoog": 0,
+    }
+    if succes_tabel is not None and not succes_tabel.empty and "_r" in succes_tabel:
+        getoetst = succes_tabel[succes_tabel["_r"].notna()]
+        sig = getoetst[getoetst["_p"] < 0.05]
+        tellingen["n_getoetst"] = len(getoetst)
+        tellingen["n_sig_positief"] = int((sig["_r"] > 0).sum())
+        tellingen["n_sig_negatief"] = int((sig["_r"] < 0).sum())
+
+    fair_items = set()
+    for tab in demo_tabellen.values():
+        if tab is not None and not tab.empty and "_p" in tab:
+            fair_items |= set(tab.loc[tab["_p"] < 0.05, "Item"])
+    tellingen["n_fair_sig"] = len(fair_items)
+
+    if correlatie_matrix is not None and correlatie_matrix.shape[0] > 1:
+        waarden = correlatie_matrix.to_numpy(dtype=float)
+        n = waarden.shape[0]
+        tellingen["n_corr_hoog"] = sum(
+            1
+            for i in range(n)
+            for j in range(i + 1, n)
+            if abs(waarden[i, j]) >= _HOGE_CORRELATIE
+        )
+    return tellingen
+
+
+def beleidsvervolgstappen(
+    bevindingen: dict, model_stats: dict | None = None
+) -> list[str]:
+    """Beleidsgerichte vervolgstappen, gekoppeld aan wat er in deze data is
+    gevonden. Eén bron voor het blok op 'Wat valt op' en de laatste sectie van
+    het rapport.
+
+    De verschiltoets is het kernsignaal: vindt hij items waarop de succesvolle
+    groep hoger scoorde, dan hebben die voorspellende waarde; items waarop
+    juist de uitvallers hoger scoorden zijn een apart, onverwacht signaal. De
+    regressie komt er als aanvulling bij. Alle aantallen komen uit
+    `bevindingen["tellingen"]`, niet uit de lengte van de tekstlijsten."""
+
+    def aantal(n, ev, mv):
+        return f"{n} {ev if n == 1 else mv}"
+
+    def namen(items):
+        items = list(items)
+        if len(items) == 1:
+            return items[0]
+        return ", ".join(items[:-1]) + " en " + items[-1]
+
+    t = bevindingen.get("tellingen", {})
+    stappen = []
+
+    if not t.get("n_getoetst"):
+        stappen.append(
+            "Er zijn te weinig gestarte studenten om de items te toetsen. Trek op "
+            "basis van deze data nog geen conclusies over de selectie."
+        )
+    elif t.get("n_sig_positief"):
+        stappen.append(
+            f"De verschiltoets vindt {aantal(t['n_sig_positief'], 'item', 'items')} "
+            "waarop doorstromers duidelijk hoger scoorden dan uitvallers. Dat is een "
+            "aanwijzing dat deze items studiesucces helpen voorspellen. "
+            "Beleidsmatig: behoud ze of laat ze zwaarder meewegen, en bevestig het "
+            "patroon eerst op een volgend cohort voordat je de procedure aanpast."
+        )
+    else:
+        stappen.append(
+            "De verschiltoets vindt geen enkel item waarop doorstromers significant "
+            "hoger scoorden dan uitvallers. Beleidsmatig betekent dit dat de "
+            "selectie in deze data geen studiesucces voorspelt: ga na of de items "
+            "iets anders meten dat je bewust wilt behouden (motivatie, passendheid), "
+            "of dat de procedure eenvoudiger en goedkoper kan."
+        )
+
+    if t.get("n_sig_negatief"):
+        stappen.append(
+            f"Bij {aantal(t['n_sig_negatief'], 'item', 'items')} scoorden juist de "
+            "uitvallers hoger. Dat is onverwacht. Beleidsmatig: laat deze items "
+            "niet zwaarder meewegen, maar zoek eerst uit wat ze meten en of de "
+            "beoordeling klopt."
+        )
+
+    if model_stats and model_stats.get("pseudo_r2") is not None:
+        r2 = model_stats["pseudo_r2"]
+        sig = model_stats.get("sig_items", [])
+        if sig:
+            ww = "levert" if len(sig) == 1 else "leveren"
+            eigen = f"Vooral {namen(sig)} {ww} een eigen bijdrage bovenop de rest. "
+        else:
+            eigen = "Geen item springt eruit als je ze samen bekijkt. "
+        stappen.append(
+            f"Alle items samen verklaren een {kracht_label(r2)} deel van het "
+            f"verschil in studiesucces (regressie, pseudo R² = {r2:.2f}). "
+            + eigen
+            + "Dit gezamenlijke model is bij kleine groepen wankel, dus leun voor "
+            "beleid vooral op de verschiltoets."
+        )
+
+    if t.get("n_fair_sig"):
+        stappen.append(
+            f"Bij {aantal(t['n_fair_sig'], 'item', 'items')} scoorden "
+            "achtergrondgroepen (geslacht, vooropleiding) verschillend. Beleidsmatig: "
+            "onderzoek of dat verschil inhoudelijk te rechtvaardigen is of op "
+            "onbedoelde vertekening wijst."
+        )
+
+    if t.get("n_corr_hoog"):
+        stappen.append(
+            f"De correlatie vindt {aantal(t['n_corr_hoog'], 'paar', 'paren')} items "
+            "die sterk samenhangen en dus deels hetzelfde meten. Beleidsmatig: je "
+            "kunt er een laten vallen om de selectie korter en goedkoper te maken "
+            "zonder veel informatie te verliezen."
+        )
+
+    stappen.append(
+        "Herhaal de analyse met een nieuw cohort voordat je de procedure echt "
+        "aanpast. Een enkel jaar is een momentopname, zeker bij kleine groepen."
+    )
+    stappen.append(
+        "Combineer deze cijfers met vakkennis en eerder onderzoek. Doorstroom naar "
+        "jaar 2 is maar een van de manieren om studiesucces te meten."
+    )
+    return stappen
+
+
+def kracht_label(r2: float) -> str:
+    """Pseudo R-kwadraat in woorden."""
+    if r2 < 0.05:
+        return "zeer beperkt"
+    if r2 < 0.15:
+        return "beperkt"
+    if r2 < 0.30:
+        return "matig"
+    return "substantieel"
 
 
 def _bevindingen_correlatie(
