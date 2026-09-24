@@ -12,14 +12,14 @@ from shared import (
     genereer_bevindingen,
     DEMO_DIMENSIES,
     demografie_scores,
-    bereken_univariaat,
+    bereken_gezamenlijk_model,
     chi2_per_dimensie,
+    model_stats_uit,
 )
 
 from helpers import (
     scores_df_from_store,
     df_from_store,
-    _bereken_model_stats,
 )
 
 
@@ -254,8 +254,9 @@ def registreer_callbacks(app):
         )
         scores["item_kort"] = scores["item"].apply(shorten_item)
         succes_tabel = vergelijk_succes_per_item(scores, perspectief=perspectief)
-        uni_data = bereken_univariaat(df, scores_df, perspectief)
-        model_stats = _bereken_model_stats(df, scores_df, perspectief)
+        model = bereken_gezamenlijk_model(df, scores_df, perspectief)
+        uni_data = model.get("univariaat", [])
+        model_stats = model_stats_uit(model)
         demo_verdelingen = chi2_per_dimensie(df, perspectief)
 
         demo_tabellen = {}

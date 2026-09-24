@@ -8,7 +8,6 @@ import base64
 import io
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import plotly.express as px
 from plotly.colors import hex_to_rgb, unlabel_rgb
@@ -370,77 +369,3 @@ def _sorteer_bereik(label: str) -> tuple[int, float, float]:
         return (1, 0.0, 0.0)
     onder, boven = grenzen
     return (0, boven, onder)
-
-
-def _bereken_model_stats(df, scores_df, perspectief):
-    """Draai het gezamenlijke logistische regressiemodel en retourneer pseudo R² + sig items."""
-    import statsmodels.api as sm
-    from numpy.linalg import matrix_rank
-
-    populatie = df[df["groep"].isin(perspectief["populatie"])].copy()
-    if len(populatie) < 10:
-        return None
-
-    populatie["uitkomst"] = (
-        populatie["groep"].isin(perspectief["positief_groepen"]).astype(int)
-    )
-    item_pivot = scores_df.pivot_table(
-        index="studentnummer", columns="item", values="score", aggfunc="mean"
-    )
-    item_pivot.columns = [shorten_item(c) for c in item_pivot.columns]
-    item_pivot_pop = item_pivot.loc[
-        item_pivot.index.isin(populatie["studentnummer"])
-    ].copy()
-
-    nan_pct = item_pivot_pop.isna().mean()
-    bruikbare_cols = [c for c in item_pivot_pop.columns if nan_pct.get(c, 1) <= 0.3]
-    if len(bruikbare_cols) < 2:
-        return None
-
-    item_pivot_pop[bruikbare_cols] = item_pivot_pop[bruikbare_cols].fillna(
-        item_pivot_pop[bruikbare_cols].mean()
-    )
-    item_pivot_pop = item_pivot_pop.dropna(subset=bruikbare_cols)
-    if len(item_pivot_pop) < 10:
-        return None
-
-    y = populatie.set_index("studentnummer").loc[item_pivot_pop.index, "uitkomst"]
-    X = item_pivot_pop[bruikbare_cols].copy()
-
-    while len(X.columns) > 1:
-        rank = matrix_rank(X.values)
-        if rank >= len(X.columns):
-            break
-        corr_vals = X.corr().abs().to_numpy().copy()
-        np.fill_diagonal(corr_vals, 0)
-        flat_idx = corr_vals.argmax()
-        _, col_idx = divmod(flat_idx, corr_vals.shape[1])
-        X = X.drop(columns=[X.columns[col_idx]])
-
-    joint_cols = list(X.columns)
-    n_events = min(int(y.sum()), int(len(y) - y.sum()))
-    max_predictoren = max(2, n_events // 5)
-    if len(joint_cols) > max_predictoren:
-        joint_cols = joint_cols[:max_predictoren]
-        X = X[joint_cols]
-
-    try:
-        X_z = X.astype(float).apply(
-            lambda s: (
-                (s - s.mean()) / s.std() if s.std() > 0 else pd.Series(0, index=s.index)
-            )
-        )
-        X_const = sm.add_constant(X_z)
-        model = sm.Logit(y.astype(float), X_const).fit(disp=0, maxiter=100)
-        sig_items = [
-            col
-            for col in joint_cols
-            if col in model.pvalues.index and model.pvalues[col] < 0.05
-        ]
-        return {
-            "pseudo_r2": round(float(model.prsquared), 3),
-            "sig_items": sig_items,
-        }
-    except Exception as e:
-        print(f"[helpers] _bereken_model_stats mislukt: {e}", flush=True)
-        return None

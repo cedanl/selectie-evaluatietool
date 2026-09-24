@@ -28,8 +28,6 @@ from shared import (
     bucket_per_item,
     meta_per_item,
     grenzen_van_label,
-    sig_sym,
-    fmt_p,
     vergelijk_succes_per_item,
     VERGELIJKING_KOLOMMEN,
     toets_verschil_per_item,
@@ -37,8 +35,9 @@ from shared import (
     genereer_bevindingen,
     DEMO_DIMENSIES,
     demografie_scores,
-    bereken_univariaat,
+    bereken_gezamenlijk_model,
     chi2_per_dimensie,
+    model_stats_uit,
 )
 
 log = logging.getLogger(__name__)
@@ -381,135 +380,50 @@ def _build_figures(
     return figures
 
 
-def _run_regression(
-    df: pd.DataFrame,
-    item_pivot: pd.DataFrame,
-    score_cols: list[str],
-    perspectief: dict | None = None,
-) -> tuple[list[list[str]], float | None, str | None]:
-    if perspectief is None:
-        perspectief = PERSPECTIEF_DOORSTROOM
-    populatie = df[df["groep"].isin(perspectief["populatie"])].copy()
+def _regressie_tekst(
+    model: dict, perspectief: dict
+) -> tuple[list[list[str]], float | None, str]:
+    """Tabelrijen, pseudo R² en samenvattende tekst voor de rapportsectie over
+    het gezamenlijke model (berekend door shared.bereken_gezamenlijk_model)."""
+    if model["status"] != "ok":
+        return [], None, model["melding"]
 
-    reg_rows = []
-    pseudo_r2 = None
-    reg_text = None
-
-    if len(populatie) < 10:
-        reg_text = f"Te weinig studenten ({len(populatie)}) voor regressie."
-        return reg_rows, pseudo_r2, reg_text
-
-    populatie["uitkomst"] = (
-        populatie["groep"].isin(perspectief["positief_groepen"]).astype(int)
+    pos_label = perspectief["positief_label"].lower()
+    neg_label = perspectief["negatief_label"].lower()
+    tekst = (
+        f"n = {model['n']} ({pos_label}: {model['n_positief']}, "
+        f"{neg_label}: {model['n_negatief']}). "
+        f"Pseudo R-kwadraat = {model['pseudo_r2']}."
     )
-
-    item_pivot_pop = item_pivot.loc[
-        item_pivot.index.isin(populatie["studentnummer"])
-    ].copy()
-
-    nan_pct = item_pivot_pop.isna().mean()
-    verwijderd_nan = [c for c in score_cols if nan_pct.get(c, 1) > 0.3]
-    bruikbare_cols = [c for c in score_cols if nan_pct.get(c, 1) <= 0.3]
-
-    if len(bruikbare_cols) < 2:
-        reg_text = "Te weinig bruikbare items voor regressie."
-        return reg_rows, pseudo_r2, reg_text
-
-    item_pivot_pop[bruikbare_cols] = item_pivot_pop[bruikbare_cols].fillna(
-        item_pivot_pop[bruikbare_cols].mean()
-    )
-    item_pivot_pop = item_pivot_pop.dropna(subset=bruikbare_cols)
-
-    if len(item_pivot_pop) < 10:
-        reg_text = f"Te weinig complete cases ({len(item_pivot_pop)}) voor regressie."
-        return reg_rows, pseudo_r2, reg_text
-
-    y = populatie.set_index("studentnummer").loc[item_pivot_pop.index, "uitkomst"]
-    X = item_pivot_pop[bruikbare_cols]
-
-    from numpy.linalg import matrix_rank
-
-    verwijderd_collinear = []
-    while len(X.columns) > 1:
-        rank = matrix_rank(X.values)
-        if rank >= len(X.columns):
-            break
-        corr_vals = X.corr().abs().to_numpy().copy()
-        np.fill_diagonal(corr_vals, 0)
-        flat_idx = corr_vals.argmax()
-        _, col_idx = divmod(flat_idx, corr_vals.shape[1])
-        verwijderd_collinear.append(X.columns[col_idx])
-        X = X.drop(columns=[X.columns[col_idx]])
-    bruikbare_cols = list(X.columns)
-
-    n_events = min(int(y.sum()), int(len(y) - y.sum()))
-    max_predictoren = max(2, n_events // 5)
-    verwijderd_epv = []
-    if len(bruikbare_cols) > max_predictoren:
-        import statsmodels.api as sm
-
-        univariate_p = {}
-        for col in bruikbare_cols:
-            x_col = X[[col]].astype(float)
-            x_col = (x_col - x_col.mean()) / x_col.std().replace(0, 1)
-            try:
-                m = sm.Logit(y.astype(float), sm.add_constant(x_col)).fit(
-                    disp=0, maxiter=50
-                )
-                univariate_p[col] = m.pvalues.iloc[-1]
-            except Exception:
-                univariate_p[col] = 1.0
-        gesorteerd = sorted(bruikbare_cols, key=lambda c: univariate_p[c])
-        verwijderd_epv = gesorteerd[max_predictoren:]
-        bruikbare_cols = gesorteerd[:max_predictoren]
-        X = X[bruikbare_cols]
-
-    try:
-        import statsmodels.api as sm
-
-        X_z = X.astype(float).apply(
-            lambda s: (
-                (s - s.mean()) / s.std() if s.std() > 0 else pd.Series(0, index=s.index)
-            )
+    if model["verwijderd_nan"]:
+        tekst += (
+            " Items niet meegenomen (>30% ontbrekend): "
+            f"{', '.join(model['verwijderd_nan'])}."
         )
-        X_const = sm.add_constant(X_z)
-        model = sm.Logit(y.astype(float), X_const).fit(disp=0, maxiter=100)
-        pseudo_r2 = round(float(model.prsquared), 3)
-
-        n_pos = int(y.sum())
-        n_neg = int(len(y) - y.sum())
-        pos_label = perspectief["positief_label"].lower()
-        neg_label = perspectief["negatief_label"].lower()
-        reg_text = (
-            f"n = {len(y)} ({pos_label}: {n_pos}, {neg_label}: {n_neg}). "
-            f"Pseudo R-kwadraat = {pseudo_r2}."
+    if model["verwijderd_collineair"]:
+        tekst += (
+            " Items niet meegenomen (overlap met andere items): "
+            f"{', '.join(model['verwijderd_collineair'])}."
         )
-        if verwijderd_nan:
-            reg_text += f" Items niet meegenomen (>30% ontbrekend): {', '.join(verwijderd_nan)}."
-        if verwijderd_collinear:
-            reg_text += (
-                f" Items niet meegenomen (overlap met andere items): "
-                f"{', '.join(verwijderd_collinear)}."
-            )
-        if verwijderd_epv:
-            reg_text += (
-                f" Items niet meegenomen (te weinig studenten voor "
-                f"{len(bruikbare_cols) + len(verwijderd_epv)} predictoren, "
-                f"beperkt tot {len(bruikbare_cols)} sterkste): "
-                f"{', '.join(verwijderd_epv)}."
-            )
-
-        for item_naam in bruikbare_cols:
-            if item_naam not in model.params.index:
-                continue
-            coef = round(float(model.params[item_naam]), 3)
-            odds = round(float(np.exp(model.params[item_naam])), 2)
-            p = float(model.pvalues[item_naam])
-            reg_rows.append([item_naam, str(coef), str(odds), fmt_p(p), sig_sym(p)])
-    except Exception as e:
-        reg_text = f"Regressie kon niet worden uitgevoerd: {e}"
-
-    return reg_rows, pseudo_r2, reg_text
+    if model["verwijderd_epv"]:
+        n_model = len(model["coefficienten"])
+        tekst += (
+            " Items niet meegenomen (te weinig studenten voor "
+            f"{n_model + len(model['verwijderd_epv'])} predictoren, "
+            f"beperkt tot {n_model} sterkste): "
+            f"{', '.join(model['verwijderd_epv'])}."
+        )
+    rijen = [
+        [
+            r["Item"],
+            str(r["Coefficient"]),
+            str(r["Odds ratio"]),
+            r["p-waarde"],
+            r["Sig."],
+        ]
+        for r in model["coefficienten"]
+    ]
+    return rijen, model["pseudo_r2"], tekst
 
 
 def _beleidsconclusies(bevindingen: dict, model_stats: dict | None) -> list[str]:
@@ -667,9 +581,8 @@ def genereer_rapport(
         .sort_values(["groep", "instrument", "criterium", "item_kort"])
     )
 
-    reg_rows, pseudo_r2, reg_text = _run_regression(
-        df, item_pivot, score_cols, perspectief=perspectief
-    )
+    model = bereken_gezamenlijk_model(df, scores_df, perspectief)
+    reg_rows, pseudo_r2, reg_text = _regressie_tekst(model, perspectief)
 
     # -- Build and render all charts --
     figures = _build_figures(
@@ -701,14 +614,10 @@ def genereer_rapport(
         corr_pivot.columns = [shorten_item(c) for c in corr_pivot.columns]
         corr_matrix = corr_pivot.corr().round(3)
 
-    # Univariate regressie per item (voor conclusies)
-    univariaat_data = bereken_univariaat(df, scores_df, perspectief)
-
-    # Model stats uit de reeds gedraaide regressie
-    model_stats = None
-    if pseudo_r2 is not None:
-        sig_items_model = [r[0] for r in reg_rows if r[4] != "ns"]
-        model_stats = {"pseudo_r2": pseudo_r2, "sig_items": sig_items_model}
+    # Univariate regressie en modelsamenvatting (voor conclusies), uit
+    # hetzelfde model als het dashboard.
+    univariaat_data = model.get("univariaat", [])
+    model_stats = model_stats_uit(model)
 
     demo_verdeling = chi2_per_dimensie(df, perspectief)
 

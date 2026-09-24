@@ -1,16 +1,9 @@
 """Tab 'Regressie': logistische regressie op studiesucces."""
 
-import numpy as np
-import pandas as pd
 from dash import dcc, html, dash_table, Input, Output, State
 import dash_bootstrap_components as dbc
 
-from shared import (
-    PERSPECTIEF_DOORSTROOM,
-    shorten_item,
-    sig_sym,
-    fmt_p,
-)
+from shared import PERSPECTIEF_DOORSTROOM, bereken_gezamenlijk_model
 
 from helpers import (
     scores_df_from_store,
@@ -126,6 +119,60 @@ def maak_layout():
     )
 
 
+_KOLOMMEN = ["Item", "Coefficient", "Odds ratio", "p-waarde", "Sig."]
+
+
+def _tabel(rijen: list[dict]) -> tuple[list[dict], list[dict], list[dict]]:
+    """Data, kolommen en de groene markering van significante rijen."""
+    data = [{k: r[k] for k in _KOLOMMEN} for r in rijen]
+    stijl = [
+        {
+            "if": {"row_index": i, "column_id": "Sig."},
+            "backgroundColor": "#bbf7d0",
+            "color": "#166534",
+            "fontWeight": "600",
+        }
+        for i, r in enumerate(rijen)
+        if r["_p"] < 0.05
+    ]
+    return data, [{"name": c, "id": c} for c in _KOLOMMEN], stijl
+
+
+def _samenvatting(model: dict, perspectief: dict):
+    pos_label = perspectief["positief_label"].lower()
+    neg_label = perspectief["negatief_label"].lower()
+    delen = [
+        html.Span(
+            f"n = {model['n']} ({pos_label}: {model['n_positief']}, "
+            f"{neg_label}: {model['n_negatief']})",
+            className="small text-muted me-3",
+        ),
+        html.Span(
+            f"Verklarende kracht (pseudo R²) = {model['pseudo_r2']}",
+            className="small fw-bold",
+        ),
+    ]
+    redenen = [
+        ("verwijderd_nan", "Items niet meegenomen (>30% ontbrekend)"),
+        ("verwijderd_collineair", "Items niet meegenomen (te veel overlap)"),
+        (
+            "verwijderd_epv",
+            "Items niet meegenomen (te weinig studenten met de uitkomst; "
+            f"de {len(model.get('coefficienten', []))} sterkste behouden)",
+        ),
+    ]
+    for sleutel, tekst in redenen:
+        if model.get(sleutel):
+            delen += [
+                html.Br(),
+                html.Span(
+                    f"{tekst}: {', '.join(model[sleutel])}",
+                    className="small text-muted",
+                ),
+            ]
+    return html.Div(delen)
+
+
 def registreer_callbacks(app):
     @app.callback(
         Output("regressie-samenvatting", "children"),
@@ -140,268 +187,34 @@ def registreer_callbacks(app):
     )
     def update_regressie_tab(store_data, scores_store):
         df = df_from_store(store_data)
-        leeg7 = ("", [], [], [], [], [], [])
         if df.empty or not scores_store:
-            return leeg7
+            return ("", [], [], [], [], [], [])
 
         perspectief = PERSPECTIEF_DOORSTROOM
-        scores_df = scores_df_from_store(scores_store)
-
-        regressie_msg = ""
-        uni_data = []
-        uni_cols = []
-        uni_style = []
-        reg_data = []
-        reg_cols = []
-        reg_style = []
-
-        item_pivot = scores_df.pivot_table(
-            index="studentnummer", columns="item", values="score", aggfunc="mean"
+        model = bereken_gezamenlijk_model(
+            df, scores_df_from_store(scores_store), perspectief
         )
-        item_pivot.columns = [shorten_item(c) for c in item_pivot.columns]
-        all_score_cols = list(item_pivot.columns)
-
-        populatie = df[df["groep"].isin(perspectief["populatie"])].copy()
-
-        if len(populatie) < 10:
-            regressie_msg = dbc.Alert(
-                f"Te weinig studenten ({len(populatie)}) voor regressie. "
-                "Minimaal 10 nodig.",
-                color="warning",
-                className="small",
+        if "univariaat" not in model:
+            # Te weinig data om ook maar iets te schatten.
+            waarschuwing = dbc.Alert(
+                model["melding"], color="warning", className="small"
             )
-            return (regressie_msg, [], [], [], [], [], [])
+            return (waarschuwing, [], [], [], [], [], [])
 
-        populatie["uitkomst"] = (
-            populatie["groep"].isin(perspectief["positief_groepen"]).astype(int)
-        )
-
-        item_pivot_pop = item_pivot.loc[
-            item_pivot.index.isin(populatie["studentnummer"])
-        ].copy()
-
-        nan_pct = item_pivot_pop.isna().mean()
-        verwijderd_nan = [
-            c
-            for c in all_score_cols
-            if c in item_pivot_pop.columns and nan_pct.get(c, 1) > 0.3
-        ]
-        bruikbare_cols = [
-            c
-            for c in all_score_cols
-            if c in item_pivot_pop.columns and nan_pct.get(c, 1) <= 0.3
-        ]
-
-        if len(bruikbare_cols) < 1:
-            regressie_msg = dbc.Alert(
-                "Te weinig bruikbare items voor regressie.",
-                color="warning",
-                className="small",
+        uni_data, uni_cols, uni_stijl = _tabel(model["univariaat"])
+        if model["status"] != "ok":
+            waarschuwing = dbc.Alert(
+                model["melding"], color="warning", className="small"
             )
-            return (regressie_msg, [], [], [], [], [], [])
+            return (waarschuwing, uni_data, uni_cols, uni_stijl, [], [], [])
 
-        item_pivot_pop[bruikbare_cols] = item_pivot_pop[bruikbare_cols].fillna(
-            item_pivot_pop[bruikbare_cols].mean()
-        )
-        item_pivot_pop = item_pivot_pop.dropna(subset=bruikbare_cols)
-
-        if len(item_pivot_pop) < 10:
-            regressie_msg = dbc.Alert(
-                "Te weinig complete cases voor regressie.",
-                color="warning",
-                className="small",
-            )
-            return (regressie_msg, [], [], [], [], [], [])
-
-        y = populatie.set_index("studentnummer").loc[item_pivot_pop.index, "uitkomst"]
-        X_all = item_pivot_pop[bruikbare_cols]
-
-        import statsmodels.api as sm
-
-        for col in bruikbare_cols:
-            x_col = X_all[[col]].astype(float)
-            std = x_col.iloc[:, 0].std()
-            if std > 0:
-                x_z = (x_col - x_col.mean()) / std
-            else:
-                x_z = x_col * 0
-            try:
-                m = sm.Logit(y.astype(float), sm.add_constant(x_z)).fit(
-                    disp=0, maxiter=50
-                )
-                coef = round(float(m.params.iloc[-1]), 3)
-                odds = round(float(np.exp(m.params.iloc[-1])), 2)
-                p = float(m.pvalues.iloc[-1])
-                uni_data.append(
-                    {
-                        "Item": col,
-                        "Coefficient": coef,
-                        "Odds ratio": odds,
-                        "p-waarde": fmt_p(p),
-                        "Sig.": sig_sym(p),
-                    }
-                )
-            except Exception as e:
-                print(f"[regressie] univariate fit '{col}' mislukt: {e}", flush=True)
-                uni_data.append(
-                    {
-                        "Item": col,
-                        "Coefficient": "-",
-                        "Odds ratio": "-",
-                        "p-waarde": "-",
-                        "Sig.": "-",
-                    }
-                )
-
-        uni_cols = [
-            {"name": c, "id": c}
-            for c in ["Item", "Coefficient", "Odds ratio", "p-waarde", "Sig."]
-        ]
-        for i, row in enumerate(uni_data):
-            if row["Sig."] not in ("-", "ns"):
-                uni_style.append(
-                    {
-                        "if": {"row_index": i, "column_id": "Sig."},
-                        "backgroundColor": "#bbf7d0",
-                        "color": "#166534",
-                        "fontWeight": "600",
-                    }
-                )
-
-        X = X_all.copy()
-
-        from numpy.linalg import matrix_rank
-
-        verwijderd_collinear = []
-        while len(X.columns) > 1:
-            rank = matrix_rank(X.values)
-            if rank >= len(X.columns):
-                break
-            corr_vals = X.corr().abs().to_numpy().copy()
-            np.fill_diagonal(corr_vals, 0)
-            flat_idx = corr_vals.argmax()
-            _, col_idx = divmod(flat_idx, corr_vals.shape[1])
-            verwijderd_collinear.append(X.columns[col_idx])
-            X = X.drop(columns=[X.columns[col_idx]])
-        joint_cols = list(X.columns)
-
-        n_events = min(int(y.sum()), int(len(y) - y.sum()))
-        max_predictoren = max(2, n_events // 5)
-        verwijderd_epv = []
-        if len(joint_cols) > max_predictoren:
-            uni_p = {
-                row["Item"]: (
-                    0.0001 if row["p-waarde"] == "< 0.001" else float(row["p-waarde"])
-                )
-                for row in uni_data
-                if row["p-waarde"] not in ("-",)
-            }
-            gesorteerd = sorted(joint_cols, key=lambda c: uni_p.get(c, 1.0))
-            verwijderd_epv = gesorteerd[max_predictoren:]
-            joint_cols = gesorteerd[:max_predictoren]
-            X = X[joint_cols]
-
-        try:
-            X_z = X.astype(float).apply(
-                lambda s: (
-                    (s - s.mean()) / s.std()
-                    if s.std() > 0
-                    else pd.Series(0, index=s.index)
-                )
-            )
-            X_const = sm.add_constant(X_z)
-            model = sm.Logit(y.astype(float), X_const).fit(disp=0, maxiter=100)
-
-            n_positief = int(y.sum())
-            n_negatief = int(len(y) - y.sum())
-            pseudo_r2 = round(float(model.prsquared), 3)
-            pos_label = perspectief["positief_label"].lower()
-            neg_label = perspectief["negatief_label"].lower()
-            msg_parts = [
-                html.Span(
-                    f"n = {len(y)} ({pos_label}: {n_positief}, {neg_label}: {n_negatief})",
-                    className="small text-muted me-3",
-                ),
-                html.Span(
-                    f"Verklarende kracht (pseudo R²) = {pseudo_r2}",
-                    className="small fw-bold",
-                ),
-            ]
-            if verwijderd_nan:
-                msg_parts.append(html.Br())
-                msg_parts.append(
-                    html.Span(
-                        f"Items niet meegenomen (>30% ontbrekend): {', '.join(verwijderd_nan)}",
-                        className="small text-muted",
-                    )
-                )
-            if verwijderd_collinear:
-                msg_parts.append(html.Br())
-                msg_parts.append(
-                    html.Span(
-                        f"Items niet meegenomen (te veel overlap): {', '.join(verwijderd_collinear)}",
-                        className="small text-muted",
-                    )
-                )
-            if verwijderd_epv:
-                msg_parts.append(html.Br())
-                msg_parts.append(
-                    html.Span(
-                        f"Items niet meegenomen (te weinig studenten met de uitkomst; "
-                        f"de {len(joint_cols)} sterkste behouden): "
-                        f"{', '.join(verwijderd_epv)}",
-                        className="small text-muted",
-                    )
-                )
-            regressie_msg = html.Div(msg_parts)
-
-            for item_naam in joint_cols:
-                if item_naam not in model.params.index:
-                    continue
-                coef = round(float(model.params[item_naam]), 3)
-                odds = round(float(np.exp(model.params[item_naam])), 2)
-                p = float(model.pvalues[item_naam])
-                reg_data.append(
-                    {
-                        "Item": item_naam,
-                        "Coefficient": coef,
-                        "Odds ratio": odds,
-                        "p-waarde": fmt_p(p),
-                        "Sig.": sig_sym(p),
-                    }
-                )
-
-            reg_cols = [
-                {"name": c, "id": c}
-                for c in ["Item", "Coefficient", "Odds ratio", "p-waarde", "Sig."]
-            ]
-
-            for i, row in enumerate(reg_data):
-                p_str = row["p-waarde"]
-                p_val = 0.0001 if p_str == "< 0.001" else float(p_str)
-                if p_val < 0.05:
-                    reg_style.append(
-                        {
-                            "if": {"row_index": i, "column_id": "Sig."},
-                            "backgroundColor": "#bbf7d0",
-                            "color": "#166534",
-                            "fontWeight": "600",
-                        }
-                    )
-
-        except Exception as e:
-            regressie_msg = dbc.Alert(
-                f"Regressie kon niet worden uitgevoerd: {e}",
-                color="warning",
-                className="small",
-            )
-
+        reg_data, reg_cols, reg_stijl = _tabel(model["coefficienten"])
         return (
-            regressie_msg,
+            _samenvatting(model, perspectief),
             uni_data,
             uni_cols,
-            uni_style,
+            uni_stijl,
             reg_data,
             reg_cols,
-            reg_style,
+            reg_stijl,
         )
