@@ -15,8 +15,18 @@ from plotly.colors import hex_to_rgb, unlabel_rgb
 
 import dash
 
-from transformatie import lees_config, parse_selectiedata, transformeer_naar_lang
-from cho_transform import transformeer_cho
+from transformatie import (
+    lees_config,
+    parse_jaar,
+    parse_selectiedata,
+    transformeer_naar_lang,
+)
+from cho_transform import (
+    beste_opleiding_match,
+    opleidingen_in_cho,
+    selecteer_spells,
+    transformeer_cho,
+)
 from shared import (
     GROEP_VOLGORDE,
     GROEP_NIET_GESTART,
@@ -45,6 +55,15 @@ if DEMO_DIR.exists():
 
 
 def koppel_data(cho_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.DataFrame:
+    dubbel = cho_df["studentnummer"].dropna().duplicated()
+    if dubbel.any():
+        # Een student met meerdere 1CHO-spells zou dubbel in de analyse komen,
+        # met mogelijk twee verschillende uitkomsten. Kies eerst één spell via
+        # bereid_cho_voor() / selecteer_spells().
+        raise ValueError(
+            f"1CHO bevat {int(dubbel.sum())} studentnummers met meerdere "
+            "inschrijvingen; kies eerst één inschrijving per student."
+        )
     instrument_gem = (
         scores_df.groupby(["studentnummer", "instrument"])["score"].mean().reset_index()
     )
@@ -142,8 +161,52 @@ def _file_to_data_uri(path: Path) -> str:
     return f"data:application/octet-stream;base64,{b64}"
 
 
+def bereid_cho_voor(
+    cho_ruw: pd.DataFrame,
+    config: dict,
+    scores_df: pd.DataFrame,
+    cho_opleiding: str | None = None,
+) -> dict:
+    """Leid de 1CHO-uitkomst af en houd per student de spell over die bij deze
+    selectie hoort (juiste opleiding en cohort).
+
+    `cho_opleiding` is de keuze van de gebruiker in de upload-overlay; zonder
+    keuze proberen we de opleiding uit de config te matchen. Eén plek voor de
+    uploadvalidatie en het laden, zodat die dezelfde studenten tellen.
+
+    Retourneert een dict met `cho_df`, `opleidingen` (alle opleidingen in het
+    bestand), `gekozen` (de gebruikte opleiding of None), `keuze_nodig` (meer
+    dan één opleiding en geen keuze of match) en `info` (tellingen)."""
+    afgeleid = transformeer_cho(cho_ruw)
+    opleidingen = opleidingen_in_cho(afgeleid)
+    gekozen = (
+        cho_opleiding
+        if cho_opleiding in opleidingen
+        else beste_opleiding_match(opleidingen, config.get("opleiding", ""))
+    )
+    keuze_nodig = len(opleidingen) > 1 and gekozen is None
+    cho_df, info = selecteer_spells(
+        afgeleid,
+        opleiding=gekozen,
+        jaar=parse_jaar(config.get("jaar", "")),
+        studentnummers=set(scores_df["studentnummer"].dropna())
+        if not scores_df.empty
+        else None,
+    )
+    return {
+        "cho_df": cho_df,
+        "opleidingen": opleidingen,
+        "gekozen": gekozen,
+        "keuze_nodig": keuze_nodig,
+        "info": info,
+    }
+
+
 def bouw_data_stores(
-    config: dict, sel_contents: str, cho_ruw: pd.DataFrame
+    config: dict,
+    sel_contents: str,
+    cho_ruw: pd.DataFrame,
+    cho_opleiding: str | None = None,
 ) -> tuple[str, str]:
     """Draai de pijplijn en geef de JSON voor data-store en scores-store terug.
 
@@ -152,7 +215,8 @@ def bouw_data_stores(
     geparseerd binnen, omdat de paden hem verschillend inlezen (demo via
     read_csv, uploads via parse_csv_or_excel)."""
     scores_df = transformeer_naar_lang(parse_selectiedata(sel_contents, config), config)
-    joined = koppel_data(transformeer_cho(cho_ruw), scores_df)
+    cho = bereid_cho_voor(cho_ruw, config, scores_df, cho_opleiding)
+    joined = koppel_data(cho["cho_df"], scores_df)
     return (
         joined.to_json(orient="split", date_format="iso"),
         scores_df.to_json(orient="split", date_format="iso"),

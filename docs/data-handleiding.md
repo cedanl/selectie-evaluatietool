@@ -207,6 +207,21 @@ combinatie van studentnummer, opleiding en eerste studiejaar. Bevat jouw
 1CHO-bestand maar een opleiding, dan hoef je je hier niets van aan te
 trekken; dan heeft elke student vanzelf maar een studieloopbaan.
 
+Upload je een 1CHO-bestand van de hele instelling, dan kiest de tool alleen
+de inschrijvingen die bij deze selectie horen:
+
+- **Opleiding**: de tool zoekt de opleiding uit je config op in het
+  1CHO-bestand. Lukt dat niet eenduidig, dan verschijnt bij het uploaden een
+  keuzemenu "Welke opleiding in het 1CHO-bestand hoort bij deze selectie?".
+  Inschrijvingen bij andere opleidingen tellen niet mee; een afgewezen
+  kandidaat die elders begon, blijft dus **niet gestart**.
+- **Cohort**: inschrijvingen die vóór het selectiejaar begonnen (een eerdere
+  poging) tellen niet mee.
+- **Meerdere inschrijvingen**: blijven er dan nog meerdere over, dan telt de
+  inschrijving die het dichtst bij het selectiejaar begon.
+
+Wat er is weggefilterd, zie je in de meldingen onder de 1CHO-upload.
+
 
 ## Hoe koppelt de tool de bestanden?
 

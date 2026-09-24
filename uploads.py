@@ -18,7 +18,6 @@ from transformatie import (
 from cho_transform import (
     ontbrekende_cho_kolommen,
     ontbrekende_demografie_kolommen,
-    transformeer_cho,
 )
 from config_wizard import maak_wizard_layout
 from tabs.intro import maak_upload_intro
@@ -28,6 +27,7 @@ from helpers import (
     scores_df_from_store,
     DEMO_DATASETS,
     df_from_store,
+    bereid_cho_voor,
     bouw_data_stores,
     _laad_demodata,
 )
@@ -115,6 +115,22 @@ _UPLOAD_KOLOM = dbc.Col(
                 "upload-1cho",
                 "cho-status",
                 ".csv,.xlsx,.xls",
+            ),
+            # Verschijnt alleen als het 1CHO-bestand meerdere opleidingen bevat
+            # (een instellingsbrede extractie): dan moet duidelijk zijn welke
+            # inschrijvingen bij deze selectie horen.
+            html.Div(
+                [
+                    html.Label(
+                        "Welke opleiding in het 1CHO-bestand hoort bij deze selectie?",
+                        htmlFor="cho-opleiding-picker",
+                        className="small fw-bold mb-1",
+                    ),
+                    dcc.Dropdown(id="cho-opleiding-picker", clearable=False),
+                ],
+                id="cho-opleiding-kiezer",
+                className="mb-3",
+                style={"display": "none"},
             ),
             dcc.Loading(
                 [
@@ -248,10 +264,14 @@ def registreer_callbacks(app):
         Output("validatie-resultaat", "children"),
         Output("cho-status", "children"),
         Output("btn-open-dashboard", "disabled"),
+        Output("cho-opleiding-picker", "options"),
+        Output("cho-opleiding-picker", "value"),
+        Output("cho-opleiding-kiezer", "style"),
         Input("upload-selectiedata", "contents"),
         Input("upload-config", "contents"),
         Input("upload-1cho", "contents"),
         Input("wiz-config-store", "data"),
+        Input("cho-opleiding-picker", "value"),
         State("upload-selectiedata", "filename"),
         State("upload-config", "filename"),
         State("upload-1cho", "filename"),
@@ -262,6 +282,7 @@ def registreer_callbacks(app):
         cfg,
         cho,
         wiz_config,
+        cho_opleiding,
         sel_fn,
         cfg_fn,
         cho_fn,
@@ -275,6 +296,21 @@ def registreer_callbacks(app):
         cho_status = no
         btn_disabled = True
         config = None
+        kiezer_opties = no
+        kiezer_waarde = no
+        kiezer_stijl = no
+
+        def resultaat():
+            return (
+                sel_status,
+                cfg_status,
+                validatie,
+                cho_status,
+                btn_disabled,
+                kiezer_opties,
+                kiezer_waarde,
+                kiezer_stijl,
+            )
 
         if trigger == "upload-selectiedata" and sel:
             sel_status = dbc.Alert(
@@ -294,7 +330,7 @@ def registreer_callbacks(app):
                 cfg_status = dbc.Alert(
                     f"Fout: {e}", color="danger", className="small py-1"
                 )
-                return sel_status, cfg_status, no, cho_status, True
+                return resultaat()
 
         if trigger == "wiz-config-store" and wiz_config:
             config = json.loads(wiz_config)
@@ -361,7 +397,7 @@ def registreer_callbacks(app):
                             color="danger",
                             className="small py-1",
                         )
-                        return sel_status, cfg_status, validatie, cho_status, True
+                        return resultaat()
 
                     demo_missing = ontbrekende_demografie_kolommen(cho_ruw)
                     if demo_missing:
@@ -371,9 +407,37 @@ def registreer_callbacks(app):
                             color="danger",
                             className="small py-1",
                         )
-                        return sel_status, cfg_status, validatie, cho_status, True
+                        return resultaat()
 
-                    cho_df = transformeer_cho(cho_ruw)
+                    # Bij een wissel in het keuzemenu de keuze van de gebruiker
+                    # volgen; bij een nieuwe upload opnieuw matchen.
+                    gebruiker_keuze = (
+                        cho_opleiding if trigger == "cho-opleiding-picker" else None
+                    )
+                    cho = bereid_cho_voor(cho_ruw, config, scores_df, gebruiker_keuze)
+                    cho_df = cho["cho_df"]
+                    if len(cho["opleidingen"]) > 1:
+                        kiezer_opties = [
+                            {"label": o, "value": o} for o in cho["opleidingen"]
+                        ]
+                        kiezer_waarde = cho["gekozen"]
+                        kiezer_stijl = {"display": "block"}
+                    else:
+                        kiezer_opties, kiezer_waarde = [], None
+                        kiezer_stijl = {"display": "none"}
+                    if trigger == "cho-opleiding-picker":
+                        kiezer_opties = kiezer_waarde = no
+
+                    if cho["keuze_nodig"]:
+                        cho_status = dbc.Alert(
+                            f"Het 1CHO-bestand bevat {len(cho['opleidingen'])} "
+                            "opleidingen. Kies hieronder welke bij deze selectie "
+                            "hoort; anders tellen inschrijvingen bij andere "
+                            "opleidingen mee als 'gestart'.",
+                            color="warning",
+                            className="small py-1",
+                        )
+                        return resultaat()
 
                     sel_ids = set(scores_df["studentnummer"].dropna().unique())
                     cho_ids = set(cho_df["studentnummer"].dropna().unique())
@@ -386,7 +450,7 @@ def registreer_callbacks(app):
                             color="danger",
                             className="small py-1",
                         )
-                        return sel_status, cfg_status, validatie, cho_status, True
+                        return resultaat()
 
                     n_zonder_match = len(sel_ids - cho_ids)
                     cho_alerts = [
@@ -405,6 +469,43 @@ def registreer_callbacks(app):
                                 className="small py-1 mb-1",
                             )
                         )
+                    info = cho["info"]
+                    filter_regels = []
+                    if len(cho["opleidingen"]) > 1:
+                        filter_regels.append(
+                            f"alleen opleiding '{cho['gekozen']}' gebruikt "
+                            f"({info['n_andere_opleiding']} inschrijvingen bij andere "
+                            "opleidingen genegeerd)"
+                        )
+                    if info["n_eerder_cohort"]:
+                        filter_regels.append(
+                            f"{info['n_eerder_cohort']} inschrijvingen van voor het "
+                            "selectiejaar genegeerd"
+                        )
+                    if info["n_studenten_meerdere_spells"]:
+                        filter_regels.append(
+                            f"{info['n_studenten_meerdere_spells']} studenten met "
+                            "meerdere inschrijvingen: de inschrijving die het dichtst "
+                            "bij het selectiejaar begon is gebruikt"
+                        )
+                    if filter_regels:
+                        cho_alerts.append(
+                            dbc.Alert(
+                                "1CHO gefilterd: " + "; ".join(filter_regels) + ".",
+                                color="info",
+                                className="small py-1 mb-1",
+                            )
+                        )
+                    if info["jaarfilter_overgeslagen"]:
+                        cho_alerts.append(
+                            dbc.Alert(
+                                "Het jaar in de config sluit niet aan op het eerste "
+                                "studiejaar in 1CHO; er is daarom niet op cohort "
+                                "gefilterd. Controleer het jaar in de config.",
+                                color="warning",
+                                className="small py-1 mb-1",
+                            )
+                        )
                     cho_status = html.Div(cho_alerts)
                     btn_disabled = False
 
@@ -413,7 +514,7 @@ def registreer_callbacks(app):
                     f"Fout bij validatie: {e}", color="danger", className="small py-1"
                 )
 
-        return sel_status, cfg_status, validatie, cho_status, btn_disabled
+        return resultaat()
 
     @app.callback(
         Output("data-store", "data"),
@@ -427,6 +528,7 @@ def registreer_callbacks(app):
         State("upload-1cho", "filename"),
         State("demo-dataset-picker", "value"),
         State("wiz-config-store", "data"),
+        State("cho-opleiding-picker", "value"),
         prevent_initial_call=True,
     )
     def laad_dashboard(
@@ -439,6 +541,7 @@ def registreer_callbacks(app):
         cho_fn,
         demo_dataset,
         wiz_config,
+        cho_opleiding,
     ):
         trigger = ctx.triggered_id
 
@@ -463,6 +566,7 @@ def registreer_callbacks(app):
                 config,
                 sel_contents,
                 parse_csv_or_excel(cho_contents, cho_fn or "data.csv"),
+                cho_opleiding,
             )
 
         return dash.no_update, dash.no_update
