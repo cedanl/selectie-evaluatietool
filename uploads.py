@@ -37,6 +37,34 @@ from helpers import (
 log = logging.getLogger(__name__)
 
 
+def actieve_config_bron(trigger, bron, cfg, wiz_config) -> str | None:
+    """Welke config geldt: het geüploade bestand ('upload') of de wizard
+    ('wizard')? De laatst aangeleverde wint. Zonder expliciete keuze de enige
+    die er is. Validatie en laden gebruiken allebei deze bron, zodat het
+    dashboard nooit opent met een andere config dan die gevalideerd is."""
+    if trigger == "upload-config" and cfg:
+        return "upload"
+    if trigger == "wiz-config-store" and wiz_config:
+        return "wizard"
+    if bron == "upload" and cfg:
+        return "upload"
+    if bron == "wizard" and wiz_config:
+        return "wizard"
+    if cfg:
+        return "upload"
+    if wiz_config:
+        return "wizard"
+    return None
+
+
+def lees_actieve_config(bron, cfg, wiz_config) -> dict | None:
+    if bron == "upload":
+        return lees_config(cfg)
+    if bron == "wizard":
+        return json.loads(wiz_config)
+    return None
+
+
 def _upload_card(title, description, upload_id, status_id, accept):
     return dbc.Card(
         dbc.CardBody(
@@ -144,6 +172,7 @@ _UPLOAD_KOLOM = dbc.Col(
                     # spinner alleen zien voor callback-outputs die ergens
                     # onder deze wrapper in de layout-boom hangen.
                     dcc.Store(id="data-store", storage_type="memory"),
+                    dcc.Store(id="config-bron", storage_type="memory"),
                     dcc.Store(id="scores-store", storage_type="memory"),
                     dbc.Button(
                         "Open dashboard",
@@ -272,6 +301,7 @@ def registreer_callbacks(app):
         Output("cho-opleiding-picker", "options"),
         Output("cho-opleiding-picker", "value"),
         Output("cho-opleiding-kiezer", "style"),
+        Output("config-bron", "data"),
         Input("upload-selectiedata", "contents"),
         Input("upload-config", "contents"),
         Input("upload-1cho", "contents"),
@@ -280,6 +310,7 @@ def registreer_callbacks(app):
         State("upload-selectiedata", "filename"),
         State("upload-config", "filename"),
         State("upload-1cho", "filename"),
+        State("config-bron", "data"),
         prevent_initial_call=True,
     )
     def valideer_uploads(
@@ -291,9 +322,11 @@ def registreer_callbacks(app):
         sel_fn,
         cfg_fn,
         cho_fn,
+        bron,
     ):
         trigger = ctx.triggered_id
         no = dash.no_update
+        bron = actieve_config_bron(trigger, bron, cfg, wiz_config)
 
         sel_status = no
         cfg_status = no
@@ -315,6 +348,7 @@ def registreer_callbacks(app):
                 kiezer_opties,
                 kiezer_waarde,
                 kiezer_stijl,
+                bron,
             )
 
         if trigger == "upload-selectiedata" and sel:
@@ -335,6 +369,7 @@ def registreer_callbacks(app):
                 cfg_status = dbc.Alert(
                     f"Fout: {e}", color="danger", className="small py-1"
                 )
+                validatie = ""
                 return resultaat()
 
         if trigger == "wiz-config-store" and wiz_config:
@@ -351,14 +386,23 @@ def registreer_callbacks(app):
                 f"{cho_fn} geladen.", color="success", className="small py-1"
             )
 
-        has_config = cfg or wiz_config
-
-        if sel and has_config:
+        if sel and bron:
             try:
                 if config is None:
-                    config = lees_config(cfg) if cfg else json.loads(wiz_config)
+                    config = lees_actieve_config(bron, cfg, wiz_config)
                 checks = valideer_config(config, sel)
-                badges = []
+                badges = [
+                    dbc.Alert(
+                        "Config: "
+                        + (
+                            f"geüpload bestand ({cfg_fn})"
+                            if bron == "upload"
+                            else "gegenereerd met de wizard"
+                        ),
+                        color="secondary",
+                        className="small py-1 mb-1",
+                    )
+                ]
                 opl = config.get("opleiding", "")
                 jaar = config.get("jaar", "")
                 inst = config.get("instellingscode", "")
@@ -534,6 +578,7 @@ def registreer_callbacks(app):
         State("demo-dataset-picker", "value"),
         State("wiz-config-store", "data"),
         State("cho-opleiding-picker", "value"),
+        State("config-bron", "data"),
         prevent_initial_call=True,
     )
     def laad_dashboard(
@@ -547,6 +592,7 @@ def registreer_callbacks(app):
         demo_dataset,
         wiz_config,
         cho_opleiding,
+        bron,
     ):
         trigger = ctx.triggered_id
 
@@ -556,17 +602,9 @@ def registreer_callbacks(app):
         if trigger == "btn-demodata":
             return _laad_demodata(demo_dataset)
 
-        has_config = cfg_contents or wiz_config
-        if (
-            trigger == "btn-open-dashboard"
-            and sel_contents
-            and has_config
-            and cho_contents
-        ):
-            if cfg_contents:
-                config = lees_config(cfg_contents)
-            else:
-                config = json.loads(wiz_config)
+        bron = actieve_config_bron(None, bron, cfg_contents, wiz_config)
+        if trigger == "btn-open-dashboard" and sel_contents and bron and cho_contents:
+            config = lees_actieve_config(bron, cfg_contents, wiz_config)
             return bouw_data_stores(
                 config,
                 sel_contents,
