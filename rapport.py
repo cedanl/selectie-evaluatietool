@@ -45,6 +45,18 @@ log = logging.getLogger(__name__)
 
 LOGO_PATH = Path(__file__).parent / "assets" / "nko-logo.png"
 
+# Unicode-font: de fpdf-kernfonts (Helvetica) kennen alleen Latin-1 en laten
+# het rapport crashen op een en-dash, typografische aanhalingstekens of een
+# teken als '≥' in item- of opleidingsnamen. DejaVu Sans dekt die wel af;
+# fpdf2 sluit alleen de gebruikte tekens in. Licentie: assets/fonts/DejaVu-LICENSE.txt.
+FONT_DIR = Path(__file__).parent / "assets" / "fonts"
+FONT = "DejaVu"
+_FONT_BESTANDEN = {
+    "": "DejaVuSans.ttf",
+    "B": "DejaVuSans-Bold.ttf",
+    "I": "DejaVuSans-Oblique.ttf",
+}
+
 BLUE = (44, 62, 80)
 DARK = (51, 51, 51)
 GRAY = (120, 120, 120)
@@ -79,6 +91,8 @@ def _render_figures(
 class RapportPDF(FPDF):
     def __init__(self, opleiding: str, jaar: str):
         super().__init__(orientation="P", unit="mm", format="A4")
+        for stijl, bestand in _FONT_BESTANDEN.items():
+            self.add_font(FONT, stijl, str(FONT_DIR / bestand))
         self.opleiding = opleiding
         self.jaar = jaar
         self.set_auto_page_break(auto=True, margin=20)
@@ -86,7 +100,7 @@ class RapportPDF(FPDF):
     def header(self):
         if self.page_no() == 1:
             return
-        self.set_font("Helvetica", "I", 8)
+        self.set_font(FONT, "I", 8)
         self.set_text_color(*GRAY)
         self.cell(
             0,
@@ -104,7 +118,7 @@ class RapportPDF(FPDF):
         if self.page_no() == 1:
             return
         self.set_y(-15)
-        self.set_font("Helvetica", "I", 7)
+        self.set_font(FONT, "I", 7)
         self.set_text_color(*GRAY)
         self.cell(0, 10, "Selectie Evaluatietool | CEDA", align="C")
 
@@ -117,18 +131,18 @@ class RapportPDF(FPDF):
         else:
             self.ln(60)
 
-        self.set_font("Helvetica", "B", 32)
+        self.set_font(FONT, "B", 32)
         self.set_text_color(*BLUE)
         self.cell(0, 14, "Selectie", align="C", new_x="LMARGIN", new_y="NEXT")
         self.cell(0, 14, "Evaluatierapport", align="C", new_x="LMARGIN", new_y="NEXT")
 
         self.ln(10)
-        self.set_font("Helvetica", "", 18)
+        self.set_font(FONT, "", 18)
         self.set_text_color(*DARK)
         self.cell(0, 10, self.opleiding, align="C", new_x="LMARGIN", new_y="NEXT")
 
         self.ln(4)
-        self.set_font("Helvetica", "", 14)
+        self.set_font(FONT, "", 14)
         self.set_text_color(*GRAY)
         self.cell(
             0,
@@ -148,7 +162,7 @@ class RapportPDF(FPDF):
         )
 
         self.ln(6)
-        self.set_font("Helvetica", "I", 11)
+        self.set_font(FONT, "I", 11)
         self.set_text_color(*GRAY)
         self.cell(
             0,
@@ -160,7 +174,7 @@ class RapportPDF(FPDF):
         )
 
         self.ln(14)
-        self.set_font("Helvetica", "", 11)
+        self.set_font(FONT, "", 11)
         self.set_text_color(*DARK)
         self.cell(
             0,
@@ -184,7 +198,7 @@ class RapportPDF(FPDF):
 
     def section_title(self, title: str):
         self.ln(4)
-        self.set_font("Helvetica", "B", 16)
+        self.set_font(FONT, "B", 16)
         self.set_text_color(*BLUE)
         self.cell(0, 10, title, new_x="LMARGIN", new_y="NEXT")
         y = self.get_y()
@@ -195,13 +209,13 @@ class RapportPDF(FPDF):
 
     def subsection_title(self, title: str):
         self.ln(2)
-        self.set_font("Helvetica", "B", 12)
+        self.set_font(FONT, "B", 12)
         self.set_text_color(*DARK)
         self.cell(0, 8, title, new_x="LMARGIN", new_y="NEXT")
         self.ln(1)
 
     def body_text(self, text: str):
-        self.set_font("Helvetica", "", 10)
+        self.set_font(FONT, "", 10)
         self.set_text_color(*DARK)
         self.multi_cell(0, 5, text)
         self.ln(2)
@@ -219,7 +233,7 @@ class RapportPDF(FPDF):
         self.set_fill_color(*_hex_to_rgb(kleur_map.get(groep, "#94a3b8")))
         self.rect(10, y + 0.5, 4, 5, style="F")
         self.set_xy(16, y)
-        self.set_font("Helvetica", "B", 11)
+        self.set_font(FONT, "B", 11)
         self.set_text_color(*DARK)
         self.cell(0, 6, f"{groep} ({n} kandidaten):", new_x="LMARGIN", new_y="NEXT")
         self.ln(1)
@@ -244,13 +258,13 @@ class RapportPDF(FPDF):
         return text + ".."
 
     def _render_table_header(self, headers: list[str], col_widths: list[float]):
-        self.set_font("Helvetica", "B", 9)
+        self.set_font(FONT, "B", 9)
         self.set_fill_color(*BLUE)
         self.set_text_color(*WHITE)
         for i, h in enumerate(headers):
             self.cell(col_widths[i], 7, h, border=1, fill=True, align="C")
         self.ln()
-        self.set_font("Helvetica", "", 9)
+        self.set_font(FONT, "", 9)
         self.set_text_color(*DARK)
 
     def add_data_table(

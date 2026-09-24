@@ -1,6 +1,7 @@
 """Upload-overlay, sidebar en de bijbehorende callbacks."""
 
 import json
+import logging
 
 import pandas as pd
 
@@ -31,6 +32,9 @@ from helpers import (
     bouw_data_stores,
     _laad_demodata,
 )
+
+
+log = logging.getLogger(__name__)
 
 
 def _upload_card(title, description, upload_id, status_id, accept):
@@ -233,6 +237,7 @@ SIDEBAR = html.Div(
                     className="w-100 mb-2",
                 ),
                 dcc.Download(id="download-rapport"),
+                html.Div(id="rapport-fout"),
             ],
             type="circle",
             color="#2c3e50",
@@ -645,6 +650,7 @@ def registreer_callbacks(app):
 
     @app.callback(
         Output("download-rapport", "data"),
+        Output("rapport-fout", "children"),
         Input("btn-download-rapport", "n_clicks"),
         State("data-store", "data"),
         State("scores-store", "data"),
@@ -653,10 +659,20 @@ def registreer_callbacks(app):
     def download_rapport(_n, store_data, scores_store):
         df = df_from_store(store_data)
         if df.empty or not scores_store:
-            return dash.no_update
+            return dash.no_update, ""
         scores_df = scores_df_from_store(scores_store)
         perspectief = PERSPECTIEF_DOORSTROOM
-        pdf_bytes = genereer_rapport(df, scores_df, perspectief=perspectief)
+        try:
+            pdf_bytes = genereer_rapport(df, scores_df, perspectief=perspectief)
+        except Exception as e:
+            # Zonder deze melding ziet de gebruiker alleen de toast
+            # 'Rapport wordt gegenereerd' en daarna niets.
+            log.exception("PDF-rapport genereren mislukt")
+            return dash.no_update, dbc.Alert(
+                f"Het rapport kon niet worden gemaakt: {e}",
+                color="danger",
+                className="small py-1 mt-2",
+            )
         opleiding = ""
         if "opleiding" in df.columns and df["opleiding"].notna().any():
             opleiding = str(df["opleiding"].dropna().iloc[0]).strip()
@@ -670,4 +686,4 @@ def registreer_callbacks(app):
             if staart
             else "Selectie evaluatierapport.pdf"
         )
-        return dcc.send_bytes(pdf_bytes, filename)
+        return dcc.send_bytes(pdf_bytes, filename), ""
