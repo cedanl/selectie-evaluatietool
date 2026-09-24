@@ -11,7 +11,6 @@ import dash_bootstrap_components as dbc
 
 from transformatie import (
     lees_config,
-    parse_csv_or_excel,
     parse_selectiedata,
     transformeer_naar_lang,
     valideer_config,
@@ -20,6 +19,7 @@ from cho_transform import (
     ontbrekende_cho_kolommen,
     ontbrekende_demografie_kolommen,
 )
+from bestandsopslag import lees_cho_upload
 from config_wizard import maak_wizard_layout
 from tabs.intro import maak_upload_intro
 from rapport import genereer_rapport
@@ -93,6 +93,36 @@ def _upload_card(title, description, upload_id, status_id, accept):
     )
 
 
+def _grote_upload_card(title, description):
+    """Uploadkaart voor 1CHO. Geen dcc.Upload: die leest het bestand als
+    base64-tekst in de browser in en faalt stil bij honderden MB's. Hier
+    stuurt assets/grote_upload.js het bestand gestreamd naar
+    /upload-bestand (bestandsopslag.py) en zet het token in 'cho-bestand'."""
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.H6(title, className="mb-1"),
+                html.P(description, className="text-muted small mb-3"),
+                # Klikken opent een bestandskiezer die grote_upload.js aanmaakt.
+                html.Div(
+                    [
+                        "Sleep een bestand hierheen of ",
+                        html.A("blader", style={"cursor": "pointer"}),
+                    ],
+                    id="cho-dropzone",
+                    className="upload-zone",
+                    role="button",
+                    tabIndex="0",
+                ),
+                html.Div(id="cho-upload-voortgang", className="small text-muted mt-2"),
+                dcc.Store(id="cho-bestand", storage_type="memory"),
+                html.Div(id="cho-status", className="mt-2"),
+            ]
+        ),
+        className="mb-3 text-start",
+    )
+
+
 _INLEIDING_KOLOM = dbc.Col(
     [
         html.Img(
@@ -139,14 +169,12 @@ _UPLOAD_KOLOM = dbc.Col(
             ),
             maak_wizard_layout(),
             html.Div(id="validatie-resultaat", className="mb-3"),
-            _upload_card(
+            _grote_upload_card(
                 "1CHO-data",
                 "Studiesuccesdata per kandidaat. Dit is de output van de "
                 "1cijferho-pipeline (BSN al gekoppeld aan studentnummer), "
-                "niet het ruwe DUO-bestand.",
-                "upload-1cho",
-                "cho-status",
-                ".csv,.xlsx,.xls",
+                "niet het ruwe DUO-bestand. Een groot bestand van de hele "
+                "instelling kan ook.",
             ),
             # Verschijnt alleen als het 1CHO-bestand meerdere opleidingen bevat
             # (een instellingsbrede extractie): dan moet duidelijk zijn welke
@@ -304,24 +332,22 @@ def registreer_callbacks(app):
         Output("config-bron", "data"),
         Input("upload-selectiedata", "contents"),
         Input("upload-config", "contents"),
-        Input("upload-1cho", "contents"),
+        Input("cho-bestand", "data"),
         Input("wiz-config-store", "data"),
         Input("cho-opleiding-picker", "value"),
         State("upload-selectiedata", "filename"),
         State("upload-config", "filename"),
-        State("upload-1cho", "filename"),
         State("config-bron", "data"),
         prevent_initial_call=True,
     )
     def valideer_uploads(
         sel,
         cfg,
-        cho,
+        cho_upload,
         wiz_config,
         cho_opleiding,
         sel_fn,
         cfg_fn,
-        cho_fn,
         bron,
     ):
         trigger = ctx.triggered_id
@@ -381,9 +407,11 @@ def registreer_callbacks(app):
                 className="small py-1",
             )
 
-        if trigger == "upload-1cho" and cho:
+        if trigger == "cho-bestand" and cho_upload:
             cho_status = dbc.Alert(
-                f"{cho_fn} geladen.", color="success", className="small py-1"
+                f"{cho_upload['filename']} geladen.",
+                color="success",
+                className="small py-1",
             )
 
         if sel and bron:
@@ -428,11 +456,11 @@ def registreer_callbacks(app):
                 validatie = html.Div(badges)
 
                 all_ok = all(c["ok"] for c in checks)
-                if all_ok and cho:
+                if all_ok and cho_upload:
                     scores_df = transformeer_naar_lang(
                         parse_selectiedata(sel, config), config
                     )
-                    cho_ruw = parse_csv_or_excel(cho, cho_fn or "data.csv")
+                    cho_ruw = lees_cho_upload(cho_upload["token"])
                     missing = ontbrekende_cho_kolommen(cho_ruw)
                     if missing:
                         cho_status = dbc.Alert(
@@ -494,7 +522,8 @@ def registreer_callbacks(app):
                     if not matches:
                         cho_status = dbc.Alert(
                             f"Geen overlap tussen selectiedata ({len(sel_ids)} studenten) "
-                            f"en 1CHO-data ({len(cho_ids)} studenten). "
+                            f"en 1CHO-data ({cho['info']['n_studenten_totaal']} "
+                            "studenten). "
                             "Controleer of beide bestanden hetzelfde studentnummer gebruiken.",
                             color="danger",
                             className="small py-1",
@@ -573,8 +602,7 @@ def registreer_callbacks(app):
         Input("btn-reset", "n_clicks"),
         State("upload-selectiedata", "contents"),
         State("upload-config", "contents"),
-        State("upload-1cho", "contents"),
-        State("upload-1cho", "filename"),
+        State("cho-bestand", "data"),
         State("demo-dataset-picker", "value"),
         State("wiz-config-store", "data"),
         State("cho-opleiding-picker", "value"),
@@ -587,8 +615,7 @@ def registreer_callbacks(app):
         _reset,
         sel_contents,
         cfg_contents,
-        cho_contents,
-        cho_fn,
+        cho_upload,
         demo_dataset,
         wiz_config,
         cho_opleiding,
@@ -603,12 +630,12 @@ def registreer_callbacks(app):
             return _laad_demodata(demo_dataset)
 
         bron = actieve_config_bron(None, bron, cfg_contents, wiz_config)
-        if trigger == "btn-open-dashboard" and sel_contents and bron and cho_contents:
+        if trigger == "btn-open-dashboard" and sel_contents and bron and cho_upload:
             config = lees_actieve_config(bron, cfg_contents, wiz_config)
             return bouw_data_stores(
                 config,
                 sel_contents,
-                parse_csv_or_excel(cho_contents, cho_fn or "data.csv"),
+                lees_cho_upload(cho_upload["token"]),
                 cho_opleiding,
             )
 

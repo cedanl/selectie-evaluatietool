@@ -15,6 +15,7 @@ from plotly.colors import hex_to_rgb, unlabel_rgb
 import dash
 
 from transformatie import (
+    normaliseer_studentnummer,
     lees_config,
     parse_jaar,
     parse_selectiedata,
@@ -177,6 +178,16 @@ def bereid_cho_voor(
     Retourneert een dict met `cho_df`, `opleidingen` (alle opleidingen in het
     bestand), `gekozen` (de gebruikte opleiding of None), `keuze_nodig` (meer
     dan één opleiding en geen keuze of match) en `info` (tellingen)."""
+    # Alleen inschrijvingen van kandidaten uit de selectie doen ertoe. Bij een
+    # instellingsbreed bestand (miljoenen rijen) scheelt dat veel rekenwerk.
+    # Matcht niemand, dan rekenen we op het hele bestand door, zodat de
+    # validatie 'geen overlap' kan melden.
+    nummers = normaliseer_studentnummer(cho_ruw["persoonsgebonden_nummer"])
+    n_studenten_totaal = int(nummers.nunique())
+    if not scores_df.empty:
+        in_selectie = nummers.isin(set(scores_df["studentnummer"].dropna()))
+        if in_selectie.any():
+            cho_ruw = cho_ruw[in_selectie]
     afgeleid = transformeer_cho(cho_ruw)
     opleidingen = opleidingen_in_cho(afgeleid)
     gekozen = (
@@ -198,7 +209,7 @@ def bereid_cho_voor(
         "opleidingen": opleidingen,
         "gekozen": gekozen,
         "keuze_nodig": keuze_nodig,
-        "info": info,
+        "info": {**info, "n_studenten_totaal": n_studenten_totaal},
     }
 
 

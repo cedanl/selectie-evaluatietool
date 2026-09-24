@@ -16,6 +16,7 @@ import dash
 from dash import dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 
+from bestandsopslag import registreer_upload_route
 from config_wizard import registreer_callbacks as registreer_wizard
 from helpers import DEMO_DATASETS, _laad_demodata
 from uploads import UPLOAD_OVERLAY, SIDEBAR
@@ -37,6 +38,7 @@ app = dash.Dash(
     suppress_callback_exceptions=True,
 )
 
+registreer_upload_route(app.server)
 registreer_wizard(app)
 registreer_uploads(app)
 for tab in (bevindingen, scores, demografie, verschiltoets, correlatie, regressie):

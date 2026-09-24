@@ -60,6 +60,17 @@ CHO_OPLEIDING_KOLOM = "cho_opleiding"
 # is in plaats van doorstroom naar jaar 2.
 _DIPLOMA_KOLOM = "diploma_behaald"
 
+# Alle 1CHO-kolommen die de tool gebruikt. Bij het inlezen van een groot
+# bestand laten we de rest weg (bestandsopslag.lees_cho_bestand).
+CHO_BENODIGDE_KOLOMMEN = {
+    *RUWE_CHO_KOLOMMEN,
+    *VEREISTE_DEMO_KOLOMMEN,
+    *_DEMO_KOLOMMEN,
+    *_META_KOLOMMEN,
+    "opleidingscode_naam_opleiding",
+    _DIPLOMA_KOLOM,
+}
+
 
 def ontbrekende_cho_kolommen(df: pd.DataFrame) -> list[str]:
     """Geef de verplichte ruwe 1CHO-kolommen die in df ontbreken."""

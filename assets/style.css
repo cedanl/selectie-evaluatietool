@@ -146,7 +146,8 @@ body {
     transition: border-color 0.15s, background 0.15s;
 }
 
-.upload-zone:hover {
+.upload-zone:hover,
+.upload-zone-actief {
     border-color: #94a3b8;
     background: #f1f5f9;
 }
