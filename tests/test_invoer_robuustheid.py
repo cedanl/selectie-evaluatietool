@@ -117,3 +117,54 @@ class TestEncoding:
         tekst = "naam;x\nJosé;1\n"
         gelezen = parse_csv_or_excel(_uri(tekst.encode("utf-8")), "data.csv")
         assert gelezen.iloc[0, 0] == "José"
+
+
+class TestKolomMatching:
+    """Pitch #33: configkolommen exact matchen, niet via de eerste substring."""
+
+    def test_exacte_match_wint_van_substring(self):
+        from transformatie import _find_col
+
+        assert _find_col(["Item 10", "Item 1"], "Item 1") == "Item 1"
+        assert _find_col(["studentnr_oud", "studentnr"], "studentnr") == "studentnr"
+
+    def test_hoofdletterongevoelig_exact(self):
+        from transformatie import _find_col
+
+        assert _find_col(["Studentnummer", "studentnummer_oud"], "studentnummer") == (
+            "Studentnummer"
+        )
+
+    def test_unieke_substring_blijft_werken(self):
+        from transformatie import _find_col
+
+        assert _find_col(["C_Sc_Totaal (punten)"], "C_Sc_Totaal") == (
+            "C_Sc_Totaal (punten)"
+        )
+
+    def test_dubbelzinnige_substring_geeft_geen_match(self):
+        from transformatie import _find_col
+
+        assert _find_col(["studentnr_oud", "studentnr_nieuw"], "studentnr") is None
+
+    def test_validatie_meldt_dubbelzinnige_naam(self):
+        df = pd.DataFrame({"studentnr_oud": [1], "studentnr_nieuw": [2], "A": [3]})
+        config = {**CONFIG, "kolommen": CONFIG["kolommen"][:1]}
+        checks = valideer_config(config, _uri(_xlsx(df)))
+        assert any(
+            not c["ok"] and "past op meerdere kolommen" in c["check"] for c in checks
+        )
+
+    def test_validatie_meldt_twee_regels_op_een_kolom(self):
+        df = pd.DataFrame({"studentnr": [1], "Score A": [3]})
+        config = {
+            "koppel_id_kolom": "studentnr",
+            "kolommen": [
+                {"kolom_naam": "Score A", "instrument": "I", "item": "x"},
+                {"kolom_naam": "score a", "instrument": "I", "item": "y"},
+            ],
+        }
+        checks = valideer_config(config, _uri(_xlsx(df)))
+        assert any(not c["ok"] and "wijzen allemaal" in c["check"] for c in checks)
+        lang = transformeer_naar_lang(df, config)
+        assert len(lang) == 1

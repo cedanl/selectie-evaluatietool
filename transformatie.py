@@ -44,12 +44,43 @@ def _decode_upload(contents: str) -> bytes:
     return base64.b64decode(content_string)
 
 
+def _kandidaat_kolommen(headers: list[str], naam: str) -> list[str]:
+    """Headers die bij een configkolomnaam passen, van streng naar los.
+
+    Eerst exacte matches (na strippen), dan hoofdletterongevoelig exact, en
+    pas als die er niet zijn alle headers die de naam als substring bevatten.
+    Zo pakt 'Item 1' nooit 'Item 10' als 'Item 1' zelf bestaat."""
+    naam = str(naam).strip()
+    if not naam:
+        return []
+    exact = [h for h in headers if str(h).strip() == naam]
+    if exact:
+        return exact
+    zonder_hoofdletters = [h for h in headers if str(h).strip().lower() == naam.lower()]
+    if zonder_hoofdletters:
+        return zonder_hoofdletters
+    return [h for h in headers if naam in str(h)]
+
+
 def _find_col(headers: list[str], naam: str) -> str | None:
-    """Zoek een kolomnaam via substring match in de headers."""
-    for h in headers:
-        if naam in str(h):
-            return h
-    return None
+    """Zoek de header die bij een configkolomnaam hoort.
+
+    Een substring-match telt alleen als hij eenduidig is: past de naam op
+    meerdere headers (bijv. 'studentnr' op 'studentnr_oud' en
+    'studentnr_nieuw'), dan geven we None terug in plaats van stil de eerste
+    te kiezen. `valideer_config` meldt zulke dubbelzinnige namen apart."""
+    kandidaten = _kandidaat_kolommen(headers, naam)
+    return kandidaten[0] if len(kandidaten) == 1 else None
+
+
+def dubbelzinnige_kolommen(headers: list[str], namen: list[str]) -> dict[str, list]:
+    """Configkolomnamen die op meer dan één header passen, met die headers."""
+    resultaat = {}
+    for naam in namen:
+        kandidaten = _kandidaat_kolommen(headers, naam)
+        if len(kandidaten) > 1:
+            resultaat[naam] = kandidaten
+    return resultaat
 
 
 _WAAR_WAARDEN = {"true", "waar", "ja", "yes", "y", "1", "1.0", "x"}
@@ -218,6 +249,37 @@ def valideer_config(config: dict, selectiedata_contents: str) -> list[dict]:
         )
 
     kolommen = meegenomen_kolommen(config)
+
+    namen = [id_kolom] if id_kolom else []
+    namen += [kol["kolom_naam"] for kol in kolommen]
+    for naam, kandidaten in dubbelzinnige_kolommen(headers, namen).items():
+        resultaten.append(
+            {
+                "check": f"'{naam}' past op meerdere kolommen: "
+                f"{', '.join(map(str, kandidaten[:3]))}"
+                f"{'...' if len(kandidaten) > 3 else ''}. "
+                "Gebruik de exacte kolomnaam in de config.",
+                "ok": False,
+            }
+        )
+
+    # Twee configregels die op dezelfde datakolom uitkomen, zouden dezelfde
+    # scores twee keer als apart item meetellen.
+    per_datakolom: dict[str, list[str]] = {}
+    for kol in kolommen:
+        data_col = _find_col(headers, kol["kolom_naam"])
+        if data_col is not None:
+            per_datakolom.setdefault(data_col, []).append(kol["kolom_naam"])
+    for data_col, config_namen in per_datakolom.items():
+        if len(config_namen) > 1:
+            resultaten.append(
+                {
+                    "check": f"Configregels {', '.join(config_namen)} wijzen allemaal "
+                    f"naar kolom '{data_col}'",
+                    "ok": False,
+                }
+            )
+
     gevonden = 0
     niet_gevonden = []
     for kol in kolommen:
@@ -327,7 +389,9 @@ def transformeer_naar_lang(selectiedata_df: pd.DataFrame, config: dict) -> pd.Da
     col_mapping = []
     for kol in kolommen:
         data_col = _find_col(headers, kol["kolom_naam"])
-        if data_col is not None:
+        # Een datakolom maar één keer meenemen, ook als meerdere configregels
+        # erop uitkomen (valideer_config meldt dat als fout).
+        if data_col is not None and data_col not in {dc for dc, _ in col_mapping}:
             col_mapping.append((data_col, kol))
 
     if not col_mapping:
