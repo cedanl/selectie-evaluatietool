@@ -49,7 +49,10 @@ def _upload_card(title, description, upload_id, status_id, accept):
                     ),
                     className="upload-zone",
                     accept=accept,
-                    max_size=50 * 1024 * 1024,
+                    # Geen limiet: een instellingsbrede 1CHO-extractie is al
+                    # snel >50 MB, en dcc.Upload negeert te grote bestanden
+                    # zonder enige melding.
+                    max_size=-1,
                 ),
                 html.Div(id=status_id, className="mt-2"),
             ]
@@ -328,7 +331,12 @@ def registreer_callbacks(app):
                         )
                     )
                 for c in checks:
-                    color = "success" if c["ok"] else "danger"
+                    if not c["ok"]:
+                        color = "danger"
+                    elif c.get("waarschuwing"):
+                        color = "warning"
+                    else:
+                        color = "success"
                     badges.append(
                         dbc.Alert(c["check"], color=color, className="small py-1 mb-1")
                     )

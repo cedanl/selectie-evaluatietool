@@ -22,7 +22,12 @@ def _repareer_xlsx(raw: bytes) -> bytes:
     .xml-bestand, en schrijft een schoon ZIP terug. Nodig wanneer een
     Excel-bestand kolomnamen of celwaarden met controle-tekens bevat die
     Excel bij opslaan gewoon bewaart maar die openpyxl's parser doen crashen.
+
+    Een oud .xls-bestand is geen ZIP; dat geven we ongewijzigd terug zodat
+    pandas het met xlrd kan lezen.
     """
+    if not zipfile.is_zipfile(io.BytesIO(raw)):
+        return raw
     src = zipfile.ZipFile(io.BytesIO(raw))
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as dst:
@@ -74,11 +79,33 @@ def normaliseer_studentnummer(serie: pd.Series) -> pd.Series:
     return s.mask(s.isin(["", "nan", "NaN", "<NA>", "None"]))
 
 
+def parse_jaar(waarde) -> int | None:
+    """Haal het jaartal uit een configwaarde. Accepteert 2025, "2025",
+    "2025.0" en ook een studiejaar als "2025-2026" (dan telt het eerste jaar).
+    Geeft None als er geen viercijferig jaartal in staat."""
+    if waarde is None or (isinstance(waarde, float) and pd.isna(waarde)):
+        return None
+    match = re.search(r"\d{4}", str(waarde))
+    return int(match.group()) if match else None
+
+
+def parse_header_rij(waarde) -> int:
+    """Lees de 1-based headerrij uit de config; leeg of onleesbaar wordt 1.
+    Accepteert ook "3.0", zoals Excel een getal soms als tekst opslaat."""
+    try:
+        return max(1, int(float(waarde)))
+    except (TypeError, ValueError):
+        return 1
+
+
 def parse_csv_or_excel(contents: str, filename: str) -> pd.DataFrame:
     raw = _decode_upload(contents)
-    if filename.endswith((".xlsx", ".xls")):
-        return pd.read_excel(io.BytesIO(raw))
-    for encoding in ("utf-8-sig", "latin-1", "cp1252"):
+    if filename.lower().endswith((".xlsx", ".xls")):
+        return pd.read_excel(io.BytesIO(_repareer_xlsx(raw)))
+    # cp1252 vóór latin-1: latin-1 accepteert elke byte en zou dus altijd
+    # 'slagen', waardoor Windows-tekens als € en typografische aanhalingstekens
+    # stil als stuurtekens zouden worden ingelezen.
+    for encoding in ("utf-8-sig", "cp1252", "latin-1"):
         try:
             decoded = raw.decode(encoding)
             break
@@ -95,7 +122,7 @@ def parse_csv_or_excel(contents: str, filename: str) -> pd.DataFrame:
 def parse_selectiedata(contents: str, config: dict) -> pd.DataFrame:
     raw = _repareer_xlsx(_decode_upload(contents))
     blad = config.get("blad_naam") or 0
-    header_rij = int(config.get("header_rij") or 1) - 1
+    header_rij = parse_header_rij(config.get("header_rij")) - 1
     return pd.read_excel(io.BytesIO(raw), sheet_name=blad, header=header_rij)
 
 
@@ -166,7 +193,7 @@ def valideer_config(config: dict, selectiedata_contents: str) -> list[dict]:
         )
         return resultaten
 
-    header_rij = int(config.get("header_rij") or 1) - 1
+    header_rij = parse_header_rij(config.get("header_rij")) - 1
     df = pd.read_excel(xls, sheet_name=blad or 0, header=header_rij, nrows=0)
     headers = list(df.columns.astype(str))
 
@@ -237,6 +264,7 @@ def valideer_config(config: dict, selectiedata_contents: str) -> list[dict]:
                 )
 
     niet_numeriek = []
+    deels_tekst = []  # (kolom, aantal tekstcellen) bij verder numerieke kolommen
     for kol in kolommen:
         actual = _find_col(headers, kol["kolom_naam"])
         if actual and actual in df_sample.columns:
@@ -246,6 +274,30 @@ def valideer_config(config: dict, selectiedata_contents: str) -> list[dict]:
                 pct_numeriek = numeric.notna().sum() / len(col_data)
                 if pct_numeriek < 0.5:
                     niet_numeriek.append(kol["kolom_naam"])
+                elif numeric.isna().any():
+                    deels_tekst.append((kol["kolom_naam"], int(numeric.isna().sum())))
+
+    if deels_tekst:
+        # Geen blokkade: tekstcellen als 'n.v.t.' worden als leeg behandeld,
+        # maar de gebruiker moet wel zien dat dat gebeurt.
+        beschrijving = ", ".join(f"'{k}' ({n})" for k, n in deels_tekst[:3])
+        resultaten.append(
+            {
+                "check": "Niet-numerieke cellen worden als leeg behandeld in "
+                f"{beschrijving}{'...' if len(deels_tekst) > 3 else ''}",
+                "ok": True,
+                "waarschuwing": True,
+            }
+        )
+
+    jaar_raw = config.get("jaar", "")
+    if str(jaar_raw).strip() and parse_jaar(jaar_raw) is None:
+        resultaten.append(
+            {
+                "check": f"Jaar '{jaar_raw}' bevat geen jaartal; vul bijvoorbeeld 2025 in",
+                "ok": False,
+            }
+        )
 
     if niet_numeriek:
         resultaten.append(
@@ -262,8 +314,7 @@ def valideer_config(config: dict, selectiedata_contents: str) -> list[dict]:
 def transformeer_naar_lang(selectiedata_df: pd.DataFrame, config: dict) -> pd.DataFrame:
     id_kolom = config.get("koppel_id_kolom", "")
     opleiding = config.get("opleiding", "")
-    jaar_raw = config.get("jaar", "")
-    jaar = int(float(jaar_raw)) if jaar_raw else None
+    jaar = parse_jaar(config.get("jaar", ""))
     kolommen = meegenomen_kolommen(config)
 
     headers = list(selectiedata_df.columns.astype(str))
@@ -289,8 +340,10 @@ def transformeer_naar_lang(selectiedata_df: pd.DataFrame, config: dict) -> pd.Da
         var_name="_kolom",
         value_name="score",
     )
+    # Tekstcellen als 'n.v.t.' of '-' tellen als ontbrekend; valideer_config
+    # meldt dat aan de gebruiker.
+    melted["score"] = pd.to_numeric(melted["score"], errors="coerce")
     melted = melted.dropna(subset=["score"])
-    melted["score"] = melted["score"].astype(float)
     melted = melted.rename(columns={id_col_actual: "studentnummer"})
     melted["studentnummer"] = normaliseer_studentnummer(melted["studentnummer"])
     melted = melted.dropna(subset=["studentnummer"])
