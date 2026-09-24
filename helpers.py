@@ -32,8 +32,7 @@ from shared import (
     GROEP_NIET_IN_VERGELIJKING,
     GROEP_INGESCHREVEN,
     GROEP_KLEUREN,
-    UITKOMST_PERSPECTIEVEN,
-    PERSPECTIEF_DOORSTROOM,
+    uitkomst_perspectief,
     binair_kleur_map,
     shorten_item,
     grenzen_van_label,
@@ -149,7 +148,9 @@ TABLE_STYLE = dict(
 # 'Niet gestart'-groep zijn uit het dashboard gehaald; niet-gestarte kandidaten
 # leven nog wel in de data en worden alleen als funnel-telling getoond.
 GROEPEER_OPTIES = [
-    {"label": PERSPECTIEF_DOORSTROOM["label"], "value": "doorstroom"},
+    # De labels in de grafieken volgen de data (doorstroom of diploma, zie
+    # shared.perspectief_voor); de keuzelijst zelf is neutraal.
+    {"label": "Studiesucces (doorstroom of diploma)", "value": "doorstroom"},
 ] + [{"label": d["label"], "value": d["kolom"]} for d in DEMO_DIMENSIES]
 
 GROEPEER_OPTIES_SCORES = GROEPEER_OPTIES
@@ -290,7 +291,7 @@ def _aantallen_per_groep(df, groepeer):
             .reindex([g for g in GROEP_VOLGORDE if g in df["groep"].values])
         )
         n_buiten = 0
-    elif perspectief := UITKOMST_PERSPECTIEVEN.get(groepeer):
+    elif perspectief := uitkomst_perspectief(groepeer, df):
         pop = df[df["groep"].isin(perspectief["populatie"])]
         binair = pop["groep"].isin(perspectief["positief_groepen"])
         labels = binair.map(
@@ -332,7 +333,7 @@ def _scores_per_groep(df, scores_df, groepeer):
         kleur_map = {g: GROEP_KLEUREN[g] for g in volgorde}
         scores["item_kort"] = scores["item"].apply(shorten_item)
         return scores, kleur_map, volgorde
-    perspectief = UITKOMST_PERSPECTIEVEN.get(groepeer)
+    perspectief = uitkomst_perspectief(groepeer, df)
     if perspectief:
         pop = df[df["groep"].isin(perspectief["populatie"])]
         scores = scores_df.merge(

@@ -4,7 +4,7 @@ from dash import dcc, html, dash_table, Input, Output, State
 import dash_bootstrap_components as dbc
 
 from shared import (
-    UITKOMST_PERSPECTIEVEN,
+    uitkomst_perspectief,
     shorten_item,
     vergelijk_succes_per_item,
     VERGELIJKING_KOLOMMEN,
@@ -86,8 +86,8 @@ def maak_layout():
                 [
                     html.H5("Verschiltoets per item"),
                     html.P(
-                        "Toetst per item of de scores significant verschillen. Kies doorstroom "
-                        "naar jaar 2 (voorspelt het item studiesucces?) of een demografische "
+                        "Toetst per item of de scores significant verschillen. Kies studiesucces "
+                        "(voorspelt het item doorstroom of diploma?) of een demografische "
                         "dimensie (maakt het item onbedoeld onderscheid?).",
                         className="text-muted small",
                     ),
@@ -147,7 +147,7 @@ def registreer_callbacks(app):
             return [], [], ""
         scores_df = scores_df_from_store(scores_store)
 
-        perspectief = UITKOMST_PERSPECTIEVEN.get(niveau)
+        perspectief = uitkomst_perspectief(niveau, df)
         if perspectief:
             pop = df[df["groep"].isin(perspectief["populatie"])]
             scores = scores_df.merge(

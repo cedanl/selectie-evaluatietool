@@ -3,7 +3,7 @@
 from dash import dcc, html, dash_table, Input, Output, State
 import dash_bootstrap_components as dbc
 
-from shared import PERSPECTIEF_DOORSTROOM, bereken_gezamenlijk_model
+from shared import perspectief_voor, bereken_gezamenlijk_model
 
 from helpers import (
     scores_df_from_store,
@@ -43,7 +43,7 @@ def maak_layout():
                                         [
                                             html.Li(
                                                 "Coefficient: richting en sterkte. Positief = hogere score, hogere "
-                                                "kans op doorstroom. Genormaliseerd (z-scores), dus vergelijkbaar."
+                                                "kans op studiesucces. Genormaliseerd (z-scores), dus vergelijkbaar."
                                             ),
                                             html.Li(
                                                 "Odds ratio: een kansverhouding per standaarddeviatie hogere score. "
@@ -190,7 +190,7 @@ def registreer_callbacks(app):
         if df.empty or not scores_store:
             return ("", [], [], [], [], [], [])
 
-        perspectief = PERSPECTIEF_DOORSTROOM
+        perspectief = perspectief_voor(df)
         model = bereken_gezamenlijk_model(
             df, scores_df_from_store(scores_store), perspectief
         )

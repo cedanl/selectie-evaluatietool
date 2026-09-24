@@ -23,7 +23,7 @@ from cho_transform import (
 from config_wizard import maak_wizard_layout
 from tabs.intro import maak_upload_intro
 from rapport import genereer_rapport
-from shared import PERSPECTIEF_DOORSTROOM, GROEP_INGESCHREVEN, GROEP_SUCCES
+from shared import perspectief_voor, GROEP_INGESCHREVEN, GROEP_SUCCES
 from helpers import (
     scores_df_from_store,
     DEMO_DATASETS,
@@ -253,7 +253,7 @@ SIDEBAR = html.Div(
         html.P("Kandidaten per cohort", className="sidebar-label"),
         html.Div(id="cohort-stats"),
         html.Hr(className="mt-3 mb-2"),
-        html.P("Van aanmelding tot doorstroom", className="sidebar-label"),
+        html.P("Van aanmelding tot studiesucces", className="sidebar-label"),
         html.Div(id="funnel-stats"),
         html.Hr(className="mt-3 mb-2"),
         dcc.Loading(
@@ -675,7 +675,11 @@ def registreer_callbacks(app):
             [
                 stap("Kandidaten", n_kandidaten, None),
                 stap("Ingeschreven", n_ingeschreven, n_kandidaten),
-                stap("Doorgestroomd", n_doorgestroomd, n_ingeschreven),
+                stap(
+                    perspectief_voor(df)["positief_label"],
+                    n_doorgestroomd,
+                    n_ingeschreven,
+                ),
             ]
         )
 
@@ -699,7 +703,7 @@ def registreer_callbacks(app):
         if df.empty or not scores_store:
             return dash.no_update, ""
         scores_df = scores_df_from_store(scores_store)
-        perspectief = PERSPECTIEF_DOORSTROOM
+        perspectief = perspectief_voor(df)
         try:
             pdf_bytes = genereer_rapport(df, scores_df, perspectief=perspectief)
         except Exception as e:

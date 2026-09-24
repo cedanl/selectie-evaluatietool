@@ -21,7 +21,7 @@ from shared import (
     GROEP_VOLGORDE,
     GROEP_KLEUREN,
     CHART_BASE,
-    PERSPECTIEF_DOORSTROOM,
+    perspectief_voor,
     binair_kleur_map,
     shorten_item,
     schaal_grenzen,
@@ -445,7 +445,7 @@ def genereer_rapport(
     df: pd.DataFrame, scores_df: pd.DataFrame, perspectief: dict | None = None
 ) -> bytes:
     if perspectief is None:
-        perspectief = PERSPECTIEF_DOORSTROOM
+        perspectief = perspectief_voor(df)
     opleiding = ""
     if "opleiding" in df.columns and df["opleiding"].notna().any():
         opleiding = str(df["opleiding"].dropna().iloc[0])
@@ -897,7 +897,7 @@ def genereer_rapport(
         "De punten hieronder volgen uit de bevindingen en zijn bedoeld als richting "
         "voor het gesprek, niet als kant-en-klaar oordeel."
     )
-    for regel in beleidsvervolgstappen(bevindingen, model_stats):
+    for regel in beleidsvervolgstappen(bevindingen, model_stats, perspectief):
         pdf.body_text(f"  - {regel}")
 
     buf = io.BytesIO()

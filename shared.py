@@ -78,7 +78,81 @@ UITKOMST_PERSPECTIEVEN = {
     },
 }
 
-PERSPECTIEF_DOORSTROOM = UITKOMST_PERSPECTIEVEN["doorstroom"]
+PERSPECTIEF_DOORSTROOM = {
+    **UITKOMST_PERSPECTIEVEN["doorstroom"],
+    # Woorden voor lopende tekst (vervolgstappen, uitleg).
+    "succes_meervoud": "doorstromers",
+    "geen_succes_meervoud": "uitvallers",
+    "uitkomst_naam": "doorstroom naar jaar 2",
+    "kanttekening": (
+        "Doorstroom naar jaar 2 is maar een van de manieren om studiesucces te meten."
+    ),
+}
+
+# Bij eenjarige opleidingen (masters) is succes een diploma, geen doorstroom.
+# Zelfde populatie en groepen, alleen andere woorden.
+_PERSPECTIEF_DIPLOMA = {
+    **PERSPECTIEF_DOORSTROOM,
+    "label": "Diploma behaald",
+    "positief_label": "Diploma behaald",
+    "negatief_label": "Geen diploma",
+    "beschrijving": (
+        "Vergelijkt gestarte studenten die hun diploma haalden met studenten "
+        "die zonder diploma stopten."
+    ),
+    "succes_meervoud": "gediplomeerden",
+    "geen_succes_meervoud": "studenten zonder diploma",
+    "uitkomst_naam": "het behalen van het diploma",
+    "kanttekening": (
+        "Het diploma halen is maar een van de manieren om studiesucces te meten."
+    ),
+}
+
+# Data met zowel doorstroom als diploma: een neutrale formulering.
+_PERSPECTIEF_GEMENGD = {
+    **PERSPECTIEF_DOORSTROOM,
+    "label": "Studiesucces",
+    "positief_label": "Studiesucces",
+    "negatief_label": "Geen studiesucces",
+    "beschrijving": (
+        "Vergelijkt gestarte studenten met studiesucces (doorstroom naar jaar 2 "
+        "of een diploma) met studenten die zijn uitgevallen."
+    ),
+    "succes_meervoud": "studenten met studiesucces",
+    "geen_succes_meervoud": "uitvallers",
+    "uitkomst_naam": "studiesucces",
+    "kanttekening": (
+        "Doorstroom en diploma zijn maar een deel van wat studiesucces is."
+    ),
+}
+
+
+def perspectief_voor(df: pd.DataFrame | None) -> dict:
+    """Het uitkomstperspectief met woorden die bij de data passen.
+
+    Rekenkundig altijd hetzelfde (gestarte studenten; succes = doorstroom of
+    diploma), maar een masteropleiding waar niemand naar jaar 2 gaat moet
+    'Diploma behaald' tonen, niet 'Doorgestroomd'."""
+    if df is None or df.empty or "groep" not in df.columns:
+        return PERSPECTIEF_DOORSTROOM
+    groepen = set(df["groep"].dropna().astype(str))
+    diploma = GROEP_DIPLOMA in groepen
+    doorstroom = GROEP_DOORGESTROOMD in groepen
+    if diploma and not doorstroom:
+        return _PERSPECTIEF_DIPLOMA
+    if diploma and doorstroom:
+        return _PERSPECTIEF_GEMENGD
+    return PERSPECTIEF_DOORSTROOM
+
+
+def uitkomst_perspectief(sleutel: str | None, df: pd.DataFrame | None) -> dict | None:
+    """Perspectief voor een waarde uit een 'groepeer op'-keuzelijst: de
+    studiesucces-optie ('doorstroom') krijgt de labels uit de data, andere
+    sleutels komen uit UITKOMST_PERSPECTIEVEN (None als het geen uitkomst is)."""
+    if sleutel == "doorstroom":
+        return perspectief_voor(df)
+    return UITKOMST_PERSPECTIEVEN.get(sleutel)
+
 
 BINAIR_KLEUREN = {"positief": "#22c55e", "negatief": "#f97316"}
 
@@ -672,7 +746,9 @@ def _tel_bevindingen(
 
 
 def beleidsvervolgstappen(
-    bevindingen: dict, model_stats: dict | None = None
+    bevindingen: dict,
+    model_stats: dict | None = None,
+    perspectief: dict | None = None,
 ) -> list[str]:
     """Beleidsgerichte vervolgstappen, gekoppeld aan wat er in deze data is
     gevonden. Eén bron voor het blok op 'Wat valt op' en de laatste sectie van
@@ -693,6 +769,9 @@ def beleidsvervolgstappen(
             return items[0]
         return ", ".join(items[:-1]) + " en " + items[-1]
 
+    p = perspectief or PERSPECTIEF_DOORSTROOM
+    succes = p.get("succes_meervoud", "doorstromers")
+    geen_succes = p.get("geen_succes_meervoud", "uitvallers")
     t = bevindingen.get("tellingen", {})
     stappen = []
 
@@ -704,15 +783,15 @@ def beleidsvervolgstappen(
     elif t.get("n_sig_positief"):
         stappen.append(
             f"De verschiltoets vindt {aantal(t['n_sig_positief'], 'item', 'items')} "
-            "waarop doorstromers duidelijk hoger scoorden dan uitvallers. Dat is een "
+            f"waarop {succes} duidelijk hoger scoorden dan {geen_succes}. Dat is een "
             "aanwijzing dat deze items studiesucces helpen voorspellen. "
             "Beleidsmatig: behoud ze of laat ze zwaarder meewegen, en bevestig het "
             "patroon eerst op een volgend cohort voordat je de procedure aanpast."
         )
     else:
         stappen.append(
-            "De verschiltoets vindt geen enkel item waarop doorstromers significant "
-            "hoger scoorden dan uitvallers. Beleidsmatig betekent dit dat de "
+            f"De verschiltoets vindt geen enkel item waarop {succes} significant "
+            f"hoger scoorden dan {geen_succes}. Beleidsmatig betekent dit dat de "
             "selectie in deze data geen studiesucces voorspelt: ga na of de items "
             "iets anders meten dat je bewust wilt behouden (motivatie, passendheid), "
             "of dat de procedure eenvoudiger en goedkoper kan."
@@ -721,7 +800,7 @@ def beleidsvervolgstappen(
     if t.get("n_sig_negatief"):
         stappen.append(
             f"Bij {aantal(t['n_sig_negatief'], 'item', 'items')} scoorden juist de "
-            "uitvallers hoger. Dat is onverwacht. Beleidsmatig: laat deze items "
+            f"{geen_succes} hoger. Dat is onverwacht. Beleidsmatig: laat deze items "
             "niet zwaarder meewegen, maar zoek eerst uit wat ze meten en of de "
             "beoordeling klopt."
         )
@@ -763,8 +842,8 @@ def beleidsvervolgstappen(
         "aanpast. Een enkel jaar is een momentopname, zeker bij kleine groepen."
     )
     stappen.append(
-        "Combineer deze cijfers met vakkennis en eerder onderzoek. Doorstroom naar "
-        "jaar 2 is maar een van de manieren om studiesucces te meten."
+        "Combineer deze cijfers met vakkennis en eerder onderzoek. "
+        + p.get("kanttekening", PERSPECTIEF_DOORSTROOM["kanttekening"])
     )
     return stappen
 

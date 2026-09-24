@@ -5,7 +5,7 @@ from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
 
 from shared import (
-    PERSPECTIEF_DOORSTROOM,
+    perspectief_voor,
     shorten_item,
     vergelijk_succes_per_item,
     toets_verschil_per_item,
@@ -63,7 +63,7 @@ def _uitleg_verschiltoets_regressie():
                 [
                     html.Li(
                         "De verschiltoets en de regressie per item toetsen vrijwel "
-                        "hetzelfde: scoort de doorgestroomde groep anders op dit ene "
+                        "hetzelfde: scoort de groep met studiesucces anders op dit ene "
                         "item? Ze bevestigen elkaar meestal."
                     ),
                     html.Li(
@@ -86,12 +86,12 @@ def _uitleg_verschiltoets_regressie():
     )
 
 
-def _maak_vervolgstappen(bevindingen, model_stats=None):
+def _maak_vervolgstappen(bevindingen, model_stats=None, perspectief=None):
     """Beleidsconclusies onder de bevindingen (tekst uit
     shared.beleidsvervolgstappen, gedeeld met het rapport). Gerenderd als
     opvallend blauw blok (.vervolg-blok) zodat een beleidsmedewerker de
     conclusie meteen ziet."""
-    stappen = beleidsvervolgstappen(bevindingen, model_stats)
+    stappen = beleidsvervolgstappen(bevindingen, model_stats, perspectief)
 
     return html.Div(
         [
@@ -150,7 +150,7 @@ def registreer_callbacks(app):
 
         scores_df = scores_df_from_store(scores_store)
 
-        perspectief = PERSPECTIEF_DOORSTROOM
+        perspectief = perspectief_voor(df)
         pop = df[df["groep"].isin(perspectief["populatie"])]
         n_pos = int(pop["groep"].isin(perspectief["positief_groepen"]).sum())
         n_neg = int(len(pop) - n_pos)
@@ -220,8 +220,8 @@ def registreer_callbacks(app):
                 bevindingen["validiteit"],
                 "Geen opvallende voorspellers gevonden in de cijfers.",
                 uitleg=(
-                    "Items waar de doorgestroomde groep duidelijk anders "
-                    "scoorde dan de uitvallers. Komt van het tabblad Verschiltoets; "
+                    "Items waar de groep met studiesucces duidelijk anders "
+                    "scoorde dan de groep zonder. Komt van het tabblad Verschiltoets; "
                     "alleen verschillen die waarschijnlijk niet op toeval berusten."
                 ),
             )
@@ -231,9 +231,9 @@ def registreer_callbacks(app):
                 _bevindingen_lijst(
                     "Regressie: elk item apart",
                     bevindingen["regressie"],
-                    "Geen items die op zichzelf doorstroom voorspellen.",
+                    "Geen items die op zichzelf studiesucces voorspellen.",
                     uitleg=(
-                        "Items die op zichzelf de kans op doorstroom "
+                        "Items die op zichzelf de kans op studiesucces "
                         "voorspellen. Komt van het tabblad Regressie, waar elk "
                         "item los is getoetst."
                     ),
@@ -246,7 +246,7 @@ def registreer_callbacks(app):
                     bevindingen["model"],
                     "",
                     uitleg=(
-                        "Hoe goed alle items samen doorstroom voorspellen, en "
+                        "Hoe goed alle items samen studiesucces voorspellen, en "
                         "welk item een eigen bijdrage levert bovenop de rest."
                     ),
                 )
@@ -286,7 +286,7 @@ def registreer_callbacks(app):
                     "",
                     uitleg=(
                         "Hangt een achtergrondkenmerk (geslacht, vooropleiding) "
-                        "samen met de kans op doorstroom? Getoetst met een "
+                        "samen met de kans op studiesucces? Getoetst met een "
                         "chi-kwadraattoets op de kruistabel van het kenmerk tegen "
                         "de uitkomst."
                     ),
@@ -305,5 +305,5 @@ def registreer_callbacks(app):
             )
         )
 
-        secties.append(_maak_vervolgstappen(bevindingen, model_stats))
+        secties.append(_maak_vervolgstappen(bevindingen, model_stats, perspectief))
         return secties

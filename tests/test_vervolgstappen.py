@@ -120,3 +120,22 @@ def test_radboud_demo_heeft_geen_fairness_stap():
     assert not any(
         "achtergrondgroepen" in s for s in beleidsvervolgstappen(bevindingen)
     )
+
+
+def test_master_krijgt_diplomalabels():
+    """Pitch #37: Leiden (Farmacie master) heeft alleen diploma-uitkomsten."""
+    from shared import perspectief_voor
+
+    data, _ = _laad_demodata("demo_leiden_2026")
+    p = perspectief_voor(df_from_store(data))
+    assert p["positief_label"] == "Diploma behaald"
+    tekst = " ".join(beleidsvervolgstappen({"tellingen": {"n_getoetst": 3}}, None, p))
+    assert "gediplomeerden" in tekst
+    assert "doorstromers" not in tekst and "jaar 2" not in tekst
+
+
+def test_bachelor_houdt_doorstroomlabels():
+    from shared import perspectief_voor
+
+    data, _ = _laad_demodata("demo_radboud_2026")
+    assert perspectief_voor(df_from_store(data))["positief_label"] == "Doorgestroomd"
