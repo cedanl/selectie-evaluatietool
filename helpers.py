@@ -8,23 +8,32 @@ import base64
 import io
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import plotly.express as px
 from plotly.colors import hex_to_rgb, unlabel_rgb
 
 import dash
 
-from transformatie import lees_config, parse_selectiedata, transformeer_naar_lang
-from cho_transform import transformeer_cho
+from transformatie import (
+    normaliseer_studentnummer,
+    lees_config,
+    parse_jaar,
+    parse_selectiedata,
+    transformeer_naar_lang,
+)
+from cho_transform import (
+    beste_opleiding_match,
+    opleidingen_in_cho,
+    selecteer_spells,
+    transformeer_cho,
+)
 from shared import (
     GROEP_VOLGORDE,
     GROEP_NIET_GESTART,
     GROEP_NIET_IN_VERGELIJKING,
     GROEP_INGESCHREVEN,
     GROEP_KLEUREN,
-    UITKOMST_PERSPECTIEVEN,
-    PERSPECTIEF_DOORSTROOM,
+    uitkomst_perspectief,
     binair_kleur_map,
     shorten_item,
     grenzen_van_label,
@@ -45,6 +54,15 @@ if DEMO_DIR.exists():
 
 
 def koppel_data(cho_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.DataFrame:
+    dubbel = cho_df["studentnummer"].dropna().duplicated()
+    if dubbel.any():
+        # Een student met meerdere 1CHO-spells zou dubbel in de analyse komen,
+        # met mogelijk twee verschillende uitkomsten. Kies eerst één spell via
+        # bereid_cho_voor() / selecteer_spells().
+        raise ValueError(
+            f"1CHO bevat {int(dubbel.sum())} studentnummers met meerdere "
+            "inschrijvingen; kies eerst één inschrijving per student."
+        )
     instrument_gem = (
         scores_df.groupby(["studentnummer", "instrument"])["score"].mean().reset_index()
     )
@@ -131,7 +149,9 @@ TABLE_STYLE = dict(
 # 'Niet gestart'-groep zijn uit het dashboard gehaald; niet-gestarte kandidaten
 # leven nog wel in de data en worden alleen als funnel-telling getoond.
 GROEPEER_OPTIES = [
-    {"label": PERSPECTIEF_DOORSTROOM["label"], "value": "doorstroom"},
+    # De labels in de grafieken volgen de data (doorstroom of diploma, zie
+    # shared.perspectief_voor); de keuzelijst zelf is neutraal.
+    {"label": "Studiesucces (doorstroom of diploma)", "value": "doorstroom"},
 ] + [{"label": d["label"], "value": d["kolom"]} for d in DEMO_DIMENSIES]
 
 GROEPEER_OPTIES_SCORES = GROEPEER_OPTIES
@@ -142,8 +162,62 @@ def _file_to_data_uri(path: Path) -> str:
     return f"data:application/octet-stream;base64,{b64}"
 
 
+def bereid_cho_voor(
+    cho_ruw: pd.DataFrame,
+    config: dict,
+    scores_df: pd.DataFrame,
+    cho_opleiding: str | None = None,
+) -> dict:
+    """Leid de 1CHO-uitkomst af en houd per student de spell over die bij deze
+    selectie hoort (juiste opleiding en cohort).
+
+    `cho_opleiding` is de keuze van de gebruiker in de upload-overlay; zonder
+    keuze proberen we de opleiding uit de config te matchen. Eén plek voor de
+    uploadvalidatie en het laden, zodat die dezelfde studenten tellen.
+
+    Retourneert een dict met `cho_df`, `opleidingen` (alle opleidingen in het
+    bestand), `gekozen` (de gebruikte opleiding of None), `keuze_nodig` (meer
+    dan één opleiding en geen keuze of match) en `info` (tellingen)."""
+    # Alleen inschrijvingen van kandidaten uit de selectie doen ertoe. Bij een
+    # instellingsbreed bestand (miljoenen rijen) scheelt dat veel rekenwerk.
+    # Matcht niemand, dan rekenen we op het hele bestand door, zodat de
+    # validatie 'geen overlap' kan melden.
+    nummers = normaliseer_studentnummer(cho_ruw["persoonsgebonden_nummer"])
+    n_studenten_totaal = int(nummers.nunique())
+    if not scores_df.empty:
+        in_selectie = nummers.isin(set(scores_df["studentnummer"].dropna()))
+        if in_selectie.any():
+            cho_ruw = cho_ruw[in_selectie]
+    afgeleid = transformeer_cho(cho_ruw)
+    opleidingen = opleidingen_in_cho(afgeleid)
+    gekozen = (
+        cho_opleiding
+        if cho_opleiding in opleidingen
+        else beste_opleiding_match(opleidingen, config.get("opleiding", ""))
+    )
+    keuze_nodig = len(opleidingen) > 1 and gekozen is None
+    cho_df, info = selecteer_spells(
+        afgeleid,
+        opleiding=gekozen,
+        jaar=parse_jaar(config.get("jaar", "")),
+        studentnummers=set(scores_df["studentnummer"].dropna())
+        if not scores_df.empty
+        else None,
+    )
+    return {
+        "cho_df": cho_df,
+        "opleidingen": opleidingen,
+        "gekozen": gekozen,
+        "keuze_nodig": keuze_nodig,
+        "info": {**info, "n_studenten_totaal": n_studenten_totaal},
+    }
+
+
 def bouw_data_stores(
-    config: dict, sel_contents: str, cho_ruw: pd.DataFrame
+    config: dict,
+    sel_contents: str,
+    cho_ruw: pd.DataFrame,
+    cho_opleiding: str | None = None,
 ) -> tuple[str, str]:
     """Draai de pijplijn en geef de JSON voor data-store en scores-store terug.
 
@@ -152,7 +226,8 @@ def bouw_data_stores(
     geparseerd binnen, omdat de paden hem verschillend inlezen (demo via
     read_csv, uploads via parse_csv_or_excel)."""
     scores_df = transformeer_naar_lang(parse_selectiedata(sel_contents, config), config)
-    joined = koppel_data(transformeer_cho(cho_ruw), scores_df)
+    cho = bereid_cho_voor(cho_ruw, config, scores_df, cho_opleiding)
+    joined = koppel_data(cho["cho_df"], scores_df)
     return (
         joined.to_json(orient="split", date_format="iso"),
         scores_df.to_json(orient="split", date_format="iso"),
@@ -227,7 +302,7 @@ def _aantallen_per_groep(df, groepeer):
             .reindex([g for g in GROEP_VOLGORDE if g in df["groep"].values])
         )
         n_buiten = 0
-    elif perspectief := UITKOMST_PERSPECTIEVEN.get(groepeer):
+    elif perspectief := uitkomst_perspectief(groepeer, df):
         pop = df[df["groep"].isin(perspectief["populatie"])]
         binair = pop["groep"].isin(perspectief["positief_groepen"])
         labels = binair.map(
@@ -269,7 +344,7 @@ def _scores_per_groep(df, scores_df, groepeer):
         kleur_map = {g: GROEP_KLEUREN[g] for g in volgorde}
         scores["item_kort"] = scores["item"].apply(shorten_item)
         return scores, kleur_map, volgorde
-    perspectief = UITKOMST_PERSPECTIEVEN.get(groepeer)
+    perspectief = uitkomst_perspectief(groepeer, df)
     if perspectief:
         pop = df[df["groep"].isin(perspectief["populatie"])]
         scores = scores_df.merge(
@@ -306,77 +381,3 @@ def _sorteer_bereik(label: str) -> tuple[int, float, float]:
         return (1, 0.0, 0.0)
     onder, boven = grenzen
     return (0, boven, onder)
-
-
-def _bereken_model_stats(df, scores_df, perspectief):
-    """Draai het gezamenlijke logistische regressiemodel en retourneer pseudo R² + sig items."""
-    import statsmodels.api as sm
-    from numpy.linalg import matrix_rank
-
-    populatie = df[df["groep"].isin(perspectief["populatie"])].copy()
-    if len(populatie) < 10:
-        return None
-
-    populatie["uitkomst"] = (
-        populatie["groep"].isin(perspectief["positief_groepen"]).astype(int)
-    )
-    item_pivot = scores_df.pivot_table(
-        index="studentnummer", columns="item", values="score", aggfunc="mean"
-    )
-    item_pivot.columns = [shorten_item(c) for c in item_pivot.columns]
-    item_pivot_pop = item_pivot.loc[
-        item_pivot.index.isin(populatie["studentnummer"])
-    ].copy()
-
-    nan_pct = item_pivot_pop.isna().mean()
-    bruikbare_cols = [c for c in item_pivot_pop.columns if nan_pct.get(c, 1) <= 0.3]
-    if len(bruikbare_cols) < 2:
-        return None
-
-    item_pivot_pop[bruikbare_cols] = item_pivot_pop[bruikbare_cols].fillna(
-        item_pivot_pop[bruikbare_cols].mean()
-    )
-    item_pivot_pop = item_pivot_pop.dropna(subset=bruikbare_cols)
-    if len(item_pivot_pop) < 10:
-        return None
-
-    y = populatie.set_index("studentnummer").loc[item_pivot_pop.index, "uitkomst"]
-    X = item_pivot_pop[bruikbare_cols].copy()
-
-    while len(X.columns) > 1:
-        rank = matrix_rank(X.values)
-        if rank >= len(X.columns):
-            break
-        corr_vals = X.corr().abs().to_numpy().copy()
-        np.fill_diagonal(corr_vals, 0)
-        flat_idx = corr_vals.argmax()
-        _, col_idx = divmod(flat_idx, corr_vals.shape[1])
-        X = X.drop(columns=[X.columns[col_idx]])
-
-    joint_cols = list(X.columns)
-    n_events = min(int(y.sum()), int(len(y) - y.sum()))
-    max_predictoren = max(2, n_events // 5)
-    if len(joint_cols) > max_predictoren:
-        joint_cols = joint_cols[:max_predictoren]
-        X = X[joint_cols]
-
-    try:
-        X_z = X.astype(float).apply(
-            lambda s: (
-                (s - s.mean()) / s.std() if s.std() > 0 else pd.Series(0, index=s.index)
-            )
-        )
-        X_const = sm.add_constant(X_z)
-        model = sm.Logit(y.astype(float), X_const).fit(disp=0, maxiter=100)
-        sig_items = [
-            col
-            for col in joint_cols
-            if col in model.pvalues.index and model.pvalues[col] < 0.05
-        ]
-        return {
-            "pseudo_r2": round(float(model.prsquared), 3),
-            "sig_items": sig_items,
-        }
-    except Exception as e:
-        print(f"[helpers] _bereken_model_stats mislukt: {e}", flush=True)
-        return None

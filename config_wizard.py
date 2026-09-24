@@ -22,7 +22,7 @@ from dash import dcc, html, dash_table, Input, Output, State, ctx
 import dash
 import dash_bootstrap_components as dbc
 
-from transformatie import _decode_upload
+from transformatie import _decode_upload, _repareer_xlsx
 
 
 # XML 1.0 staat bepaalde controle-tekens niet toe. openpyxl schrijft ze zonder
@@ -874,7 +874,7 @@ def registreer_callbacks(app: dash.Dash) -> None:
             return [], None, 1, None, None, None
 
         try:
-            raw = _decode_upload(raw_contents)
+            raw = _repareer_xlsx(_decode_upload(raw_contents))
             xls = pd.ExcelFile(io.BytesIO(raw))
             bladen = xls.sheet_names
             options = [{"label": b, "value": b} for b in bladen]
@@ -919,7 +919,7 @@ def registreer_callbacks(app: dash.Dash) -> None:
             return leeg
 
         try:
-            raw = _decode_upload(raw_contents)
+            raw = _repareer_xlsx(_decode_upload(raw_contents))
             header_idx = int(header_rij) - 1
             df = pd.read_excel(
                 io.BytesIO(raw),

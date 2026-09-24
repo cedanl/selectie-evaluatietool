@@ -5,21 +5,22 @@ from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
 
 from shared import (
-    PERSPECTIEF_DOORSTROOM,
+    perspectief_voor,
     shorten_item,
     vergelijk_succes_per_item,
     toets_verschil_per_item,
     genereer_bevindingen,
+    beleidsvervolgstappen,
     DEMO_DIMENSIES,
     demografie_scores,
-    bereken_univariaat,
+    bereken_gezamenlijk_model,
     chi2_per_dimensie,
+    model_stats_uit,
 )
 
 from helpers import (
     scores_df_from_store,
     df_from_store,
-    _bereken_model_stats,
 )
 
 
@@ -48,30 +49,6 @@ def _bevindingen_lijst(titel, items, leeg_tekst, uitleg=None):
     return html.Div([html.H6(kop_kinderen), *extra, inhoud], className="mb-4")
 
 
-def _aantal(n, ev, mv):
-    """'1 item' of '3 items': telwoord met enkel-/meervoud."""
-    return f"{n} {ev if n == 1 else mv}"
-
-
-def _namen(items):
-    """'A', 'A en B' of 'A, B en C': nette opsomming van itemnamen."""
-    items = list(items)
-    if len(items) == 1:
-        return items[0]
-    return ", ".join(items[:-1]) + " en " + items[-1]
-
-
-def _kracht_label(r2):
-    """Pseudo R-kwadraat naar woord, gelijk aan shared._bevindingen_gezamenlijk_model."""
-    if r2 < 0.05:
-        return "zeer beperkt"
-    if r2 < 0.15:
-        return "beperkt"
-    if r2 < 0.30:
-        return "matig"
-    return "substantieel"
-
-
 def _uitleg_verschiltoets_regressie():
     """Legt uit waarom de verschiltoets voorop staat en wat de regressie daar als
     aanvulling op is. Ingeklapt zodat het de bevindingen niet in de weg zit."""
@@ -86,7 +63,7 @@ def _uitleg_verschiltoets_regressie():
                 [
                     html.Li(
                         "De verschiltoets en de regressie per item toetsen vrijwel "
-                        "hetzelfde: scoort de doorgestroomde groep anders op dit ene "
+                        "hetzelfde: scoort de groep met studiesucces anders op dit ene "
                         "item? Ze bevestigen elkaar meestal."
                     ),
                     html.Li(
@@ -109,76 +86,12 @@ def _uitleg_verschiltoets_regressie():
     )
 
 
-def _maak_vervolgstappen(bevindingen, model_stats=None):
-    """Beleidsconclusies onder de bevindingen, gekoppeld aan wat er in deze data
-    is gevonden. De verschiltoets is het kernsignaal: vindt hij een effect, dan
-    heeft een item voorspellende waarde; vindt hij niets, dan voorspelt de
-    selectie in deze data geen studiesucces. De regressie komt er als aanvulling
-    bij. Gerenderd als opvallend blauw blok (.vervolg-blok) zodat een
-    beleidsmedewerker de conclusie meteen ziet."""
-    stappen = []
-
-    n_valide = len(bevindingen.get("validiteit", []))
-    if n_valide:
-        stappen.append(
-            f"De verschiltoets vindt {_aantal(n_valide, 'item', 'items')} "
-            "waarop doorstromers duidelijk anders scoorden dan uitvallers. Dat is een "
-            "aanwijzing dat deze items studiesucces helpen voorspellen. "
-            "Beleidsmatig: behoud ze of laat ze zwaarder meewegen, en bevestig het "
-            "patroon eerst op een volgend cohort voordat je de procedure aanpast."
-        )
-    else:
-        stappen.append(
-            "De verschiltoets vindt geen enkel item waarop doorstromers en "
-            "uitvallers significant verschillen. Beleidsmatig betekent dit dat de "
-            "selectie in deze data geen studiesucces voorspelt: ga na of de items "
-            "iets anders meten dat je bewust wilt behouden (motivatie, passendheid), "
-            "of dat de procedure eenvoudiger en goedkoper kan."
-        )
-
-    if model_stats and model_stats.get("pseudo_r2") is not None:
-        r2 = model_stats["pseudo_r2"]
-        sig = model_stats.get("sig_items", [])
-        if sig:
-            ww = "levert" if len(sig) == 1 else "leveren"
-            eigen = f"Vooral {_namen(sig)} {ww} een eigen bijdrage bovenop de rest. "
-        else:
-            eigen = "Geen item springt eruit als je ze samen bekijkt. "
-        stappen.append(
-            f"Alle items samen verklaren een {_kracht_label(r2)} deel van het "
-            f"verschil in studiesucces (regressie, pseudo R² = {r2:.2f}). "
-            + eigen
-            + "Dit gezamenlijke model is bij kleine groepen wankel, dus leun voor "
-            "beleid vooral op de verschiltoets hierboven."
-        )
-
-    n_fair = len(bevindingen.get("fairness", []))
-    if n_fair:
-        stappen.append(
-            f"Bij {_aantal(n_fair, 'item', 'items')} scoorden "
-            "achtergrondgroepen (geslacht, vooropleiding) verschillend. Beleidsmatig: "
-            "onderzoek of dat verschil inhoudelijk te rechtvaardigen is of op "
-            "onbedoelde vertekening wijst."
-        )
-
-    n_corr = len(bevindingen.get("correlatie", []))
-    if n_corr:
-        stappen.append(
-            "De correlatie vindt "
-            f"{_aantal(n_corr, 'sterke samenhang', 'sterke samenhangen')} tussen "
-            "items die deels hetzelfde meten. Beleidsmatig: je kunt er een laten "
-            "vallen om de selectie korter en goedkoper te maken zonder veel informatie "
-            "te verliezen."
-        )
-
-    stappen.append(
-        "Herhaal de analyse met een nieuw cohort voordat je de procedure echt "
-        "aanpast. Een enkel jaar is een momentopname, zeker bij kleine groepen."
-    )
-    stappen.append(
-        "Combineer deze cijfers met vakkennis en eerder onderzoek. Doorstroom naar "
-        "jaar 2 is maar een van de manieren om studiesucces te meten."
-    )
+def _maak_vervolgstappen(bevindingen, model_stats=None, perspectief=None):
+    """Beleidsconclusies onder de bevindingen (tekst uit
+    shared.beleidsvervolgstappen, gedeeld met het rapport). Gerenderd als
+    opvallend blauw blok (.vervolg-blok) zodat een beleidsmedewerker de
+    conclusie meteen ziet."""
+    stappen = beleidsvervolgstappen(bevindingen, model_stats, perspectief)
 
     return html.Div(
         [
@@ -237,7 +150,7 @@ def registreer_callbacks(app):
 
         scores_df = scores_df_from_store(scores_store)
 
-        perspectief = PERSPECTIEF_DOORSTROOM
+        perspectief = perspectief_voor(df)
         pop = df[df["groep"].isin(perspectief["populatie"])]
         n_pos = int(pop["groep"].isin(perspectief["positief_groepen"]).sum())
         n_neg = int(len(pop) - n_pos)
@@ -254,8 +167,9 @@ def registreer_callbacks(app):
         )
         scores["item_kort"] = scores["item"].apply(shorten_item)
         succes_tabel = vergelijk_succes_per_item(scores, perspectief=perspectief)
-        uni_data = bereken_univariaat(df, scores_df, perspectief)
-        model_stats = _bereken_model_stats(df, scores_df, perspectief)
+        model = bereken_gezamenlijk_model(df, scores_df, perspectief)
+        uni_data = model.get("univariaat", [])
+        model_stats = model_stats_uit(model)
         demo_verdelingen = chi2_per_dimensie(df, perspectief)
 
         demo_tabellen = {}
@@ -306,8 +220,8 @@ def registreer_callbacks(app):
                 bevindingen["validiteit"],
                 "Geen opvallende voorspellers gevonden in de cijfers.",
                 uitleg=(
-                    "Items waar de doorgestroomde groep duidelijk anders "
-                    "scoorde dan de uitvallers. Komt van het tabblad Verschiltoets; "
+                    "Items waar de groep met studiesucces duidelijk anders "
+                    "scoorde dan de groep zonder. Komt van het tabblad Verschiltoets; "
                     "alleen verschillen die waarschijnlijk niet op toeval berusten."
                 ),
             )
@@ -317,9 +231,9 @@ def registreer_callbacks(app):
                 _bevindingen_lijst(
                     "Regressie: elk item apart",
                     bevindingen["regressie"],
-                    "Geen items die op zichzelf doorstroom voorspellen.",
+                    "Geen items die op zichzelf studiesucces voorspellen.",
                     uitleg=(
-                        "Items die op zichzelf de kans op doorstroom "
+                        "Items die op zichzelf de kans op studiesucces "
                         "voorspellen. Komt van het tabblad Regressie, waar elk "
                         "item los is getoetst."
                     ),
@@ -332,7 +246,7 @@ def registreer_callbacks(app):
                     bevindingen["model"],
                     "",
                     uitleg=(
-                        "Hoe goed alle items samen doorstroom voorspellen, en "
+                        "Hoe goed alle items samen studiesucces voorspellen, en "
                         "welk item een eigen bijdrage levert bovenop de rest."
                     ),
                 )
@@ -372,7 +286,7 @@ def registreer_callbacks(app):
                     "",
                     uitleg=(
                         "Hangt een achtergrondkenmerk (geslacht, vooropleiding) "
-                        "samen met de kans op doorstroom? Getoetst met een "
+                        "samen met de kans op studiesucces? Getoetst met een "
                         "chi-kwadraattoets op de kruistabel van het kenmerk tegen "
                         "de uitkomst."
                     ),
@@ -391,5 +305,5 @@ def registreer_callbacks(app):
             )
         )
 
-        secties.append(_maak_vervolgstappen(bevindingen, model_stats))
+        secties.append(_maak_vervolgstappen(bevindingen, model_stats, perspectief))
         return secties

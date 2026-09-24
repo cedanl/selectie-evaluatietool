@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 
 from shared import (
     CHART_BASE,
-    PERSPECTIEF_DOORSTROOM,
+    perspectief_voor,
     binair_kleur_map,
     DEMO_DIMENSIES,
     chi2_per_dimensie,
@@ -84,7 +84,7 @@ def registreer_callbacks(app):
             )
 
         dim = next((d for d in DEMO_DIMENSIES if d["kolom"] == dim_kolom), None)
-        perspectief = PERSPECTIEF_DOORSTROOM
+        perspectief = perspectief_voor(df)
         if dim is None:
             return html.P("Selecteer een achtergrond.", className="text-muted")
 

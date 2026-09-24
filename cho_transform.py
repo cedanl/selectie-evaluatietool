@@ -51,10 +51,25 @@ _DEMO_KOLOMMEN = ["geslacht"]
 # Optionele passthrough-kolommen die de rest van de tool nog kan gebruiken.
 _META_KOLOMMEN = ["opleiding", "instellingscode"]
 
+# Uitvoerkolom met de opleiding van de spell (uit opleidingscode_naam_opleiding
+# of opleiding), gebruikt om een instellingsbreed 1CHO-bestand te filteren.
+CHO_OPLEIDING_KOLOM = "cho_opleiding"
+
 # Optionele kolom die aangeeft of de student in het cohortjaar een diploma
 # haalde. Aanwezig bij eenjarige opleidingen (masters) waar succes 'diploma'
 # is in plaats van doorstroom naar jaar 2.
 _DIPLOMA_KOLOM = "diploma_behaald"
+
+# Alle 1CHO-kolommen die de tool gebruikt. Bij het inlezen van een groot
+# bestand laten we de rest weg (bestandsopslag.lees_cho_bestand).
+CHO_BENODIGDE_KOLOMMEN = {
+    *RUWE_CHO_KOLOMMEN,
+    *VEREISTE_DEMO_KOLOMMEN,
+    *_DEMO_KOLOMMEN,
+    *_META_KOLOMMEN,
+    "opleidingscode_naam_opleiding",
+    _DIPLOMA_KOLOM,
+}
 
 
 def ontbrekende_cho_kolommen(df: pd.DataFrame) -> list[str]:
@@ -133,9 +148,11 @@ def transformeer_cho(ruwe_df: pd.DataFrame) -> pd.DataFrame:
     # eigen eerste jaar. De groep-sleutel is studentnummer + opleiding (indien
     # aanwezig) + het eerste jaar van die spell.
     spell_sleutel = ["studentnummer"]
+    opleiding_kolom = None
     for kol in ("opleidingscode_naam_opleiding", "opleiding"):
         if kol in df.columns:
             spell_sleutel.append(kol)
+            opleiding_kolom = kol
             break
     spell_sleutel.append("eerste_jaar_aan_deze_opleiding_instelling")
 
@@ -189,12 +206,115 @@ def transformeer_cho(ruwe_df: pd.DataFrame) -> pd.DataFrame:
             _VOOROPL_OMSCHRIJVING_KOLOM
         ].map(_classificeer_vooropleiding)
 
+    # De opleiding van de spell, los van de passthrough-kolom 'opleiding', zodat
+    # selecteer_spells() kan filteren op de opleiding die bij de selectie hoort.
+    if opleiding_kolom is not None:
+        eerstejaars[CHO_OPLEIDING_KOLOM] = eerstejaars[opleiding_kolom].astype(str)
+
     uit_kolommen = ["studentnummer", "selectiejaar", "groep"]
-    for kol in [*_META_KOLOMMEN, "hoogste_vooropleiding", *_DEMO_KOLOMMEN]:
+    for kol in [
+        *_META_KOLOMMEN,
+        CHO_OPLEIDING_KOLOM,
+        "hoogste_vooropleiding",
+        *_DEMO_KOLOMMEN,
+    ]:
         if kol in eerstejaars.columns:
             uit_kolommen.append(kol)
 
     return eerstejaars[uit_kolommen].reset_index(drop=True)
+
+
+def opleidingen_in_cho(cho_df: pd.DataFrame) -> list[str]:
+    """De opleidingen in een (via transformeer_cho afgeleide) 1CHO-tabel,
+    meest voorkomende eerst. Leeg als het bestand geen opleidingskolom heeft."""
+    if CHO_OPLEIDING_KOLOM not in cho_df.columns:
+        return []
+    return cho_df[CHO_OPLEIDING_KOLOM].dropna().value_counts().index.tolist()
+
+
+def beste_opleiding_match(opleidingen: list[str], config_opleiding: str) -> str | None:
+    """Welke 1CHO-opleiding hoort bij de opleiding uit de config?
+
+    Eén opleiding in 1CHO: die. Anders een hoofdletterongevoelige exacte
+    match, en daarna een eenduidige deelmatch ('Psychologie' in
+    'B Psychologie'). Geen of meerdere kandidaten: None, dan moet de
+    gebruiker kiezen."""
+    if len(opleidingen) == 1:
+        return opleidingen[0]
+    doel = str(config_opleiding or "").strip().lower()
+    if not doel:
+        return None
+    exact = [o for o in opleidingen if o.strip().lower() == doel]
+    if len(exact) == 1:
+        return exact[0]
+    deel = [o for o in opleidingen if doel in o.lower() or o.strip().lower() in doel]
+    return deel[0] if len(deel) == 1 else None
+
+
+def selecteer_spells(
+    cho_df: pd.DataFrame,
+    opleiding: str | None = None,
+    jaar: int | None = None,
+    studentnummers: set | None = None,
+) -> tuple[pd.DataFrame, dict]:
+    """Houd per student één 1CHO-spell over die bij deze selectie hoort.
+
+    Een instellingsbrede 1CHO-extractie bevat ook inschrijvingen bij andere
+    opleidingen en eerdere cohorten. Zonder filter telt een afgewezen
+    kandidaat die elders instroomde als 'gestart', en komt een student met
+    twee opleidingen dubbel in de analyse.
+
+    1. `opleiding`: alleen spells van die opleiding.
+    2. `jaar`: spells die vóór het selectiejaar begonnen vallen af (een
+       eerdere poging hoort niet bij deze selectie). Zou dat alle koppelingen
+       met `studentnummers` wegfilteren, dan slaan we deze stap over en
+       melden dat; het jaar in de config sluit dan kennelijk niet aan op het
+       eerste studiejaar in 1CHO.
+    3. Blijven er meerdere spells per student over: de spell die het dichtst
+       bij het selectiejaar begon (bij gelijke stand de vroegste).
+
+    Retourneert het gefilterde frame en een dict met tellingen voor de
+    uploadvalidatie.
+    """
+    info = {
+        "n_spells": len(cho_df),
+        "n_andere_opleiding": 0,
+        "n_eerder_cohort": 0,
+        "jaarfilter_overgeslagen": False,
+        "n_studenten_meerdere_spells": 0,
+    }
+    df = cho_df
+    if opleiding is not None and CHO_OPLEIDING_KOLOM in df.columns:
+        binnen = df[CHO_OPLEIDING_KOLOM] == opleiding
+        info["n_andere_opleiding"] = int((~binnen).sum())
+        df = df[binnen]
+
+    if jaar is not None:
+        vanaf_jaar = df[df["selectiejaar"] >= jaar]
+        verliest_alles = (
+            studentnummers is not None
+            and df["studentnummer"].isin(studentnummers).any()
+            and not vanaf_jaar["studentnummer"].isin(studentnummers).any()
+        )
+        if verliest_alles:
+            info["jaarfilter_overgeslagen"] = True
+        else:
+            info["n_eerder_cohort"] = len(df) - len(vanaf_jaar)
+            df = vanaf_jaar
+
+    per_student = df.groupby("studentnummer")["studentnummer"].transform("size")
+    info["n_studenten_meerdere_spells"] = int(
+        df.loc[per_student > 1, "studentnummer"].nunique()
+    )
+    if info["n_studenten_meerdere_spells"]:
+        referentie = jaar if jaar is not None else df["selectiejaar"].min()
+        df = (
+            df.assign(_afstand=(df["selectiejaar"] - referentie).abs())
+            .sort_values(["studentnummer", "_afstand", "selectiejaar"])
+            .drop_duplicates("studentnummer", keep="first")
+            .drop(columns="_afstand")
+        )
+    return df.reset_index(drop=True), info
 
 
 def bouw_ruwe_cho(

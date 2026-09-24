@@ -78,7 +78,81 @@ UITKOMST_PERSPECTIEVEN = {
     },
 }
 
-PERSPECTIEF_DOORSTROOM = UITKOMST_PERSPECTIEVEN["doorstroom"]
+PERSPECTIEF_DOORSTROOM = {
+    **UITKOMST_PERSPECTIEVEN["doorstroom"],
+    # Woorden voor lopende tekst (vervolgstappen, uitleg).
+    "succes_meervoud": "doorstromers",
+    "geen_succes_meervoud": "uitvallers",
+    "uitkomst_naam": "doorstroom naar jaar 2",
+    "kanttekening": (
+        "Doorstroom naar jaar 2 is maar een van de manieren om studiesucces te meten."
+    ),
+}
+
+# Bij eenjarige opleidingen (masters) is succes een diploma, geen doorstroom.
+# Zelfde populatie en groepen, alleen andere woorden.
+_PERSPECTIEF_DIPLOMA = {
+    **PERSPECTIEF_DOORSTROOM,
+    "label": "Diploma behaald",
+    "positief_label": "Diploma behaald",
+    "negatief_label": "Geen diploma",
+    "beschrijving": (
+        "Vergelijkt gestarte studenten die hun diploma haalden met studenten "
+        "die zonder diploma stopten."
+    ),
+    "succes_meervoud": "gediplomeerden",
+    "geen_succes_meervoud": "studenten zonder diploma",
+    "uitkomst_naam": "het behalen van het diploma",
+    "kanttekening": (
+        "Het diploma halen is maar een van de manieren om studiesucces te meten."
+    ),
+}
+
+# Data met zowel doorstroom als diploma: een neutrale formulering.
+_PERSPECTIEF_GEMENGD = {
+    **PERSPECTIEF_DOORSTROOM,
+    "label": "Studiesucces",
+    "positief_label": "Studiesucces",
+    "negatief_label": "Geen studiesucces",
+    "beschrijving": (
+        "Vergelijkt gestarte studenten met studiesucces (doorstroom naar jaar 2 "
+        "of een diploma) met studenten die zijn uitgevallen."
+    ),
+    "succes_meervoud": "studenten met studiesucces",
+    "geen_succes_meervoud": "uitvallers",
+    "uitkomst_naam": "studiesucces",
+    "kanttekening": (
+        "Doorstroom en diploma zijn maar een deel van wat studiesucces is."
+    ),
+}
+
+
+def perspectief_voor(df: pd.DataFrame | None) -> dict:
+    """Het uitkomstperspectief met woorden die bij de data passen.
+
+    Rekenkundig altijd hetzelfde (gestarte studenten; succes = doorstroom of
+    diploma), maar een masteropleiding waar niemand naar jaar 2 gaat moet
+    'Diploma behaald' tonen, niet 'Doorgestroomd'."""
+    if df is None or df.empty or "groep" not in df.columns:
+        return PERSPECTIEF_DOORSTROOM
+    groepen = set(df["groep"].dropna().astype(str))
+    diploma = GROEP_DIPLOMA in groepen
+    doorstroom = GROEP_DOORGESTROOMD in groepen
+    if diploma and not doorstroom:
+        return _PERSPECTIEF_DIPLOMA
+    if diploma and doorstroom:
+        return _PERSPECTIEF_GEMENGD
+    return PERSPECTIEF_DOORSTROOM
+
+
+def uitkomst_perspectief(sleutel: str | None, df: pd.DataFrame | None) -> dict | None:
+    """Perspectief voor een waarde uit een 'groepeer op'-keuzelijst: de
+    studiesucces-optie ('doorstroom') krijgt de labels uit de data, andere
+    sleutels komen uit UITKOMST_PERSPECTIEVEN (None als het geen uitkomst is)."""
+    if sleutel == "doorstroom":
+        return perspectief_voor(df)
+    return UITKOMST_PERSPECTIEVEN.get(sleutel)
+
 
 BINAIR_KLEUREN = {"positief": "#22c55e", "negatief": "#f97316"}
 
@@ -573,6 +647,8 @@ def genereer_bevindingen(
                 "groepen is dat niet ongebruikelijk."
             )
 
+    tellingen = _tel_bevindingen(succes_tabel, demo_tabellen, correlatie_matrix)
+
     if correlatie_matrix is not None and not correlatie_matrix.empty:
         _bevindingen_correlatie(correlatie_matrix, correlatie, top)
 
@@ -614,7 +690,173 @@ def genereer_bevindingen(
         "model": model,
         "fairness": fairness,
         "demografie": demografie,
+        "tellingen": tellingen,
     }
+
+
+# Correlatie vanaf waar twee items 'vrijwel hetzelfde' meten (zie
+# _bevindingen_correlatie).
+_HOGE_CORRELATIE = 0.70
+
+
+def _tel_bevindingen(
+    succes_tabel: pd.DataFrame | None,
+    demo_tabellen: dict[str, pd.DataFrame],
+    correlatie_matrix: pd.DataFrame | None,
+) -> dict[str, int]:
+    """Tel de echte bevindingen, voor de beleidsvervolgstappen.
+
+    - `n_getoetst`: items waarop de verschiltoets draaide.
+    - `n_sig_positief` / `n_sig_negatief`: significante items waarop de
+      positieve groep hoger resp. lager scoorde.
+    - `n_fair_sig`: items die in minstens één achtergronddimensie significant
+      verschillen.
+    - `n_corr_hoog`: itemparen met |r| >= 0.70.
+    """
+    tellingen = {
+        "n_getoetst": 0,
+        "n_sig_positief": 0,
+        "n_sig_negatief": 0,
+        "n_fair_sig": 0,
+        "n_corr_hoog": 0,
+    }
+    if succes_tabel is not None and not succes_tabel.empty and "_r" in succes_tabel:
+        getoetst = succes_tabel[succes_tabel["_r"].notna()]
+        sig = getoetst[getoetst["_p"] < 0.05]
+        tellingen["n_getoetst"] = len(getoetst)
+        tellingen["n_sig_positief"] = int((sig["_r"] > 0).sum())
+        tellingen["n_sig_negatief"] = int((sig["_r"] < 0).sum())
+
+    fair_items = set()
+    for tab in demo_tabellen.values():
+        if tab is not None and not tab.empty and "_p" in tab:
+            fair_items |= set(tab.loc[tab["_p"] < 0.05, "Item"])
+    tellingen["n_fair_sig"] = len(fair_items)
+
+    if correlatie_matrix is not None and correlatie_matrix.shape[0] > 1:
+        waarden = correlatie_matrix.to_numpy(dtype=float)
+        n = waarden.shape[0]
+        tellingen["n_corr_hoog"] = sum(
+            1
+            for i in range(n)
+            for j in range(i + 1, n)
+            if abs(waarden[i, j]) >= _HOGE_CORRELATIE
+        )
+    return tellingen
+
+
+def beleidsvervolgstappen(
+    bevindingen: dict,
+    model_stats: dict | None = None,
+    perspectief: dict | None = None,
+) -> list[str]:
+    """Beleidsgerichte vervolgstappen, gekoppeld aan wat er in deze data is
+    gevonden. Eén bron voor het blok op 'Wat valt op' en de laatste sectie van
+    het rapport.
+
+    De verschiltoets is het kernsignaal: vindt hij items waarop de succesvolle
+    groep hoger scoorde, dan hebben die voorspellende waarde; items waarop
+    juist de uitvallers hoger scoorden zijn een apart, onverwacht signaal. De
+    regressie komt er als aanvulling bij. Alle aantallen komen uit
+    `bevindingen["tellingen"]`, niet uit de lengte van de tekstlijsten."""
+
+    def aantal(n, ev, mv):
+        return f"{n} {ev if n == 1 else mv}"
+
+    def namen(items):
+        items = list(items)
+        if len(items) == 1:
+            return items[0]
+        return ", ".join(items[:-1]) + " en " + items[-1]
+
+    p = perspectief or PERSPECTIEF_DOORSTROOM
+    succes = p.get("succes_meervoud", "doorstromers")
+    geen_succes = p.get("geen_succes_meervoud", "uitvallers")
+    t = bevindingen.get("tellingen", {})
+    stappen = []
+
+    if not t.get("n_getoetst"):
+        stappen.append(
+            "Er zijn te weinig gestarte studenten om de items te toetsen. Trek op "
+            "basis van deze data nog geen conclusies over de selectie."
+        )
+    elif t.get("n_sig_positief"):
+        stappen.append(
+            f"De verschiltoets vindt {aantal(t['n_sig_positief'], 'item', 'items')} "
+            f"waarop {succes} duidelijk hoger scoorden dan {geen_succes}. Dat is een "
+            "aanwijzing dat deze items studiesucces helpen voorspellen. "
+            "Beleidsmatig: behoud ze of laat ze zwaarder meewegen, en bevestig het "
+            "patroon eerst op een volgend cohort voordat je de procedure aanpast."
+        )
+    else:
+        stappen.append(
+            f"De verschiltoets vindt geen enkel item waarop {succes} significant "
+            f"hoger scoorden dan {geen_succes}. Beleidsmatig betekent dit dat de "
+            "selectie in deze data geen studiesucces voorspelt: ga na of de items "
+            "iets anders meten dat je bewust wilt behouden (motivatie, passendheid), "
+            "of dat de procedure eenvoudiger en goedkoper kan."
+        )
+
+    if t.get("n_sig_negatief"):
+        stappen.append(
+            f"Bij {aantal(t['n_sig_negatief'], 'item', 'items')} scoorden juist de "
+            f"{geen_succes} hoger. Dat is onverwacht. Beleidsmatig: laat deze items "
+            "niet zwaarder meewegen, maar zoek eerst uit wat ze meten en of de "
+            "beoordeling klopt."
+        )
+
+    if model_stats and model_stats.get("pseudo_r2") is not None:
+        r2 = model_stats["pseudo_r2"]
+        sig = model_stats.get("sig_items", [])
+        if sig:
+            ww = "levert" if len(sig) == 1 else "leveren"
+            eigen = f"Vooral {namen(sig)} {ww} een eigen bijdrage bovenop de rest. "
+        else:
+            eigen = "Geen item springt eruit als je ze samen bekijkt. "
+        stappen.append(
+            f"Alle items samen verklaren een {kracht_label(r2)} deel van het "
+            f"verschil in studiesucces (regressie, pseudo R² = {r2:.2f}). "
+            + eigen
+            + "Dit gezamenlijke model is bij kleine groepen wankel, dus leun voor "
+            "beleid vooral op de verschiltoets."
+        )
+
+    if t.get("n_fair_sig"):
+        stappen.append(
+            f"Bij {aantal(t['n_fair_sig'], 'item', 'items')} scoorden "
+            "achtergrondgroepen (geslacht, vooropleiding) verschillend. Beleidsmatig: "
+            "onderzoek of dat verschil inhoudelijk te rechtvaardigen is of op "
+            "onbedoelde vertekening wijst."
+        )
+
+    if t.get("n_corr_hoog"):
+        stappen.append(
+            f"De correlatie vindt {aantal(t['n_corr_hoog'], 'paar', 'paren')} items "
+            "die sterk samenhangen en dus deels hetzelfde meten. Beleidsmatig: je "
+            "kunt er een laten vallen om de selectie korter en goedkoper te maken "
+            "zonder veel informatie te verliezen."
+        )
+
+    stappen.append(
+        "Herhaal de analyse met een nieuw cohort voordat je de procedure echt "
+        "aanpast. Een enkel jaar is een momentopname, zeker bij kleine groepen."
+    )
+    stappen.append(
+        "Combineer deze cijfers met vakkennis en eerder onderzoek. "
+        + p.get("kanttekening", PERSPECTIEF_DOORSTROOM["kanttekening"])
+    )
+    return stappen
+
+
+def kracht_label(r2: float) -> str:
+    """Pseudo R-kwadraat in woorden."""
+    if r2 < 0.05:
+        return "zeer beperkt"
+    if r2 < 0.15:
+        return "beperkt"
+    if r2 < 0.30:
+        return "matig"
+    return "substantieel"
 
 
 def _bevindingen_correlatie(
@@ -763,61 +1005,229 @@ def _bevindingen_demografie_verdeling(
             )
 
 
-def bereken_univariaat(
-    df: pd.DataFrame, scores_df: pd.DataFrame, perspectief: dict
-) -> list[dict]:
-    """Univariate logistische regressie per item."""
-    import numpy as np
-    import statsmodels.api as sm
+# Grens voor ontbrekende waarden: items die bij meer dan dit deel van de
+# populatie ontbreken, gaan niet de regressie in (imputatie zou dan te veel
+# invullen).
+_MAX_ONTBREKEND = 0.3
 
+
+def _z(serie: pd.Series) -> pd.Series:
+    """z-score; een constante kolom wordt 0 in plaats van NaN."""
+    std = serie.std()
+    if not std > 0:
+        return pd.Series(0.0, index=serie.index)
+    return (serie - serie.mean()) / std
+
+
+def _bereid_regressiedata(
+    df: pd.DataFrame, scores_df: pd.DataFrame, perspectief: dict
+) -> dict:
+    """Populatie, itemmatrix en uitkomst voor de logistische regressies.
+
+    Eén plek voor de stappen die de univariate en de gezamenlijke regressie
+    delen: populatie volgens het perspectief, een kolom per item (verkorte
+    naam), items met >30% ontbrekend eruit, de rest mean-geïmputeerd.
+    Retourneert een dict met `status` ("ok" of een reden), `melding`, en bij
+    "ok" ook `X`, `y` en `verwijderd_nan`."""
     populatie = df[df["groep"].isin(perspectief["populatie"])].copy()
     if len(populatie) < 10:
-        return []
-
+        return {
+            "status": "te_weinig_studenten",
+            "melding": f"Te weinig studenten ({len(populatie)}) voor regressie. "
+            "Minimaal 10 nodig.",
+        }
     populatie["uitkomst"] = (
         populatie["groep"].isin(perspectief["positief_groepen"]).astype(int)
     )
+
     item_pivot = scores_df.pivot_table(
         index="studentnummer", columns="item", values="score", aggfunc="mean"
     )
     item_pivot.columns = [shorten_item(c) for c in item_pivot.columns]
-    item_pivot_pop = item_pivot.loc[
-        item_pivot.index.isin(populatie["studentnummer"])
-    ].copy()
-    nan_pct = item_pivot_pop.isna().mean()
-    bruikbare_cols = [c for c in item_pivot_pop.columns if nan_pct.get(c, 1) <= 0.3]
-    if not bruikbare_cols:
-        return []
+    pivot_pop = item_pivot.loc[item_pivot.index.isin(populatie["studentnummer"])].copy()
 
-    item_pivot_pop[bruikbare_cols] = item_pivot_pop[bruikbare_cols].fillna(
-        item_pivot_pop[bruikbare_cols].mean()
+    nan_pct = pivot_pop.isna().mean()
+    verwijderd_nan = [c for c in pivot_pop.columns if nan_pct[c] > _MAX_ONTBREKEND]
+    bruikbaar = [c for c in pivot_pop.columns if nan_pct[c] <= _MAX_ONTBREKEND]
+    if not bruikbaar:
+        return {
+            "status": "te_weinig_items",
+            "melding": "Te weinig bruikbare items voor regressie.",
+        }
+
+    pivot_pop[bruikbaar] = pivot_pop[bruikbaar].fillna(pivot_pop[bruikbaar].mean())
+    pivot_pop = pivot_pop.dropna(subset=bruikbaar)
+    if len(pivot_pop) < 10:
+        return {
+            "status": "te_weinig_cases",
+            "melding": f"Te weinig complete cases ({len(pivot_pop)}) voor regressie.",
+        }
+
+    y = (
+        populatie.drop_duplicates("studentnummer")
+        .set_index("studentnummer")
+        .loc[pivot_pop.index, "uitkomst"]
+        .astype(float)
     )
-    item_pivot_pop = item_pivot_pop.dropna(subset=bruikbare_cols)
-    if len(item_pivot_pop) < 10:
-        return []
+    return {
+        "status": "ok",
+        "melding": "",
+        "X": pivot_pop[bruikbaar].astype(float),
+        "y": y,
+        "verwijderd_nan": verwijderd_nan,
+    }
 
-    y = populatie.set_index("studentnummer").loc[item_pivot_pop.index, "uitkomst"]
-    resultaten = []
-    for col in bruikbare_cols:
-        x_col = item_pivot_pop[[col]].astype(float)
-        std = x_col.iloc[:, 0].std()
-        if std > 0:
-            x_z = (x_col - x_col.mean()) / std
-        else:
-            x_z = x_col * 0
-        try:
-            m = sm.Logit(y.astype(float), sm.add_constant(x_z)).fit(disp=0, maxiter=50)
-            resultaten.append(
-                {
-                    "Item": col,
-                    "Coefficient": round(float(m.params.iloc[-1]), 3),
-                    "Odds ratio": round(float(np.exp(m.params.iloc[-1])), 2),
-                    "p-waarde": fmt_p(float(m.pvalues.iloc[-1])),
-                }
-            )
-        except Exception as e:
-            print(f"[shared] bereken_univariaat item '{col}' mislukt: {e}", flush=True)
-    return resultaten
+
+def _univariaat_rij(item: str, x: pd.Series, y: pd.Series) -> dict:
+    """Een univariate logistische regressie van y op het (gestandaardiseerde)
+    item. Mislukt de fit, dan een rij met '-'."""
+    import numpy as np
+    import statsmodels.api as sm
+
+    try:
+        m = sm.Logit(y, sm.add_constant(_z(x).to_frame(item))).fit(disp=0, maxiter=50)
+        p = float(m.pvalues.iloc[-1])
+        return {
+            "Item": item,
+            "Coefficient": round(float(m.params.iloc[-1]), 3),
+            "Odds ratio": round(float(np.exp(m.params.iloc[-1])), 2),
+            "p-waarde": fmt_p(p),
+            "Sig.": sig_sym(p),
+            "_p": p,
+        }
+    except Exception as e:
+        print(f"[shared] univariate fit '{item}' mislukt: {e}", flush=True)
+        return {
+            "Item": item,
+            "Coefficient": "-",
+            "Odds ratio": "-",
+            "p-waarde": "-",
+            "Sig.": "-",
+            "_p": float("nan"),
+        }
+
+
+def bereken_univariaat(
+    df: pd.DataFrame, scores_df: pd.DataFrame, perspectief: dict
+) -> list[dict]:
+    """Univariate logistische regressie per item (z-gestandaardiseerd).
+
+    Een rij per bruikbaar item met Coefficient, Odds ratio, p-waarde (tekst),
+    Sig. en `_p` (numeriek). Leeg als er te weinig data is."""
+    data = _bereid_regressiedata(df, scores_df, perspectief)
+    if data["status"] != "ok":
+        return []
+    return [_univariaat_rij(c, data["X"][c], data["y"]) for c in data["X"].columns]
+
+
+def _verwijder_collineair(X: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
+    """Haal kolommen weg tot de matrix volle rang heeft: telkens een kolom uit
+    het sterkst correlerende paar. Vangt alleen (bijna) perfecte overlap."""
+    import numpy as np
+
+    verwijderd = []
+    while len(X.columns) > 1 and np.linalg.matrix_rank(X.values) < len(X.columns):
+        corr = X.corr().abs().fillna(0).to_numpy().copy()
+        np.fill_diagonal(corr, 0)
+        _, kolom = divmod(int(corr.argmax()), corr.shape[1])
+        verwijderd.append(X.columns[kolom])
+        X = X.drop(columns=[X.columns[kolom]])
+    return X, verwijderd
+
+
+def bereken_gezamenlijk_model(
+    df: pd.DataFrame, scores_df: pd.DataFrame, perspectief: dict
+) -> dict:
+    """Gezamenlijke logistische regressie van de uitkomst op alle items.
+
+    De enige implementatie, gedeeld door de tab Regressie, 'Wat valt op' en
+    het PDF-rapport, zodat die dezelfde pseudo R² en items tonen. Stappen:
+
+    1. Populatie en itemmatrix via `_bereid_regressiedata` (>30% ontbrekend
+       eruit, rest mean-geïmputeerd).
+    2. Collineaire items eruit tot de matrix volle rang heeft.
+    3. Te weinig events per variabele (minder dan 5 in de kleinste groep per
+       item): houd de items met de laagste univariate p-waarde over.
+    4. Fit op z-scores, zodat odds ratios per standaarddeviatie gelden.
+
+    Retourneert een dict met `status` ("ok" of een reden), `melding`, en bij
+    "ok": `n`, `n_positief`, `n_negatief`, `pseudo_r2`, `coefficienten`
+    (rijen zoals bij bereken_univariaat), `sig_items`, `univariaat` en de
+    lijsten `verwijderd_nan`, `verwijderd_collineair`, `verwijderd_epv`.
+    """
+    import numpy as np
+    import statsmodels.api as sm
+
+    data = _bereid_regressiedata(df, scores_df, perspectief)
+    if data["status"] != "ok":
+        return data
+    X_all, y = data["X"], data["y"]
+
+    univariaat = [_univariaat_rij(c, X_all[c], y) for c in X_all.columns]
+    X, verwijderd_collineair = _verwijder_collineair(X_all)
+
+    n_positief = int(y.sum())
+    n_negatief = int(len(y) - n_positief)
+    max_predictoren = max(2, min(n_positief, n_negatief) // 5)
+    verwijderd_epv = []
+    if len(X.columns) > max_predictoren:
+        uni_p = {r["Item"]: r["_p"] for r in univariaat}
+        gesorteerd = sorted(
+            X.columns,
+            key=lambda c: uni_p[c] if uni_p[c] == uni_p[c] else 1.0,  # NaN achteraan
+        )
+        verwijderd_epv = list(gesorteerd[max_predictoren:])
+        X = X[gesorteerd[:max_predictoren]]
+
+    basis = {
+        "n": len(y),
+        "n_positief": n_positief,
+        "n_negatief": n_negatief,
+        "univariaat": univariaat,
+        "verwijderd_nan": data["verwijderd_nan"],
+        "verwijderd_collineair": verwijderd_collineair,
+        "verwijderd_epv": verwijderd_epv,
+    }
+    try:
+        X_z = sm.add_constant(X.apply(_z))
+        model = sm.Logit(y, X_z).fit(disp=0, maxiter=100)
+    except Exception as e:
+        print(f"[shared] gezamenlijk model mislukt: {e}", flush=True)
+        return {
+            **basis,
+            "status": "fout",
+            "melding": f"Regressie kon niet worden uitgevoerd: {e}",
+        }
+
+    coefficienten = []
+    for item in X.columns:
+        p = float(model.pvalues[item])
+        coefficienten.append(
+            {
+                "Item": item,
+                "Coefficient": round(float(model.params[item]), 3),
+                "Odds ratio": round(float(np.exp(model.params[item])), 2),
+                "p-waarde": fmt_p(p),
+                "Sig.": sig_sym(p),
+                "_p": p,
+            }
+        )
+    return {
+        **basis,
+        "status": "ok",
+        "melding": "",
+        "pseudo_r2": round(float(model.prsquared), 3),
+        "coefficienten": coefficienten,
+        "sig_items": [r["Item"] for r in coefficienten if r["_p"] < 0.05],
+    }
+
+
+def model_stats_uit(model: dict) -> dict | None:
+    """De samenvatting van het gezamenlijke model die genereer_bevindingen en
+    de vervolgstappen gebruiken: pseudo R² en de items met een eigen bijdrage."""
+    if model.get("status") != "ok":
+        return None
+    return {"pseudo_r2": model["pseudo_r2"], "sig_items": model["sig_items"]}
 
 
 def chi2_per_dimensie(df: pd.DataFrame, perspectief: dict) -> dict[str, dict]:

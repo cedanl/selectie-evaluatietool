@@ -21,29 +21,41 @@ from shared import (
     GROEP_VOLGORDE,
     GROEP_KLEUREN,
     CHART_BASE,
-    PERSPECTIEF_DOORSTROOM,
+    perspectief_voor,
     binair_kleur_map,
     shorten_item,
     schaal_grenzen,
     bucket_per_item,
     meta_per_item,
     grenzen_van_label,
-    sig_sym,
-    fmt_p,
     vergelijk_succes_per_item,
     VERGELIJKING_KOLOMMEN,
     toets_verschil_per_item,
     VERSCHIL_KOLOMMEN,
     genereer_bevindingen,
+    beleidsvervolgstappen,
     DEMO_DIMENSIES,
     demografie_scores,
-    bereken_univariaat,
+    bereken_gezamenlijk_model,
     chi2_per_dimensie,
+    model_stats_uit,
 )
 
 log = logging.getLogger(__name__)
 
 LOGO_PATH = Path(__file__).parent / "assets" / "nko-logo.png"
+
+# Unicode-font: de fpdf-kernfonts (Helvetica) kennen alleen Latin-1 en laten
+# het rapport crashen op een en-dash, typografische aanhalingstekens of een
+# teken als '≥' in item- of opleidingsnamen. DejaVu Sans dekt die wel af;
+# fpdf2 sluit alleen de gebruikte tekens in. Licentie: assets/fonts/DejaVu-LICENSE.txt.
+FONT_DIR = Path(__file__).parent / "assets" / "fonts"
+FONT = "DejaVu"
+_FONT_BESTANDEN = {
+    "": "DejaVuSans.ttf",
+    "B": "DejaVuSans-Bold.ttf",
+    "I": "DejaVuSans-Oblique.ttf",
+}
 
 BLUE = (44, 62, 80)
 DARK = (51, 51, 51)
@@ -79,6 +91,8 @@ def _render_figures(
 class RapportPDF(FPDF):
     def __init__(self, opleiding: str, jaar: str):
         super().__init__(orientation="P", unit="mm", format="A4")
+        for stijl, bestand in _FONT_BESTANDEN.items():
+            self.add_font(FONT, stijl, str(FONT_DIR / bestand))
         self.opleiding = opleiding
         self.jaar = jaar
         self.set_auto_page_break(auto=True, margin=20)
@@ -86,7 +100,7 @@ class RapportPDF(FPDF):
     def header(self):
         if self.page_no() == 1:
             return
-        self.set_font("Helvetica", "I", 8)
+        self.set_font(FONT, "I", 8)
         self.set_text_color(*GRAY)
         self.cell(
             0,
@@ -104,7 +118,7 @@ class RapportPDF(FPDF):
         if self.page_no() == 1:
             return
         self.set_y(-15)
-        self.set_font("Helvetica", "I", 7)
+        self.set_font(FONT, "I", 7)
         self.set_text_color(*GRAY)
         self.cell(0, 10, "Selectie Evaluatietool | CEDA", align="C")
 
@@ -117,18 +131,18 @@ class RapportPDF(FPDF):
         else:
             self.ln(60)
 
-        self.set_font("Helvetica", "B", 32)
+        self.set_font(FONT, "B", 32)
         self.set_text_color(*BLUE)
         self.cell(0, 14, "Selectie", align="C", new_x="LMARGIN", new_y="NEXT")
         self.cell(0, 14, "Evaluatierapport", align="C", new_x="LMARGIN", new_y="NEXT")
 
         self.ln(10)
-        self.set_font("Helvetica", "", 18)
+        self.set_font(FONT, "", 18)
         self.set_text_color(*DARK)
         self.cell(0, 10, self.opleiding, align="C", new_x="LMARGIN", new_y="NEXT")
 
         self.ln(4)
-        self.set_font("Helvetica", "", 14)
+        self.set_font(FONT, "", 14)
         self.set_text_color(*GRAY)
         self.cell(
             0,
@@ -148,7 +162,7 @@ class RapportPDF(FPDF):
         )
 
         self.ln(6)
-        self.set_font("Helvetica", "I", 11)
+        self.set_font(FONT, "I", 11)
         self.set_text_color(*GRAY)
         self.cell(
             0,
@@ -160,7 +174,7 @@ class RapportPDF(FPDF):
         )
 
         self.ln(14)
-        self.set_font("Helvetica", "", 11)
+        self.set_font(FONT, "", 11)
         self.set_text_color(*DARK)
         self.cell(
             0,
@@ -184,7 +198,7 @@ class RapportPDF(FPDF):
 
     def section_title(self, title: str):
         self.ln(4)
-        self.set_font("Helvetica", "B", 16)
+        self.set_font(FONT, "B", 16)
         self.set_text_color(*BLUE)
         self.cell(0, 10, title, new_x="LMARGIN", new_y="NEXT")
         y = self.get_y()
@@ -195,13 +209,13 @@ class RapportPDF(FPDF):
 
     def subsection_title(self, title: str):
         self.ln(2)
-        self.set_font("Helvetica", "B", 12)
+        self.set_font(FONT, "B", 12)
         self.set_text_color(*DARK)
         self.cell(0, 8, title, new_x="LMARGIN", new_y="NEXT")
         self.ln(1)
 
     def body_text(self, text: str):
-        self.set_font("Helvetica", "", 10)
+        self.set_font(FONT, "", 10)
         self.set_text_color(*DARK)
         self.multi_cell(0, 5, text)
         self.ln(2)
@@ -219,7 +233,7 @@ class RapportPDF(FPDF):
         self.set_fill_color(*_hex_to_rgb(kleur_map.get(groep, "#94a3b8")))
         self.rect(10, y + 0.5, 4, 5, style="F")
         self.set_xy(16, y)
-        self.set_font("Helvetica", "B", 11)
+        self.set_font(FONT, "B", 11)
         self.set_text_color(*DARK)
         self.cell(0, 6, f"{groep} ({n} kandidaten):", new_x="LMARGIN", new_y="NEXT")
         self.ln(1)
@@ -244,13 +258,13 @@ class RapportPDF(FPDF):
         return text + ".."
 
     def _render_table_header(self, headers: list[str], col_widths: list[float]):
-        self.set_font("Helvetica", "B", 9)
+        self.set_font(FONT, "B", 9)
         self.set_fill_color(*BLUE)
         self.set_text_color(*WHITE)
         for i, h in enumerate(headers):
             self.cell(col_widths[i], 7, h, border=1, fill=True, align="C")
         self.ln()
-        self.set_font("Helvetica", "", 9)
+        self.set_font(FONT, "", 9)
         self.set_text_color(*DARK)
 
     def add_data_table(
@@ -381,231 +395,57 @@ def _build_figures(
     return figures
 
 
-def _run_regression(
-    df: pd.DataFrame,
-    item_pivot: pd.DataFrame,
-    score_cols: list[str],
-    perspectief: dict | None = None,
-) -> tuple[list[list[str]], float | None, str | None]:
-    if perspectief is None:
-        perspectief = PERSPECTIEF_DOORSTROOM
-    populatie = df[df["groep"].isin(perspectief["populatie"])].copy()
+def _regressie_tekst(
+    model: dict, perspectief: dict
+) -> tuple[list[list[str]], float | None, str]:
+    """Tabelrijen, pseudo R² en samenvattende tekst voor de rapportsectie over
+    het gezamenlijke model (berekend door shared.bereken_gezamenlijk_model)."""
+    if model["status"] != "ok":
+        return [], None, model["melding"]
 
-    reg_rows = []
-    pseudo_r2 = None
-    reg_text = None
-
-    if len(populatie) < 10:
-        reg_text = f"Te weinig studenten ({len(populatie)}) voor regressie."
-        return reg_rows, pseudo_r2, reg_text
-
-    populatie["uitkomst"] = (
-        populatie["groep"].isin(perspectief["positief_groepen"]).astype(int)
+    pos_label = perspectief["positief_label"].lower()
+    neg_label = perspectief["negatief_label"].lower()
+    tekst = (
+        f"n = {model['n']} ({pos_label}: {model['n_positief']}, "
+        f"{neg_label}: {model['n_negatief']}). "
+        f"Pseudo R-kwadraat = {model['pseudo_r2']}."
     )
-
-    item_pivot_pop = item_pivot.loc[
-        item_pivot.index.isin(populatie["studentnummer"])
-    ].copy()
-
-    nan_pct = item_pivot_pop.isna().mean()
-    verwijderd_nan = [c for c in score_cols if nan_pct.get(c, 1) > 0.3]
-    bruikbare_cols = [c for c in score_cols if nan_pct.get(c, 1) <= 0.3]
-
-    if len(bruikbare_cols) < 2:
-        reg_text = "Te weinig bruikbare items voor regressie."
-        return reg_rows, pseudo_r2, reg_text
-
-    item_pivot_pop[bruikbare_cols] = item_pivot_pop[bruikbare_cols].fillna(
-        item_pivot_pop[bruikbare_cols].mean()
-    )
-    item_pivot_pop = item_pivot_pop.dropna(subset=bruikbare_cols)
-
-    if len(item_pivot_pop) < 10:
-        reg_text = f"Te weinig complete cases ({len(item_pivot_pop)}) voor regressie."
-        return reg_rows, pseudo_r2, reg_text
-
-    y = populatie.set_index("studentnummer").loc[item_pivot_pop.index, "uitkomst"]
-    X = item_pivot_pop[bruikbare_cols]
-
-    from numpy.linalg import matrix_rank
-
-    verwijderd_collinear = []
-    while len(X.columns) > 1:
-        rank = matrix_rank(X.values)
-        if rank >= len(X.columns):
-            break
-        corr_vals = X.corr().abs().to_numpy().copy()
-        np.fill_diagonal(corr_vals, 0)
-        flat_idx = corr_vals.argmax()
-        _, col_idx = divmod(flat_idx, corr_vals.shape[1])
-        verwijderd_collinear.append(X.columns[col_idx])
-        X = X.drop(columns=[X.columns[col_idx]])
-    bruikbare_cols = list(X.columns)
-
-    n_events = min(int(y.sum()), int(len(y) - y.sum()))
-    max_predictoren = max(2, n_events // 5)
-    verwijderd_epv = []
-    if len(bruikbare_cols) > max_predictoren:
-        import statsmodels.api as sm
-
-        univariate_p = {}
-        for col in bruikbare_cols:
-            x_col = X[[col]].astype(float)
-            x_col = (x_col - x_col.mean()) / x_col.std().replace(0, 1)
-            try:
-                m = sm.Logit(y.astype(float), sm.add_constant(x_col)).fit(
-                    disp=0, maxiter=50
-                )
-                univariate_p[col] = m.pvalues.iloc[-1]
-            except Exception:
-                univariate_p[col] = 1.0
-        gesorteerd = sorted(bruikbare_cols, key=lambda c: univariate_p[c])
-        verwijderd_epv = gesorteerd[max_predictoren:]
-        bruikbare_cols = gesorteerd[:max_predictoren]
-        X = X[bruikbare_cols]
-
-    try:
-        import statsmodels.api as sm
-
-        X_z = X.astype(float).apply(
-            lambda s: (
-                (s - s.mean()) / s.std() if s.std() > 0 else pd.Series(0, index=s.index)
-            )
+    if model["verwijderd_nan"]:
+        tekst += (
+            " Items niet meegenomen (>30% ontbrekend): "
+            f"{', '.join(model['verwijderd_nan'])}."
         )
-        X_const = sm.add_constant(X_z)
-        model = sm.Logit(y.astype(float), X_const).fit(disp=0, maxiter=100)
-        pseudo_r2 = round(float(model.prsquared), 3)
-
-        n_pos = int(y.sum())
-        n_neg = int(len(y) - y.sum())
-        pos_label = perspectief["positief_label"].lower()
-        neg_label = perspectief["negatief_label"].lower()
-        reg_text = (
-            f"n = {len(y)} ({pos_label}: {n_pos}, {neg_label}: {n_neg}). "
-            f"Pseudo R-kwadraat = {pseudo_r2}."
+    if model["verwijderd_collineair"]:
+        tekst += (
+            " Items niet meegenomen (overlap met andere items): "
+            f"{', '.join(model['verwijderd_collineair'])}."
         )
-        if verwijderd_nan:
-            reg_text += f" Items niet meegenomen (>30% ontbrekend): {', '.join(verwijderd_nan)}."
-        if verwijderd_collinear:
-            reg_text += (
-                f" Items niet meegenomen (overlap met andere items): "
-                f"{', '.join(verwijderd_collinear)}."
-            )
-        if verwijderd_epv:
-            reg_text += (
-                f" Items niet meegenomen (te weinig studenten voor "
-                f"{len(bruikbare_cols) + len(verwijderd_epv)} predictoren, "
-                f"beperkt tot {len(bruikbare_cols)} sterkste): "
-                f"{', '.join(verwijderd_epv)}."
-            )
-
-        for item_naam in bruikbare_cols:
-            if item_naam not in model.params.index:
-                continue
-            coef = round(float(model.params[item_naam]), 3)
-            odds = round(float(np.exp(model.params[item_naam])), 2)
-            p = float(model.pvalues[item_naam])
-            reg_rows.append([item_naam, str(coef), str(odds), fmt_p(p), sig_sym(p)])
-    except Exception as e:
-        reg_text = f"Regressie kon niet worden uitgevoerd: {e}"
-
-    return reg_rows, pseudo_r2, reg_text
-
-
-def _beleidsconclusies(bevindingen: dict, model_stats: dict | None) -> list[str]:
-    """Beleidsgerichte vervolgstappen, gekoppeld aan de bevindingen. Spiegelt het
-    'Vervolgstappen voor beleid'-blok op de 'Wat valt op'-tab van het dashboard, zodat
-    het rapport dezelfde conclusie trekt: een significant verschil betekent
-    voorspellende waarde, geen verschil betekent dat de selectie studiesucces niet
-    voorspelt."""
-
-    def aantal(n, ev, mv):
-        return f"{n} {ev if n == 1 else mv}"
-
-    def namen(items):
-        items = list(items)
-        if len(items) == 1:
-            return items[0]
-        return ", ".join(items[:-1]) + " en " + items[-1]
-
-    def kracht(r2):
-        if r2 < 0.05:
-            return "zeer beperkt"
-        if r2 < 0.15:
-            return "beperkt"
-        if r2 < 0.30:
-            return "matig"
-        return "substantieel"
-
-    stappen = []
-    n_valide = len(bevindingen.get("validiteit", []))
-    if n_valide:
-        stappen.append(
-            f"De verschiltoets vindt {aantal(n_valide, 'item', 'items')} waarop "
-            "doorstromers duidelijk anders scoorden dan uitvallers. Dat is een "
-            "aanwijzing dat deze items studiesucces helpen voorspellen. Beleidsmatig: "
-            "behoud ze of laat ze zwaarder meewegen, en bevestig het patroon eerst op "
-            "een volgend cohort voordat je de procedure aanpast."
+    if model["verwijderd_epv"]:
+        n_model = len(model["coefficienten"])
+        tekst += (
+            " Items niet meegenomen (te weinig studenten voor "
+            f"{n_model + len(model['verwijderd_epv'])} predictoren, "
+            f"beperkt tot {n_model} sterkste): "
+            f"{', '.join(model['verwijderd_epv'])}."
         )
-    else:
-        stappen.append(
-            "De verschiltoets vindt geen enkel item waarop doorstromers en uitvallers "
-            "significant verschillen. Beleidsmatig betekent dit dat de selectie in deze "
-            "data geen studiesucces voorspelt: ga na of de items iets anders meten dat "
-            "je bewust wilt behouden (motivatie, passendheid), of dat de procedure "
-            "eenvoudiger en goedkoper kan."
-        )
-
-    if model_stats and model_stats.get("pseudo_r2") is not None:
-        r2 = model_stats["pseudo_r2"]
-        sig = model_stats.get("sig_items", [])
-        if sig:
-            ww = "levert" if len(sig) == 1 else "leveren"
-            eigen = f"Vooral {namen(sig)} {ww} een eigen bijdrage bovenop de rest. "
-        else:
-            eigen = "Geen item springt eruit als je ze samen bekijkt. "
-        stappen.append(
-            f"Alle items samen verklaren een {kracht(r2)} deel van het verschil in "
-            f"studiesucces (regressie, pseudo R-kwadraat = {r2:.2f}). "
-            + eigen
-            + "Dit gezamenlijke model is bij kleine groepen wankel, dus leun voor "
-            "beleid vooral op de verschiltoets."
-        )
-
-    n_fair = len(bevindingen.get("fairness", []))
-    if n_fair:
-        stappen.append(
-            f"Bij {aantal(n_fair, 'item', 'items')} scoorden achtergrondgroepen "
-            "(geslacht, vooropleiding) verschillend. Beleidsmatig: onderzoek of dat "
-            "verschil inhoudelijk te rechtvaardigen is of op onbedoelde vertekening "
-            "wijst."
-        )
-
-    n_corr = len(bevindingen.get("correlatie", []))
-    if n_corr:
-        stappen.append(
-            "De correlatie vindt "
-            f"{aantal(n_corr, 'sterke samenhang', 'sterke samenhangen')} tussen items "
-            "die deels hetzelfde meten. Beleidsmatig: je kunt er een laten vallen om de "
-            "selectie korter en goedkoper te maken zonder veel informatie te verliezen."
-        )
-
-    stappen.append(
-        "Herhaal de analyse met een nieuw cohort voordat je de procedure echt aanpast. "
-        "Een enkel jaar is een momentopname, zeker bij kleine groepen."
-    )
-    stappen.append(
-        "Combineer deze cijfers met vakkennis en eerder onderzoek. Doorstroom naar "
-        "jaar 2 is maar een van de manieren om studiesucces te meten."
-    )
-    return stappen
+    rijen = [
+        [
+            r["Item"],
+            str(r["Coefficient"]),
+            str(r["Odds ratio"]),
+            r["p-waarde"],
+            r["Sig."],
+        ]
+        for r in model["coefficienten"]
+    ]
+    return rijen, model["pseudo_r2"], tekst
 
 
 def genereer_rapport(
     df: pd.DataFrame, scores_df: pd.DataFrame, perspectief: dict | None = None
 ) -> bytes:
     if perspectief is None:
-        perspectief = PERSPECTIEF_DOORSTROOM
+        perspectief = perspectief_voor(df)
     opleiding = ""
     if "opleiding" in df.columns and df["opleiding"].notna().any():
         opleiding = str(df["opleiding"].dropna().iloc[0])
@@ -667,9 +507,8 @@ def genereer_rapport(
         .sort_values(["groep", "instrument", "criterium", "item_kort"])
     )
 
-    reg_rows, pseudo_r2, reg_text = _run_regression(
-        df, item_pivot, score_cols, perspectief=perspectief
-    )
+    model = bereken_gezamenlijk_model(df, scores_df, perspectief)
+    reg_rows, pseudo_r2, reg_text = _regressie_tekst(model, perspectief)
 
     # -- Build and render all charts --
     figures = _build_figures(
@@ -701,14 +540,10 @@ def genereer_rapport(
         corr_pivot.columns = [shorten_item(c) for c in corr_pivot.columns]
         corr_matrix = corr_pivot.corr().round(3)
 
-    # Univariate regressie per item (voor conclusies)
-    univariaat_data = bereken_univariaat(df, scores_df, perspectief)
-
-    # Model stats uit de reeds gedraaide regressie
-    model_stats = None
-    if pseudo_r2 is not None:
-        sig_items_model = [r[0] for r in reg_rows if r[4] != "ns"]
-        model_stats = {"pseudo_r2": pseudo_r2, "sig_items": sig_items_model}
+    # Univariate regressie en modelsamenvatting (voor conclusies), uit
+    # hetzelfde model als het dashboard.
+    univariaat_data = model.get("univariaat", [])
+    model_stats = model_stats_uit(model)
 
     demo_verdeling = chi2_per_dimensie(df, perspectief)
 
@@ -1062,7 +897,7 @@ def genereer_rapport(
         "De punten hieronder volgen uit de bevindingen en zijn bedoeld als richting "
         "voor het gesprek, niet als kant-en-klaar oordeel."
     )
-    for regel in _beleidsconclusies(bevindingen, model_stats):
+    for regel in beleidsvervolgstappen(bevindingen, model_stats, perspectief):
         pdf.body_text(f"  - {regel}")
 
     buf = io.BytesIO()

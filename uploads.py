@@ -1,6 +1,7 @@
 """Upload-overlay, sidebar en de bijbehorende callbacks."""
 
 import json
+import logging
 
 import pandas as pd
 
@@ -10,7 +11,6 @@ import dash_bootstrap_components as dbc
 
 from transformatie import (
     lees_config,
-    parse_csv_or_excel,
     parse_selectiedata,
     transformeer_naar_lang,
     valideer_config,
@@ -18,19 +18,51 @@ from transformatie import (
 from cho_transform import (
     ontbrekende_cho_kolommen,
     ontbrekende_demografie_kolommen,
-    transformeer_cho,
 )
+from bestandsopslag import lees_cho_upload
 from config_wizard import maak_wizard_layout
 from tabs.intro import maak_upload_intro
 from rapport import genereer_rapport
-from shared import PERSPECTIEF_DOORSTROOM, GROEP_INGESCHREVEN, GROEP_SUCCES
+from shared import perspectief_voor, GROEP_INGESCHREVEN, GROEP_SUCCES
 from helpers import (
     scores_df_from_store,
     DEMO_DATASETS,
     df_from_store,
+    bereid_cho_voor,
     bouw_data_stores,
     _laad_demodata,
 )
+
+
+log = logging.getLogger(__name__)
+
+
+def actieve_config_bron(trigger, bron, cfg, wiz_config) -> str | None:
+    """Welke config geldt: het geüploade bestand ('upload') of de wizard
+    ('wizard')? De laatst aangeleverde wint. Zonder expliciete keuze de enige
+    die er is. Validatie en laden gebruiken allebei deze bron, zodat het
+    dashboard nooit opent met een andere config dan die gevalideerd is."""
+    if trigger == "upload-config" and cfg:
+        return "upload"
+    if trigger == "wiz-config-store" and wiz_config:
+        return "wizard"
+    if bron == "upload" and cfg:
+        return "upload"
+    if bron == "wizard" and wiz_config:
+        return "wizard"
+    if cfg:
+        return "upload"
+    if wiz_config:
+        return "wizard"
+    return None
+
+
+def lees_actieve_config(bron, cfg, wiz_config) -> dict | None:
+    if bron == "upload":
+        return lees_config(cfg)
+    if bron == "wizard":
+        return json.loads(wiz_config)
+    return None
 
 
 def _upload_card(title, description, upload_id, status_id, accept):
@@ -49,9 +81,42 @@ def _upload_card(title, description, upload_id, status_id, accept):
                     ),
                     className="upload-zone",
                     accept=accept,
-                    max_size=50 * 1024 * 1024,
+                    # Geen limiet: een instellingsbrede 1CHO-extractie is al
+                    # snel >50 MB, en dcc.Upload negeert te grote bestanden
+                    # zonder enige melding.
+                    max_size=-1,
                 ),
                 html.Div(id=status_id, className="mt-2"),
+            ]
+        ),
+        className="mb-3 text-start",
+    )
+
+
+def _grote_upload_card(title, description):
+    """Uploadkaart voor 1CHO. Geen dcc.Upload: die leest het bestand als
+    base64-tekst in de browser in en faalt stil bij honderden MB's. Hier
+    stuurt assets/grote_upload.js het bestand gestreamd naar
+    /upload-bestand (bestandsopslag.py) en zet het token in 'cho-bestand'."""
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.H6(title, className="mb-1"),
+                html.P(description, className="text-muted small mb-3"),
+                # Klikken opent een bestandskiezer die grote_upload.js aanmaakt.
+                html.Div(
+                    [
+                        "Sleep een bestand hierheen of ",
+                        html.A("blader", style={"cursor": "pointer"}),
+                    ],
+                    id="cho-dropzone",
+                    className="upload-zone",
+                    role="button",
+                    tabIndex="0",
+                ),
+                html.Div(id="cho-upload-voortgang", className="small text-muted mt-2"),
+                dcc.Store(id="cho-bestand", storage_type="memory"),
+                html.Div(id="cho-status", className="mt-2"),
             ]
         ),
         className="mb-3 text-start",
@@ -104,14 +169,28 @@ _UPLOAD_KOLOM = dbc.Col(
             ),
             maak_wizard_layout(),
             html.Div(id="validatie-resultaat", className="mb-3"),
-            _upload_card(
+            _grote_upload_card(
                 "1CHO-data",
                 "Studiesuccesdata per kandidaat. Dit is de output van de "
                 "1cijferho-pipeline (BSN al gekoppeld aan studentnummer), "
-                "niet het ruwe DUO-bestand.",
-                "upload-1cho",
-                "cho-status",
-                ".csv,.xlsx,.xls",
+                "niet het ruwe DUO-bestand. Een groot bestand van de hele "
+                "instelling kan ook.",
+            ),
+            # Verschijnt alleen als het 1CHO-bestand meerdere opleidingen bevat
+            # (een instellingsbrede extractie): dan moet duidelijk zijn welke
+            # inschrijvingen bij deze selectie horen.
+            html.Div(
+                [
+                    html.Label(
+                        "Welke opleiding in het 1CHO-bestand hoort bij deze selectie?",
+                        htmlFor="cho-opleiding-picker",
+                        className="small fw-bold mb-1",
+                    ),
+                    dcc.Dropdown(id="cho-opleiding-picker", clearable=False),
+                ],
+                id="cho-opleiding-kiezer",
+                className="mb-3",
+                style={"display": "none"},
             ),
             dcc.Loading(
                 [
@@ -121,6 +200,7 @@ _UPLOAD_KOLOM = dbc.Col(
                     # spinner alleen zien voor callback-outputs die ergens
                     # onder deze wrapper in de layout-boom hangen.
                     dcc.Store(id="data-store", storage_type="memory"),
+                    dcc.Store(id="config-bron", storage_type="memory"),
                     dcc.Store(id="scores-store", storage_type="memory"),
                     dbc.Button(
                         "Open dashboard",
@@ -201,7 +281,7 @@ SIDEBAR = html.Div(
         html.P("Kandidaten per cohort", className="sidebar-label"),
         html.Div(id="cohort-stats"),
         html.Hr(className="mt-3 mb-2"),
-        html.P("Van aanmelding tot doorstroom", className="sidebar-label"),
+        html.P("Van aanmelding tot studiesucces", className="sidebar-label"),
         html.Div(id="funnel-stats"),
         html.Hr(className="mt-3 mb-2"),
         dcc.Loading(
@@ -214,6 +294,7 @@ SIDEBAR = html.Div(
                     className="w-100 mb-2",
                 ),
                 dcc.Download(id="download-rapport"),
+                html.Div(id="rapport-fout"),
             ],
             type="circle",
             color="#2c3e50",
@@ -245,26 +326,33 @@ def registreer_callbacks(app):
         Output("validatie-resultaat", "children"),
         Output("cho-status", "children"),
         Output("btn-open-dashboard", "disabled"),
+        Output("cho-opleiding-picker", "options"),
+        Output("cho-opleiding-picker", "value"),
+        Output("cho-opleiding-kiezer", "style"),
+        Output("config-bron", "data"),
         Input("upload-selectiedata", "contents"),
         Input("upload-config", "contents"),
-        Input("upload-1cho", "contents"),
+        Input("cho-bestand", "data"),
         Input("wiz-config-store", "data"),
+        Input("cho-opleiding-picker", "value"),
         State("upload-selectiedata", "filename"),
         State("upload-config", "filename"),
-        State("upload-1cho", "filename"),
+        State("config-bron", "data"),
         prevent_initial_call=True,
     )
     def valideer_uploads(
         sel,
         cfg,
-        cho,
+        cho_upload,
         wiz_config,
+        cho_opleiding,
         sel_fn,
         cfg_fn,
-        cho_fn,
+        bron,
     ):
         trigger = ctx.triggered_id
         no = dash.no_update
+        bron = actieve_config_bron(trigger, bron, cfg, wiz_config)
 
         sel_status = no
         cfg_status = no
@@ -272,6 +360,22 @@ def registreer_callbacks(app):
         cho_status = no
         btn_disabled = True
         config = None
+        kiezer_opties = no
+        kiezer_waarde = no
+        kiezer_stijl = no
+
+        def resultaat():
+            return (
+                sel_status,
+                cfg_status,
+                validatie,
+                cho_status,
+                btn_disabled,
+                kiezer_opties,
+                kiezer_waarde,
+                kiezer_stijl,
+                bron,
+            )
 
         if trigger == "upload-selectiedata" and sel:
             sel_status = dbc.Alert(
@@ -291,7 +395,8 @@ def registreer_callbacks(app):
                 cfg_status = dbc.Alert(
                     f"Fout: {e}", color="danger", className="small py-1"
                 )
-                return sel_status, cfg_status, no, cho_status, True
+                validatie = ""
+                return resultaat()
 
         if trigger == "wiz-config-store" and wiz_config:
             config = json.loads(wiz_config)
@@ -302,19 +407,30 @@ def registreer_callbacks(app):
                 className="small py-1",
             )
 
-        if trigger == "upload-1cho" and cho:
+        if trigger == "cho-bestand" and cho_upload:
             cho_status = dbc.Alert(
-                f"{cho_fn} geladen.", color="success", className="small py-1"
+                f"{cho_upload['filename']} geladen.",
+                color="success",
+                className="small py-1",
             )
 
-        has_config = cfg or wiz_config
-
-        if sel and has_config:
+        if sel and bron:
             try:
                 if config is None:
-                    config = lees_config(cfg) if cfg else json.loads(wiz_config)
+                    config = lees_actieve_config(bron, cfg, wiz_config)
                 checks = valideer_config(config, sel)
-                badges = []
+                badges = [
+                    dbc.Alert(
+                        "Config: "
+                        + (
+                            f"geüpload bestand ({cfg_fn})"
+                            if bron == "upload"
+                            else "gegenereerd met de wizard"
+                        ),
+                        color="secondary",
+                        className="small py-1 mb-1",
+                    )
+                ]
                 opl = config.get("opleiding", "")
                 jaar = config.get("jaar", "")
                 inst = config.get("instellingscode", "")
@@ -328,18 +444,23 @@ def registreer_callbacks(app):
                         )
                     )
                 for c in checks:
-                    color = "success" if c["ok"] else "danger"
+                    if not c["ok"]:
+                        color = "danger"
+                    elif c.get("waarschuwing"):
+                        color = "warning"
+                    else:
+                        color = "success"
                     badges.append(
                         dbc.Alert(c["check"], color=color, className="small py-1 mb-1")
                     )
                 validatie = html.Div(badges)
 
                 all_ok = all(c["ok"] for c in checks)
-                if all_ok and cho:
+                if all_ok and cho_upload:
                     scores_df = transformeer_naar_lang(
                         parse_selectiedata(sel, config), config
                     )
-                    cho_ruw = parse_csv_or_excel(cho, cho_fn or "data.csv")
+                    cho_ruw = lees_cho_upload(cho_upload["token"])
                     missing = ontbrekende_cho_kolommen(cho_ruw)
                     if missing:
                         cho_status = dbc.Alert(
@@ -353,7 +474,7 @@ def registreer_callbacks(app):
                             color="danger",
                             className="small py-1",
                         )
-                        return sel_status, cfg_status, validatie, cho_status, True
+                        return resultaat()
 
                     demo_missing = ontbrekende_demografie_kolommen(cho_ruw)
                     if demo_missing:
@@ -363,9 +484,37 @@ def registreer_callbacks(app):
                             color="danger",
                             className="small py-1",
                         )
-                        return sel_status, cfg_status, validatie, cho_status, True
+                        return resultaat()
 
-                    cho_df = transformeer_cho(cho_ruw)
+                    # Bij een wissel in het keuzemenu de keuze van de gebruiker
+                    # volgen; bij een nieuwe upload opnieuw matchen.
+                    gebruiker_keuze = (
+                        cho_opleiding if trigger == "cho-opleiding-picker" else None
+                    )
+                    cho = bereid_cho_voor(cho_ruw, config, scores_df, gebruiker_keuze)
+                    cho_df = cho["cho_df"]
+                    if len(cho["opleidingen"]) > 1:
+                        kiezer_opties = [
+                            {"label": o, "value": o} for o in cho["opleidingen"]
+                        ]
+                        kiezer_waarde = cho["gekozen"]
+                        kiezer_stijl = {"display": "block"}
+                    else:
+                        kiezer_opties, kiezer_waarde = [], None
+                        kiezer_stijl = {"display": "none"}
+                    if trigger == "cho-opleiding-picker":
+                        kiezer_opties = kiezer_waarde = no
+
+                    if cho["keuze_nodig"]:
+                        cho_status = dbc.Alert(
+                            f"Het 1CHO-bestand bevat {len(cho['opleidingen'])} "
+                            "opleidingen. Kies hieronder welke bij deze selectie "
+                            "hoort; anders tellen inschrijvingen bij andere "
+                            "opleidingen mee als 'gestart'.",
+                            color="warning",
+                            className="small py-1",
+                        )
+                        return resultaat()
 
                     sel_ids = set(scores_df["studentnummer"].dropna().unique())
                     cho_ids = set(cho_df["studentnummer"].dropna().unique())
@@ -373,12 +522,13 @@ def registreer_callbacks(app):
                     if not matches:
                         cho_status = dbc.Alert(
                             f"Geen overlap tussen selectiedata ({len(sel_ids)} studenten) "
-                            f"en 1CHO-data ({len(cho_ids)} studenten). "
+                            f"en 1CHO-data ({cho['info']['n_studenten_totaal']} "
+                            "studenten). "
                             "Controleer of beide bestanden hetzelfde studentnummer gebruiken.",
                             color="danger",
                             className="small py-1",
                         )
-                        return sel_status, cfg_status, validatie, cho_status, True
+                        return resultaat()
 
                     n_zonder_match = len(sel_ids - cho_ids)
                     cho_alerts = [
@@ -397,6 +547,43 @@ def registreer_callbacks(app):
                                 className="small py-1 mb-1",
                             )
                         )
+                    info = cho["info"]
+                    filter_regels = []
+                    if len(cho["opleidingen"]) > 1:
+                        filter_regels.append(
+                            f"alleen opleiding '{cho['gekozen']}' gebruikt "
+                            f"({info['n_andere_opleiding']} inschrijvingen bij andere "
+                            "opleidingen genegeerd)"
+                        )
+                    if info["n_eerder_cohort"]:
+                        filter_regels.append(
+                            f"{info['n_eerder_cohort']} inschrijvingen van voor het "
+                            "selectiejaar genegeerd"
+                        )
+                    if info["n_studenten_meerdere_spells"]:
+                        filter_regels.append(
+                            f"{info['n_studenten_meerdere_spells']} studenten met "
+                            "meerdere inschrijvingen: de inschrijving die het dichtst "
+                            "bij het selectiejaar begon is gebruikt"
+                        )
+                    if filter_regels:
+                        cho_alerts.append(
+                            dbc.Alert(
+                                "1CHO gefilterd: " + "; ".join(filter_regels) + ".",
+                                color="info",
+                                className="small py-1 mb-1",
+                            )
+                        )
+                    if info["jaarfilter_overgeslagen"]:
+                        cho_alerts.append(
+                            dbc.Alert(
+                                "Het jaar in de config sluit niet aan op het eerste "
+                                "studiejaar in 1CHO; er is daarom niet op cohort "
+                                "gefilterd. Controleer het jaar in de config.",
+                                color="warning",
+                                className="small py-1 mb-1",
+                            )
+                        )
                     cho_status = html.Div(cho_alerts)
                     btn_disabled = False
 
@@ -405,7 +592,7 @@ def registreer_callbacks(app):
                     f"Fout bij validatie: {e}", color="danger", className="small py-1"
                 )
 
-        return sel_status, cfg_status, validatie, cho_status, btn_disabled
+        return resultaat()
 
     @app.callback(
         Output("data-store", "data"),
@@ -415,10 +602,11 @@ def registreer_callbacks(app):
         Input("btn-reset", "n_clicks"),
         State("upload-selectiedata", "contents"),
         State("upload-config", "contents"),
-        State("upload-1cho", "contents"),
-        State("upload-1cho", "filename"),
+        State("cho-bestand", "data"),
         State("demo-dataset-picker", "value"),
         State("wiz-config-store", "data"),
+        State("cho-opleiding-picker", "value"),
+        State("config-bron", "data"),
         prevent_initial_call=True,
     )
     def laad_dashboard(
@@ -427,10 +615,11 @@ def registreer_callbacks(app):
         _reset,
         sel_contents,
         cfg_contents,
-        cho_contents,
-        cho_fn,
+        cho_upload,
         demo_dataset,
         wiz_config,
+        cho_opleiding,
+        bron,
     ):
         trigger = ctx.triggered_id
 
@@ -440,21 +629,14 @@ def registreer_callbacks(app):
         if trigger == "btn-demodata":
             return _laad_demodata(demo_dataset)
 
-        has_config = cfg_contents or wiz_config
-        if (
-            trigger == "btn-open-dashboard"
-            and sel_contents
-            and has_config
-            and cho_contents
-        ):
-            if cfg_contents:
-                config = lees_config(cfg_contents)
-            else:
-                config = json.loads(wiz_config)
+        bron = actieve_config_bron(None, bron, cfg_contents, wiz_config)
+        if trigger == "btn-open-dashboard" and sel_contents and bron and cho_upload:
+            config = lees_actieve_config(bron, cfg_contents, wiz_config)
             return bouw_data_stores(
                 config,
                 sel_contents,
-                parse_csv_or_excel(cho_contents, cho_fn or "data.csv"),
+                lees_cho_upload(cho_upload["token"]),
+                cho_opleiding,
             )
 
         return dash.no_update, dash.no_update
@@ -520,7 +702,11 @@ def registreer_callbacks(app):
             [
                 stap("Kandidaten", n_kandidaten, None),
                 stap("Ingeschreven", n_ingeschreven, n_kandidaten),
-                stap("Doorgestroomd", n_doorgestroomd, n_ingeschreven),
+                stap(
+                    perspectief_voor(df)["positief_label"],
+                    n_doorgestroomd,
+                    n_ingeschreven,
+                ),
             ]
         )
 
@@ -533,6 +719,7 @@ def registreer_callbacks(app):
 
     @app.callback(
         Output("download-rapport", "data"),
+        Output("rapport-fout", "children"),
         Input("btn-download-rapport", "n_clicks"),
         State("data-store", "data"),
         State("scores-store", "data"),
@@ -541,10 +728,20 @@ def registreer_callbacks(app):
     def download_rapport(_n, store_data, scores_store):
         df = df_from_store(store_data)
         if df.empty or not scores_store:
-            return dash.no_update
+            return dash.no_update, ""
         scores_df = scores_df_from_store(scores_store)
-        perspectief = PERSPECTIEF_DOORSTROOM
-        pdf_bytes = genereer_rapport(df, scores_df, perspectief=perspectief)
+        perspectief = perspectief_voor(df)
+        try:
+            pdf_bytes = genereer_rapport(df, scores_df, perspectief=perspectief)
+        except Exception as e:
+            # Zonder deze melding ziet de gebruiker alleen de toast
+            # 'Rapport wordt gegenereerd' en daarna niets.
+            log.exception("PDF-rapport genereren mislukt")
+            return dash.no_update, dbc.Alert(
+                f"Het rapport kon niet worden gemaakt: {e}",
+                color="danger",
+                className="small py-1 mt-2",
+            )
         opleiding = ""
         if "opleiding" in df.columns and df["opleiding"].notna().any():
             opleiding = str(df["opleiding"].dropna().iloc[0]).strip()
@@ -558,4 +755,4 @@ def registreer_callbacks(app):
             if staart
             else "Selectie evaluatierapport.pdf"
         )
-        return dcc.send_bytes(pdf_bytes, filename)
+        return dcc.send_bytes(pdf_bytes, filename), ""
