@@ -63,7 +63,7 @@ def _uitleg_verschiltoets_regressie():
                 [
                     html.Li(
                         "De verschiltoets en de regressie per item toetsen vrijwel "
-                        "hetzelfde: scoort de groep met studiesucces anders op dit ene "
+                        "hetzelfde: scoort de groep met de positieve uitkomst anders op dit ene "
                         "item? Ze bevestigen elkaar meestal."
                     ),
                     html.Li(
@@ -205,12 +205,13 @@ def registreer_callbacks(app):
                 html.P(" ".join(bevindingen["samenvatting"]), className="fw-bold")
             )
 
-        # Deel 1: voorspellen de selectiescores studiesucces?
-        secties.append(html.H5("Selectiescores en studiesucces", className="mt-2 mb-1"))
+        # Deel 1: voorspellen de selectiescores de uitkomst (retentie of diploma)?
+        uitkomst = perspectief.get("uitkomst_naam", "de uitkomst")
+        secties.append(html.H5("Selectiescores en uitkomst", className="mt-2 mb-1"))
         secties.append(
             html.P(
-                "Hangen hogere selectiescores samen met meer studiesucces "
-                "(doorstroom naar jaar 2 of een diploma)?",
+                f"Hangen hogere selectiescores samen met {uitkomst}? "
+                + perspectief.get("kanttekening", ""),
                 className="small text-muted",
             )
         )
@@ -220,7 +221,7 @@ def registreer_callbacks(app):
                 bevindingen["validiteit"],
                 "Geen opvallende voorspellers gevonden in de cijfers.",
                 uitleg=(
-                    "Items waar de groep met studiesucces duidelijk anders "
+                    "Items waar de groep met de positieve uitkomst duidelijk anders "
                     "scoorde dan de groep zonder. Komt van het tabblad Verschiltoets; "
                     "alleen verschillen die waarschijnlijk niet op toeval berusten, "
                     "ook na correctie voor het aantal items dat tegelijk getoetst "
@@ -228,14 +229,27 @@ def registreer_callbacks(app):
                 ),
             )
         )
+        if bevindingen.get("kanttekeningen"):
+            secties.append(
+                html.Div(
+                    [
+                        html.H6("Hoe zeker is dit?", className="small fw-bold"),
+                        html.Ul(
+                            [html.Li(k) for k in bevindingen["kanttekeningen"]],
+                            className="small text-muted mb-0",
+                        ),
+                    ],
+                    className="mb-4",
+                )
+            )
         if bevindingen.get("regressie"):
             secties.append(
                 _bevindingen_lijst(
                     "Regressie: elk item apart",
                     bevindingen["regressie"],
-                    "Geen items die op zichzelf studiesucces voorspellen.",
+                    f"Geen items die op zichzelf {uitkomst} voorspellen.",
                     uitleg=(
-                        "Items die op zichzelf de kans op studiesucces "
+                        "Items die op zichzelf de kans op de positieve uitkomst "
                         "voorspellen. Komt van het tabblad Regressie, waar elk "
                         "item los is getoetst."
                     ),
@@ -248,7 +262,7 @@ def registreer_callbacks(app):
                     bevindingen["model"],
                     "",
                     uitleg=(
-                        "Hoe goed alle items samen studiesucces voorspellen, en "
+                        f"Hoe goed alle items samen {uitkomst} voorspellen, en "
                         "welk item een eigen bijdrage levert bovenop de rest."
                     ),
                 )
@@ -276,7 +290,10 @@ def registreer_callbacks(app):
         secties.append(
             html.P(
                 "Hangen achtergrondkenmerken samen met de uitkomst, en scoren "
-                "groepen verschillend op de selectie-items?",
+                "gestarte studenten met een andere achtergrond verschillend op de "
+                "selectie-items? De achtergrond komt uit 1CHO en is alleen bekend "
+                "voor wie is gestart; of de selectie bepaalde groepen vaker afwijst, "
+                "is hier dus niet te zien.",
                 className="small text-muted",
             )
         )
@@ -288,7 +305,7 @@ def registreer_callbacks(app):
                     "",
                     uitleg=(
                         "Hangt een achtergrondkenmerk (geslacht, vooropleiding) "
-                        "samen met de kans op studiesucces? Getoetst met een "
+                        "samen met de kans op de positieve uitkomst? Getoetst met een "
                         "chi-kwadraattoets op de kruistabel van het kenmerk tegen "
                         "de uitkomst."
                     ),
@@ -296,13 +313,15 @@ def registreer_callbacks(app):
             )
         secties.append(
             _bevindingen_lijst(
-                "Verschiltoets: eerlijkheid",
+                "Scoreverschillen naar achtergrond (gestarte studenten)",
                 bevindingen["fairness"],
                 "Geen demografische gegevens beschikbaar om te vergelijken.",
                 uitleg=(
-                    "Items waar achtergrondgroepen verschillend scoorden. "
-                    "Kan wijzen op onbedoelde vertekening. Per item getoetst met "
-                    "een Kruskal-Wallis-toets, net als op het tabblad Verschiltoets."
+                    "Items waar gestarte studenten met een andere achtergrond "
+                    "verschillend scoorden. Kan wijzen op onbedoelde vertekening, "
+                    "maar een verschil in gemiddelde is op zichzelf geen bewijs "
+                    "daarvan. Per item getoetst met een Kruskal-Wallis-toets, net "
+                    "als op het tabblad Verschiltoets."
                 ),
             )
         )

@@ -1,5 +1,5 @@
 """
-1CHO-transformaties: van ruwe inschrijvingsdata naar studiesucces-uitkomst.
+1CHO-transformaties: van ruwe inschrijvingsdata naar retentie-uitkomst.
 
 Echte 1CHO-data (1 Cijfer Hoger Onderwijs, beheerd door DUO) kent geen
 kant-en-klare 'groep'-kolom. Het zijn inschrijvingsgegevens in lang

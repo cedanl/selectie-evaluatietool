@@ -1,4 +1,4 @@
-"""Tab 'Demografie': achtergrond tegen studieuitkomst."""
+"""Tab 'Demografie': achtergrond tegen uitkomst (retentie of diploma)."""
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -12,6 +12,8 @@ from shared import (
     DEMO_DIMENSIES,
     chi2_per_dimensie,
     fmt_p,
+    afgeschermde_kruistabel,
+    AFSCHERM_UITLEG,
 )
 
 from helpers import (
@@ -113,21 +115,17 @@ def registreer_callbacks(app):
         volgorde = [pos_label, neg_label]
         kleuren = binair_kleur_map(perspectief)
 
-        ct = pd.crosstab(
-            subset[dim_col], subset["_uitkomst"], margins=True, margins_name="Totaal"
-        )
+        ct = pd.crosstab(subset[dim_col], subset["_uitkomst"])
         aanwezig = [c for c in volgorde if c in ct.columns]
-        ct = ct[aanwezig + ["Totaal"]]
-        ct_pct = ct.div(ct["Totaal"], axis=0).drop(columns=["Totaal"]).round(3)
+        ct = ct[aanwezig]
+        ct_pct = ct.div(ct.sum(axis=1), axis=0).round(3)
+        tekst, afgeschermd = afgeschermde_kruistabel(ct, aanwezig)
 
         tabel_data = []
-        for rij_naam in ct.index:
+        for rij_naam in tekst.index:
             rij = {dim_label: str(rij_naam)}
-            for col in aanwezig:
-                n = int(ct.loc[rij_naam, col])
-                pct = ct_pct.loc[rij_naam, col] * 100 if col in ct_pct.columns else 0
-                rij[col] = f"{n} ({pct:.0f}%)"
-            rij["Totaal"] = int(ct.loc[rij_naam, "Totaal"])
+            for col in aanwezig + ["Totaal"]:
+                rij[col] = tekst.loc[rij_naam, col]
             tabel_data.append(rij)
 
         tabel_cols = [{"name": dim_label, "id": dim_label}]
@@ -150,7 +148,9 @@ def registreer_callbacks(app):
             }
         )
 
-        groep_namen = [g for g in ct.index if g != "Totaal"]
+        # Afgeschermde groepen staan ook niet in de grafiek (de balk zou het
+        # percentage alsnog verraden).
+        groep_namen = [g for g in ct.index if g not in afgeschermd]
         fig = go.Figure()
         for uitkomst_cat in aanwezig:
             waarden = [
@@ -203,6 +203,13 @@ def registreer_callbacks(app):
 
         n_buiten = int((~df["groep"].isin(perspectief["populatie"])).sum())
         voetnoot = []
+        if afgeschermd:
+            voetnoot.append(
+                html.P(
+                    AFSCHERM_UITLEG + " Deze groepen staan niet in de grafiek.",
+                    className="text-muted small fst-italic mt-2 mb-0",
+                )
+            )
         if n_buiten > 0:
             voetnoot.append(
                 html.P(

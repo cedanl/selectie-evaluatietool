@@ -166,7 +166,7 @@ TABLE_STYLE = dict(
 GROEPEER_OPTIES = [
     # De labels in de grafieken volgen de data (doorstroom of diploma, zie
     # shared.perspectief_voor); de keuzelijst zelf is neutraal.
-    {"label": "Studiesucces (doorstroom of diploma)", "value": "doorstroom"},
+    {"label": "Retentie (jaar 2 of diploma)", "value": "doorstroom"},
 ] + [{"label": d["label"], "value": d["kolom"]} for d in DEMO_DIMENSIES]
 
 GROEPEER_OPTIES_SCORES = GROEPEER_OPTIES

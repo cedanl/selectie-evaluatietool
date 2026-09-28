@@ -131,11 +131,25 @@ _INLEIDING_KOLOM = dbc.Col(
         ),
         html.H3("Selectie Evaluatietool", className="mb-2"),
         html.P(
-            "Deze tool laat zien of je selectieprocedure studiesucces "
-            "voorspelt: doen kandidaten die hoog scoorden bij de selectie "
-            "het later ook beter in hun studie? Je hebt geen statistiek "
+            "Deze tool laat zien of je selectieprocedure retentie "
+            "voorspelt: staan kandidaten die hoog scoorden bij de selectie "
+            "vaker in jaar 2 nog ingeschreven (of halen ze bij een eenjarige "
+            "master vaker het diploma)? Je hebt geen statistiek "
             "nodig. Je laadt je data en het dashboard rekent de "
             "vergelijkingen uit en legt in gewone taal uit wat eruit komt.",
+            className="text-muted small mb-3",
+        ),
+        html.P(
+            [
+                "Werk je met echte data? Lees eerst de ",
+                html.A(
+                    "privacy-handleiding",
+                    href="https://github.com/cedanl/selectie-evaluatietool/blob/master/docs/privacy-handleiding.md",
+                    target="_blank",
+                    rel="noopener noreferrer",
+                ),
+                ". Alle gegevens blijven op deze computer.",
+            ],
             className="text-muted small mb-3",
         ),
         maak_upload_intro(),
@@ -171,7 +185,7 @@ _UPLOAD_KOLOM = dbc.Col(
             html.Div(id="validatie-resultaat", className="mb-3"),
             _grote_upload_card(
                 "1CHO-data",
-                "Studiesuccesdata per kandidaat. Dit is de output van de "
+                "Inschrijvingsdata per kandidaat. Dit is de output van de "
                 "1cijferho-pipeline (BSN al gekoppeld aan studentnummer), "
                 "niet het ruwe DUO-bestand. Een groot bestand van de hele "
                 "instelling kan ook.",
@@ -281,7 +295,7 @@ SIDEBAR = html.Div(
         html.P("Kandidaten per cohort", className="sidebar-label"),
         html.Div(id="cohort-stats"),
         html.Hr(className="mt-3 mb-2"),
-        html.P("Van aanmelding tot studiesucces", className="sidebar-label"),
+        html.P("Van aanmelding tot uitkomst", className="sidebar-label"),
         html.Div(id="funnel-stats"),
         html.Hr(className="mt-3 mb-2"),
         dcc.Loading(
