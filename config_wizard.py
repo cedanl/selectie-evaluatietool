@@ -12,6 +12,7 @@ import json
 import math
 import re
 
+import numpy as np
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.comments import Comment
@@ -270,6 +271,83 @@ def _raad_schaal(waarden: pd.Series) -> str:
     return f"{laag}-{hoog}"
 
 
+# Woorden in een kolomnaam die op een (sub)totaal wijzen. Gematcht als los
+# woorddeel (zie _naam_delen), zodat bijv. 'somatisch' niet meetelt.
+_SOM_WOORDEN = {
+    "subtotaal",
+    "subtotal",
+    "totaal",
+    "total",
+    "totaalscore",
+    "totalscore",
+    "som",
+    "sum",
+}
+
+
+def _naam_delen(naam: str) -> set[str]:
+    """Kolomnaam in kleine woorddelen: splitst op niet-letters/cijfers en op
+    CamelCase ('C_B1_Sc_SubTotaal' -> {c, b1, sc, subtotaal, sub, totaal})."""
+    delen = set()
+    for stuk in re.split(r"[^0-9A-Za-z]+", naam):
+        if not stuk:
+            continue
+        delen.add(stuk.lower())
+        delen.update(d.lower() for d in re.findall(r"[A-Z]?[a-z0-9]+|[A-Z]+", stuk))
+    return delen
+
+
+def detecteer_somkolommen(
+    df: pd.DataFrame, kolommen: list[str], min_rijen: int = 5
+) -> dict[str, list[str]]:
+    """Zoek kolommen die een (sub)totaal van andere scorekolommen zijn.
+
+    Een subtotaal naast zijn onderdelen telt dezelfde informatie dubbel en
+    overlapt per definitie sterk met die onderdelen; in de analyses komt het
+    dan vaak als 'sterkste voorspeller' bovenaan. Twee signalen:
+
+    - de naam bevat een woord als 'subtotaal', 'totaal' of 'som';
+    - de kolom is (op alle rijen) gelijk aan de som van een aaneengesloten
+      reeks van minstens twee andere scorekolommen, zoals in de meeste
+      selectie-Excels waar een subtotaal naast zijn onderdelen staat.
+
+    Returnt {kolom: [onderdelen]}; de lijst is leeg als alleen de naam het
+    verraadt.
+    """
+    gevonden: dict[str, list[str]] = {
+        k: [] for k in kolommen if _naam_delen(k) & _SOM_WOORDEN
+    }
+    if len(kolommen) < 3:
+        return gevonden
+
+    waarden = df[kolommen].apply(pd.to_numeric, errors="coerce")
+    bruikbaar = waarden.notna().any(axis=1)
+    if bruikbaar.sum() < min_rijen:
+        return gevonden
+    # Lege cellen tellen als 0, net als in een Excel-SOM.
+    matrix = waarden[bruikbaar].fillna(0).to_numpy(dtype=float)
+    cum = np.concatenate([np.zeros((len(matrix), 1)), matrix.cumsum(axis=1)], axis=1)
+
+    for c, kolom in enumerate(kolommen):
+        doel = matrix[:, c]
+        if not np.any(doel):
+            continue
+        # Alle aaneengesloten reeksen [i, j) van minstens twee kolommen,
+        # zonder de kolom zelf.
+        delen = next(
+            (
+                kolommen[i:j]
+                for i in range(len(kolommen))
+                for j in range(i + 2, len(kolommen) + 1)
+                if not i <= c < j and np.allclose(cum[:, j] - cum[:, i], doel)
+            ),
+            None,
+        )
+        if delen:
+            gevonden[kolom] = delen
+    return gevonden
+
+
 def detecteer_alle_kolommen(
     df: pd.DataFrame,
     id_kolom: str | None,
@@ -278,18 +356,30 @@ def detecteer_alle_kolommen(
     """Eén rij per kolom in het selectiebestand, met `_meenemen` aan voor de
     kolommen die als score worden herkend (numeriek, geen ID/totaal/uitsluiting).
     Voor die kolommen worden instrument, item en schaal alvast voorgesteld; de
-    overige kolommen komen leeg en uitgevinkt in de tabel."""
+    overige kolommen komen leeg en uitgevinkt in de tabel.
+
+    Een (sub)totaalkolom (zie detecteer_somkolommen) krijgt wel voorstellen
+    maar staat uitgevinkt, met de onderdelen in `_somdelen` voor de tip."""
     skip = {id_kolom, totaalscore_kolom} - {None}
     alle_kolommen = [str(c) for c in df.columns]
     resultaat = []
 
+    def _is_score(col) -> bool:
+        return (
+            str(col) not in skip
+            and pd.api.types.is_numeric_dtype(df[col])
+            and not _moet_uitsluiten(str(col))
+        )
+
+    somkolommen = detecteer_somkolommen(
+        df.set_axis(alle_kolommen, axis=1),
+        [str(c) for c in df.columns if _is_score(c)],
+    )
+
     for col in df.columns:
         col_str = str(col)
-        is_score = (
-            col_str not in skip
-            and pd.api.types.is_numeric_dtype(df[col])
-            and not _moet_uitsluiten(col_str)
-        )
+        is_score = _is_score(col)
+        is_som = col_str in somkolommen
         resultaat.append(
             {
                 "kolom_naam": col_str,
@@ -299,7 +389,8 @@ def detecteer_alle_kolommen(
                 "item": _maak_item_naam(col_str) if is_score else "",
                 "criterium": "",
                 "schaal": _raad_schaal(df[col]) if is_score else "",
-                "_meenemen": is_score,
+                "_meenemen": is_score and not is_som,
+                "_somdelen": somkolommen.get(col_str) if is_som else None,
             }
         )
 
@@ -360,6 +451,32 @@ def _duplicaat_tip(df: pd.DataFrame, score_kols: list[dict]):
         ],
         color="warning",
         className="small py-2 mb-0",
+    )
+
+
+def _somkolom_tip(alle_kols: list[dict]):
+    """Leg uit waarom (sub)totaalkolommen standaard uitgevinkt staan."""
+    som = [k for k in alle_kols if k.get("_somdelen") is not None]
+    if not som:
+        return ""
+
+    def regel(k):
+        if not k["_somdelen"]:
+            return f"'{k['kolom_naam']}' (de naam wijst op een totaal)"
+        return f"'{k['kolom_naam']}' = som van {', '.join(k['_somdelen'])}"
+
+    return dbc.Alert(
+        [
+            html.Strong("Subtotalen uitgevinkt. "),
+            "Deze kolommen zijn een optelling van andere scorekolommen. Neem je "
+            "ze naast hun onderdelen mee, dan telt dezelfde informatie dubbel: "
+            "het subtotaal lijkt dan al snel de sterkste voorspeller, terwijl het "
+            "alleen de onderdelen herhaalt. Daarom staan ze uit. Wil je liever "
+            "het subtotaal analyseren, vink het dan aan en vink de onderdelen uit.",
+            html.Ul([html.Li(regel(k)) for k in som], className="mb-0 mt-1"),
+        ],
+        color="info",
+        className="small py-2 mb-2",
     )
 
 
@@ -937,6 +1054,9 @@ def registreer_callbacks(app: dash.Dash) -> None:
 
             tip_children = []
             if alle_kols:
+                som_tip = _somkolom_tip(alle_kols)
+                if som_tip:
+                    tip_children.append(som_tip)
                 instrument_tip = _instrument_tip(alle_kols)
                 if instrument_tip:
                     tip_children.append(instrument_tip)
@@ -946,10 +1066,12 @@ def registreer_callbacks(app: dash.Dash) -> None:
             tip = html.Div(tip_children) if tip_children else ""
 
             # De checkboxes (selected_rows) zijn de Meenemen-vlag; vink de
-            # herkende scorekolommen vast aan. _meenemen hoort niet in de tabel.
+            # herkende scorekolommen vast aan. Hulpvelden (_meenemen, _somdelen)
+            # horen niet in de tabel.
             geselecteerd = [i for i, k in enumerate(alle_kols) if k["_meenemen"]]
             tabel_rijen = [
-                {k: v for k, v in kol.items() if k != "_meenemen"} for kol in alle_kols
+                {k: v for k, v in kol.items() if not k.startswith("_")}
+                for kol in alle_kols
             ]
 
             return (

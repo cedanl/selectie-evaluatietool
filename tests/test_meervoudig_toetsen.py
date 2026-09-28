@@ -29,7 +29,9 @@ def test_bh_gelijk_aan_statsmodels(p):
 def test_bh_laat_nan_staan_en_telt_die_niet_mee():
     uit = bh_correctie([0.01, float("nan"), 0.04])
     assert math.isnan(uit[1])
-    assert np.allclose([uit[0], uit[2]], multipletests([0.01, 0.04], method="fdr_bh")[1])
+    assert np.allclose(
+        [uit[0], uit[2]], multipletests([0.01, 0.04], method="fdr_bh")[1]
+    )
 
 
 def _scores(n_items=10, n=12, seed=0):
@@ -45,7 +47,9 @@ def _scores(n_items=10, n=12, seed=0):
                     "studentnummer": s,
                     "item_kort": f"item{i}",
                     "score": basis + rng.normal(),
-                    "groep": GROEP_DOORGESTROOMD if succes else GROEP_GESTART_GEEN_VERVOLG,
+                    "groep": GROEP_DOORGESTROOMD
+                    if succes
+                    else GROEP_GESTART_GEEN_VERVOLG,
                     "geslacht": "M" if s % 2 else "V",
                 }
             )
