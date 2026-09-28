@@ -93,12 +93,15 @@ def normaliseer_1cijferho(df: pd.DataFrame) -> pd.DataFrame:
       een koppelbestand), dan wordt die de koppelsleutel in plaats van het
       DUO-nummer in `persoonsgebonden_nummer`.
     - Ontbreekt `diploma_behaald`, dan leiden we die af uit `diplomajaar` voor
-      rijen in de masterfase. `diplomajaar` is net als `inschrijvingsjaar` een
-      studiejaar (2024 = 2024-2025), dus een diploma telt op een rij alleen
-      als `diplomajaar == inschrijvingsjaar`. Samen met de cohortjaar-eis in
-      `transformeer_cho` betekent dat: diploma gehaald in het studiejaar van de
-      start. Bachelors krijgen geen diplomakolom, daar is doorstroom naar jaar
-      2 de uitkomst.
+      rijen in de masterfase. Volgens de DUO-bestandsbeschrijving loopt
+      inschrijvingsjaar T van september T t/m augustus T+1, en diplomajaar T
+      van oktober T t/m september T+1: een maand later. Een diploma uit
+      september T (de eerste maand van inschrijvingsjaar T) heeft dus
+      diplomajaar T-1. Een diploma telt daarom als `diplomajaar` gelijk is aan
+      `inschrijvingsjaar` of één lager. Samen met de cohortjaar-eis in
+      `transformeer_cho` betekent dat: diploma gehaald tussen september van het
+      startjaar en september van het jaar erna. Bachelors krijgen geen
+      diplomakolom, daar is doorstroom naar jaar 2 de uitkomst.
 
     Een bestand in het eigen formaat van de tool (zoals de demodata) blijft
     ongewijzigd."""
@@ -118,9 +121,8 @@ def normaliseer_1cijferho(df: pd.DataFrame) -> pd.DataFrame:
         if master.any():
             diplomajaar = pd.to_numeric(df[_1CIJFERHO_DIPLOMAJAAR], errors="coerce")
             inschrijvingsjaar = pd.to_numeric(df["inschrijvingsjaar"], errors="coerce")
-            df = df.assign(
-                **{_DIPLOMA_KOLOM: master & diplomajaar.eq(inschrijvingsjaar)}
-            )
+            verschil = inschrijvingsjaar - diplomajaar
+            df = df.assign(**{_DIPLOMA_KOLOM: master & verschil.isin([0, 1])})
     return df
 
 
