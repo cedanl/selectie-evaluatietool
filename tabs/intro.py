@@ -14,13 +14,14 @@ from shared import (
     GROEP_KLEUREN,
     GROEP_GESTART_GEEN_VERVOLG,
     GROEP_DOORGESTROOMD,
+    RETENTIE_UITLEG,
 )
 
 # De groepen zoals we ze in de inleiding uitleggen. De tool vergelijkt alleen
-# studenten die daadwerkelijk aan de opleiding zijn begonnen: wie studiesucces
-# had tegenover wie uitviel. De vergelijking 'gestart vs niet gestart' en de
+# studenten die daadwerkelijk aan de opleiding zijn begonnen: wie in jaar 2 nog
+# ingeschreven stond tegenover wie niet. De vergelijking 'gestart vs niet gestart' en de
 # losse 'Niet gestart'-groep zitten niet in het dashboard, dus die tonen we hier
-# ook niet als vergelijkingsgroep. Studiesucces is per opleiding ofwel doorstroom
+# ook niet als vergelijkingsgroep. De positieve uitkomst is per opleiding ofwel doorstroom
 # naar jaar 2 ofwel een diploma (eenjarige opleidingen zoals masters); die twee
 # tonen we als een gecombineerde succesgroep. De kleur komt uit shared.py zodat
 # hij gelijkloopt met de grafieken.
@@ -33,8 +34,8 @@ GROEP_KAARTEN = [
     ),
     (
         GROEP_KLEUREN[GROEP_DOORGESTROOMD],
-        "Studiesucces",
-        "Doorgestroomd naar jaar 2, of bij eenjarige opleidingen zoals masters het "
+        "Retentie",
+        "In jaar 2 nog ingeschreven, of bij eenjarige opleidingen zoals masters het "
         "diploma gehaald. Dit is de positieve uitkomst.",
     ),
 ]
@@ -106,7 +107,7 @@ def maak_upload_intro():
                         3,
                         "Bekijken",
                         "In de tabbladen zie je per item of hogere scores samenhangen "
-                        "met meer studiesucces, met uitleg erbij.",
+                        "met meer retentie, met uitleg erbij.",
                     ),
                 ],
                 flush=True,
@@ -116,8 +117,8 @@ def maak_upload_intro():
             html.P(
                 "Deze tool kijkt alleen naar studenten die zich daadwerkelijk bij de "
                 "instelling en opleiding inschreven en daardoor in het 1CHO-bestand "
-                "terechtkomen. Binnen die groep vergelijkt de tool wie studiesucces "
-                "had met wie uitviel:",
+                "terechtkomen. Binnen die groep vergelijkt de tool wie in jaar 2 nog "
+                "ingeschreven stond (of het diploma haalde) met wie niet:",
                 className="text-muted small",
             ),
             dbc.Row(
@@ -132,6 +133,10 @@ def maak_upload_intro():
                 "maar niet aan de opleiding begonnen, staan niet in 1CHO. Zij worden "
                 "uit de analyse gehaald en niet met de ingeschreven studenten "
                 "vergeleken.",
+                className="text-muted small mb-2",
+            ),
+            html.P(
+                RETENTIE_UITLEG,
                 className="text-muted small mb-0",
             ),
         ],
@@ -180,7 +185,7 @@ def maak_layout():
                             ),
                             _tab_uitleg(
                                 "Regressie",
-                                "welke items samen het beste studiesucces voorspellen.",
+                                "welke items samen het beste retentie voorspellen.",
                             ),
                         ],
                         className="small text-muted",

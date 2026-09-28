@@ -206,6 +206,16 @@ The "events per variable" (EPV) rule says you need at least 5-10 events (student
 
 The per-item tests (verschiltoets per outcome, per demographic dimension, and the univariate regressions) test many items at once, so some come out below p = 0.05 by chance. `shared.bh_correctie` applies Benjamini-Hochberg (chosen over Holm, which is too strict for 50-150 students) per family of tests: one table = one family. Tables show the raw `p` and `p (gecorrigeerd)` (`shared.P_GECORRIGEERD`, numeric `_p_bh`); significance stars, the "Verschil" direction, `genereer_bevindingen`, `_tel_bevindingen` and the vervolgstappen all use the corrected p (`shared._p_kolom` falls back to `_p` for tables without `_p_bh`). The user-facing explanation is one constant, `shared.BH_UITLEG`, reused by the tabs and the report. The joint model is a single test and is not corrected.
 
+### Policy framing (beleidsaudit, issues #46-#52)
+
+- **Outcome is called retentie**, not studiesucces, in all user-facing text (`shared.RETENTIE_UITLEG`, the perspectives' `kanttekening`/`uitkomst_naam`). Year-2 enrollment is retention: repeaters count as doorgestroomd, switchers as not. Group labels (`GROEP_*`) are unchanged.
+- **Null results are not evidence against the selection.** `beleidsvervolgstappen` never advises simplifying/cutting when nothing is significant. `genereer_bevindingen` returns `kanttekeningen`: the smallest detectable effect (`kleinste_aantoonbaar_effect`, 80% power, uncorrected, so a lower bound) and `BEREIKSBEPERKING_UITLEG` (range restriction: only admitted students have an outcome). Shown in Wat valt op, the Verschiltoets explanation and the report.
+- **Background analysis is named for what it is**: "Scoreverschillen naar achtergrond (gestarte studenten)", not "eerlijkheid". Background comes from 1CHO, so rejected candidates are invisible; the text says so.
+- **Retentie per scoregroep** (`retentie_per_scoregroep`): quartiles of started students per item (or one band per value when an item has ≤4 distinct values), share with the positive outcome. Verschiltoets tab and report section 3.
+- **Small cells**: `MIN_CEL` (5). Use `cel_tekst` for counts and `afgeschermde_kruistabel` for crosstabs (suppresses the small cell, its row partner, and the Totaal row when exactly one row is suppressed). Suppressed groups are left out of charts and out of the demografie findings text.
+- **Report provenance**: "Over dit rapport" table in the Inleiding (tool version from pyproject, date, opleiding, instelling, jaar, counts, MIN_CEL).
+- **Privacy**: `docs/privacy-handleiding.md` (FG checklist), linked from README and the upload screen.
+
 ### Subtotals
 
 A subtotal next to its parts double-counts and correlates with them by construction, so it tends to top the findings. `config_wizard.detecteer_somkolommen` flags a column whose name contains a (sub)totaal/som word (as a word part, see `_naam_delen`) or that equals the sum of a contiguous run of ≥2 other score columns. The wizard leaves those unchecked (with suggestions filled in) and explains why in `_somkolom_tip`.

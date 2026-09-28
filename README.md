@@ -1,7 +1,7 @@
 <div align="center">
   <h1>Selectie Evaluatietool</h1>
 
-  <p>Onderzoek of je selectieprocedure studiesucces voorspelt</p>
+  <p>Onderzoek of je selectieprocedure retentie voorspelt</p>
 
   <p>
     <a href="#"><img src="https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white" alt="Windows"></a>
@@ -15,9 +15,13 @@
 
 ---
 
-Veel opleidingen selecteren kandidaten via een test, gesprek of vragenlijst. Maar **werkt zo'n selectie eigenlijk?** Haalden de studenten die hoog scoorden het ook echt beter?
+Veel opleidingen selecteren kandidaten via een test, gesprek of vragenlijst. Maar **werkt zo'n selectie eigenlijk?** Staan de studenten die hoog scoorden na het eerste jaar vaker nog ingeschreven?
 
-Deze tool geeft antwoord. Upload je selectiescores en 1CHO-studiedata, en het dashboard legt ze naast elkaar: grafieken, significantietoetsen, correlaties en een regressiemodel dat laat zien welke onderdelen van de selectie iets voorspellen.
+Deze tool helpt die vraag te beantwoorden. Upload je selectiescores en 1CHO-inschrijvingsdata, en het dashboard legt ze naast elkaar: grafieken, significantietoetsen, correlaties en een regressiemodel dat laat zien welke onderdelen van de selectie iets voorspellen.
+
+De uitkomst is **retentie**: staat de student in jaar 2 nog ingeschreven bij de opleiding (of is bij een eenjarige master het diploma gehaald)? Dat is niet hetzelfde als studiesucces: wie jaar 1 overdoet telt als doorgestroomd, wie overstapt naar een beter passende opleiding niet. En omdat alleen toegelaten studenten een uitkomst hebben, lijken verbanden zwakker dan ze in de hele kandidatenpool zijn. Lees de uitkomsten daarom als aanwijzingen, niet als eindoordeel.
+
+Werk je met echte data? Lees dan eerst de [privacy-handleiding](docs/privacy-handleiding.md).
 
 
 ## Inhoud
@@ -97,7 +101,7 @@ Het dashboard opent op een **Introductie**-tab met context en een uitleg per tab
 | **Demografie** | Per achtergrondkenmerk: welk aandeel van elke groep stroomde door naar jaar 2 |
 | **Verschiltoets** | Per item: is het verschil tussen groepen significant of toeval? Met effectgrootte en p-waarde |
 | **Correlatie** | Kleurenkaart van de samenhang tussen items — handig om te zien welke items hetzelfde meten |
-| **Regressie** | Welke items voorspellen studiesucces het sterkst, apart en gezamenlijk |
+| **Regressie** | Welke items voorspellen retentie het sterkst, apart en gezamenlijk |
 
 Het dashboard genereert ook een **PDF-rapport** met alle analyses. Klik op de downloadknop rechtsbovenin.
 

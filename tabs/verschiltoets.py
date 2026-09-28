@@ -13,7 +13,11 @@ from shared import (
     DEMO_DIMENSIES,
     demografie_scores,
     BH_UITLEG,
+    BEREIKSBEPERKING_UITLEG,
     P_GECORRIGEERD,
+    retentie_per_scoregroep,
+    SCOREGROEP_KOLOMMEN,
+    SCOREGROEP_UITLEG,
 )
 
 from helpers import (
@@ -45,6 +49,13 @@ def _uitleg_details(samenvatting, inhoud):
                                 [
                                     html.Strong("Correctie voor meervoudig toetsen. "),
                                     BH_UITLEG,
+                                ],
+                                className="mb-1",
+                            ),
+                            html.P(
+                                [
+                                    html.Strong("Alleen gestarte studenten. "),
+                                    BEREIKSBEPERKING_UITLEG,
                                 ],
                                 className="mb-0",
                             ),
@@ -93,6 +104,25 @@ def _uitleg_verschil_demografisch(label):
     )
 
 
+def _scoregroep_blok(tabel, perspectief):
+    """Tabel 'uitkomst per scoregroep': dezelfde vraag als de verschiltoets, in
+    percentages die een commissie direct kan lezen."""
+    if tabel.empty:
+        return None
+    return html.Div(
+        [
+            html.H6(f"Aandeel '{perspectief['positief_label']}' per scoregroep"),
+            html.P(SCOREGROEP_UITLEG, className="text-muted small"),
+            dash_table.DataTable(
+                data=tabel.to_dict("records"),
+                columns=[{"name": c, "id": c} for c in SCOREGROEP_KOLOMMEN],
+                style_table={"overflowX": "auto"},
+                **TABLE_STYLE,
+            ),
+        ]
+    )
+
+
 def maak_layout():
     return dbc.Tab(
         label="Verschiltoets",
@@ -102,9 +132,10 @@ def maak_layout():
                 [
                     html.H5("Verschiltoets per item"),
                     html.P(
-                        "Toetst per item of de scores significant verschillen. Kies studiesucces "
-                        "(voorspelt het item doorstroom of diploma?) of een demografische "
-                        "dimensie (maakt het item onbedoeld onderscheid?).",
+                        "Toetst per item of de scores significant verschillen. Kies "
+                        "retentie (voorspelt het item wie in jaar 2 nog ingeschreven "
+                        "staat, of het diploma haalt?) of een achtergrondkenmerk "
+                        "(scoren gestarte studenten met een andere achtergrond anders?).",
                         className="text-muted small",
                     ),
                     dbc.Row(
@@ -145,6 +176,7 @@ def maak_layout():
                         ],
                         **TABLE_STYLE,
                     ),
+                    html.Div(id="scoregroep-blok", className="mt-4"),
                 ],
                 className="tab-body",
             ),
@@ -157,6 +189,7 @@ def registreer_callbacks(app):
         Output("tabel-verschil", "data"),
         Output("tabel-verschil", "columns"),
         Output("verschiltoets-uitleg", "children"),
+        Output("scoregroep-blok", "children"),
         Input("verschil-niveau", "value"),
         Input("data-store", "data"),
         State("scores-store", "data"),
@@ -164,7 +197,7 @@ def registreer_callbacks(app):
     def update_verschiltoets_tab(niveau, store_data, scores_store):
         df = df_from_store(store_data)
         if df.empty or not scores_store:
-            return [], [], ""
+            return [], [], "", None
         scores_df = scores_df_from_store(scores_store)
 
         perspectief = uitkomst_perspectief(niveau, df)
@@ -179,6 +212,9 @@ def registreer_callbacks(app):
             tabel = vergelijk_succes_per_item(scores, perspectief=perspectief)
             kolommen = VERGELIJKING_KOLOMMEN
             uitleg = _uitleg_verschil_uitkomst(perspectief)
+            scoregroepen = _scoregroep_blok(
+                retentie_per_scoregroep(scores, perspectief), perspectief
+            )
         else:
             dim = next((d for d in DEMO_DIMENSIES if d["kolom"] == niveau), None)
             scores = demografie_scores(df, scores_df, dim) if dim else None
@@ -187,11 +223,13 @@ def registreer_callbacks(app):
                     [],
                     [],
                     _uitleg_verschil_demografisch(dim["label"] if dim else ""),
+                    None,
                 )
             tabel = toets_verschil_per_item(scores, dim["kolom"])
             kolommen = VERSCHIL_KOLOMMEN
             uitleg = _uitleg_verschil_demografisch(dim["label"])
+            scoregroepen = None
 
         data = tabel[kolommen].to_dict("records") if not tabel.empty else []
         cols = [{"name": c, "id": c} for c in kolommen]
-        return data, cols, uitleg
+        return data, cols, uitleg, scoregroepen

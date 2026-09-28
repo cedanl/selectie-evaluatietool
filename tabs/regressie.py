@@ -1,4 +1,4 @@
-"""Tab 'Regressie': logistische regressie op studiesucces."""
+"""Tab 'Regressie': logistische regressie op retentie (of diploma)."""
 
 from dash import dcc, html, dash_table, Input, Output, State
 import dash_bootstrap_components as dbc
@@ -25,11 +25,11 @@ def maak_layout():
         children=[
             html.Div(
                 [
-                    html.H5("Regressie-analyse: voorspelling studiesucces"),
+                    html.H5("Regressie-analyse: voorspelling retentie"),
                     html.P(
                         "Welke items van de selectie voorspellen het beste of een student "
-                        "de opleiding succesvol vervolgt (doorstroom naar jaar 2, of een diploma "
-                        "bij eenjarige opleidingen)?",
+                        "in jaar 2 nog ingeschreven staat (of bij eenjarige opleidingen "
+                        "het diploma haalt)?",
                         className="text-muted small",
                     ),
                     html.Details(
@@ -49,7 +49,7 @@ def maak_layout():
                                         [
                                             html.Li(
                                                 "Coefficient: richting en sterkte. Positief = hogere score, hogere "
-                                                "kans op studiesucces. Genormaliseerd (z-scores), dus vergelijkbaar."
+                                                "kans op de positieve uitkomst. Genormaliseerd (z-scores), dus vergelijkbaar."
                                             ),
                                             html.Li(
                                                 "Odds ratio: een kansverhouding per standaarddeviatie hogere score. "
@@ -74,7 +74,7 @@ def maak_layout():
                                     ),
                                     html.P(
                                         "Het univariate model toetst elk item afzonderlijk: voorspelt dit "
-                                        "item op zichzelf studiesucces? Het gezamenlijke model zet alle "
+                                        "item op zichzelf de uitkomst? Het gezamenlijke model zet alle "
                                         "items tegelijk in en laat zien welk item bovenop de andere "
                                         "nog een eigen bijdrage levert. Bij weinig studenten worden de zwakste "
                                         "items automatisch weggelaten: per item in het model zijn "
@@ -107,7 +107,7 @@ def maak_layout():
                             ),
                             html.H6("Elk item los getoetst"),
                             html.P(
-                                "Voorspelt dit item op zichzelf studiesucces? Hier "
+                                "Voorspelt dit item op zichzelf de uitkomst? Hier "
                                 "wordt elk item afzonderlijk bekeken; alle items "
                                 "blijven staan, er valt niets weg.",
                                 className="text-muted small",

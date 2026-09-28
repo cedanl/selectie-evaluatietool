@@ -1,5 +1,5 @@
 """
-Evaluatietool: selectie & studiesucces dashboard
+Evaluatietool: selectie & retentie dashboard
 
 Draai met: uv run python app.py
 Demodata aanmaken: uv run python scripts/maak_data.py

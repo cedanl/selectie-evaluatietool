@@ -69,7 +69,7 @@ def test_niets_significant_zegt_geen_enkel_item():
 def test_alleen_negatieve_richting_wordt_niet_aangeprezen():
     _, tekst = _stappen(_succes_tabel([("A", -0.4, 0.01)]))
     assert "zwaarder meewegen, en bevestig" not in tekst
-    assert "scoorden juist de uitvallers hoger" in tekst
+    assert "scoorden juist de niet-doorstromers hoger" in tekst
 
 
 def test_telt_alle_significante_items_ook_boven_top3():

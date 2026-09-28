@@ -40,11 +40,30 @@ from shared import (
     chi2_per_dimensie,
     model_stats_uit,
     BH_UITLEG,
+    BEREIKSBEPERKING_UITLEG,
     VOORSELECTIE_UITLEG,
     SCHEIDING_UITLEG,
+    MIN_CEL,
+    cel_tekst,
+    retentie_per_scoregroep,
+    SCOREGROEP_KOLOMMEN,
+    SCOREGROEP_UITLEG,
 )
 
 log = logging.getLogger(__name__)
+
+
+def _tool_versie() -> str:
+    """Versie uit pyproject.toml, zodat een rapport later terug te voeren is op
+    de code die het maakte. 'onbekend' als het bestand ontbreekt."""
+    import tomllib
+
+    try:
+        with open(Path(__file__).parent / "pyproject.toml", "rb") as f:
+            return tomllib.load(f)["project"]["version"]
+    except (OSError, KeyError, tomllib.TOMLDecodeError):
+        return "onbekend"
+
 
 LOGO_PATH = Path(__file__).parent / "assets" / "nko-logo.png"
 
@@ -192,8 +211,8 @@ class RapportPDF(FPDF):
                 0,
                 7,
                 f"{groep}: {n} ({n / n_totaal * 100:.0f}%)"
-                if n_totaal > 0
-                else f"{groep}: 0",
+                if n >= MIN_CEL and n_totaal > 0
+                else f"{groep}: {cel_tekst(n)}",
                 align="C",
                 new_x="LMARGIN",
                 new_y="NEXT",
@@ -238,7 +257,9 @@ class RapportPDF(FPDF):
         self.set_xy(16, y)
         self.set_font(FONT, "B", 11)
         self.set_text_color(*DARK)
-        self.cell(0, 6, f"{groep} ({n} kandidaten):", new_x="LMARGIN", new_y="NEXT")
+        self.cell(
+            0, 6, f"{groep} ({cel_tekst(n)} kandidaten):", new_x="LMARGIN", new_y="NEXT"
+        )
         self.ln(1)
 
     def add_image_from_bytes(self, img_bytes: bytes, w=180):
@@ -463,6 +484,10 @@ def genereer_rapport(
         jaren = sorted(df["selectiejaar"].dropna().unique())
         jaar = ", ".join(str(int(j)) for j in jaren)
 
+    instelling = ""
+    if "instellingscode" in df.columns and df["instellingscode"].notna().any():
+        instelling = str(df["instellingscode"].dropna().iloc[0])
+
     pos_label = perspectief["positief_label"]
     neg_label = perspectief["negatief_label"]
     binaire_volgorde = [pos_label, neg_label]
@@ -579,18 +604,38 @@ def genereer_rapport(
     pdf.body_text(
         f"Dit rapport evalueert de selectieprocedure van {opleiding} "
         f"voor selectiejaar {jaar}. Het doel is om te bekijken of de selectie "
-        f"goed voorspelt welke studenten het eerste jaar succesvol afronden. "
-        f"Met andere woorden: scoren studenten die uiteindelijk slagen "
-        f"ook hoger bij de selectie dan studenten die stoppen?"
+        f"{perspectief.get('uitkomst_naam', 'de uitkomst')} voorspelt. Met andere "
+        f"woorden: scoorden gestarte studenten met de uitkomst '{pos_label}' hoger "
+        f"bij de selectie dan studenten met de uitkomst '{neg_label}'?"
     )
+    pdf.body_text(perspectief.get("kanttekening", ""))
 
     pdf.body_text(
         f"De data bevat {total} kandidaten. Dit rapport vergelijkt twee "
         f"groepen op basis van de uitkomstmaat '{perspectief['label']}':"
     )
-    pdf.body_text(f"  - {pos_label} ({n_pos} studenten)")
-    pdf.body_text(f"  - {neg_label} ({n_neg} studenten)")
+    pdf.body_text(f"  - {pos_label} ({cel_tekst(n_pos)} studenten)")
+    pdf.body_text(f"  - {neg_label} ({cel_tekst(n_neg)} studenten)")
     pdf.body_text(perspectief["beschrijving"])
+
+    # Herkomst: genoeg om een besluit op dit rapport later te kunnen herleiden.
+    pdf.subsection_title("Over dit rapport")
+    pdf.add_data_table(
+        ["Gegeven", "Waarde"],
+        [
+            ["Tool", f"Selectie Evaluatietool, versie {_tool_versie()}"],
+            ["Gegenereerd op", date.today().strftime("%d-%m-%Y")],
+            ["Opleiding", opleiding or "-"],
+            ["Instelling", instelling or "-"],
+            ["Selectiejaar", jaar or "-"],
+            ["Uitkomstmaat", perspectief["label"]],
+            ["Kandidaten in selectiedata", str(total)],
+            ["Gestarte studenten in de analyse", cel_tekst(n_pop)],
+            ["Items geanalyseerd", str(scores_df["item"].nunique())],
+            ["Kleinste getoonde aantal", f"{MIN_CEL} (kleinere aantallen afgeschermd)"],
+        ],
+        col_widths=[70, 120],
+    )
 
     # Section 2: Dataset overview
     pdf.add_page()
@@ -628,8 +673,8 @@ def genereer_rapport(
     groep_rows = []
     for groep in binaire_volgorde:
         n = n_per_groep.get(groep, 0)
-        pct = f"{n / n_pop * 100:.1f}%" if n_pop > 0 else "0%"
-        groep_rows.append([groep, str(n), pct])
+        pct = f"{n / n_pop * 100:.1f}%" if n_pop > 0 and n >= MIN_CEL else "-"
+        groep_rows.append([groep, cel_tekst(n), pct])
     pdf.add_data_table(
         ["Groep", "n", "%"],
         groep_rows,
@@ -732,6 +777,20 @@ def genereer_rapport(
             ],
             verg_rows,
             col_widths=[44, 17, 17, 20, 24, 30, 16, 22],
+        )
+    pdf.body_text(BEREIKSBEPERKING_UITLEG)
+
+    scoregroepen = retentie_per_scoregroep(scores_origineel, perspectief)
+    if not scoregroepen.empty:
+        pdf.subsection_title(f"Aandeel '{pos_label}' per scoregroep")
+        pdf.body_text(SCOREGROEP_UITLEG)
+        pdf.add_data_table(
+            SCOREGROEP_KOLOMMEN,
+            [
+                [str(r[k]) for k in SCOREGROEP_KOLOMMEN]
+                for _, r in scoregroepen.iterrows()
+            ],
+            col_widths=[60, 38, 42, 20, 30],
         )
 
     # Section 4: Samenhang en regressie
@@ -881,8 +940,10 @@ def genereer_rapport(
     if not bevindingen["validiteit"]:
         pdf.body_text(
             "  Geen enkel item laat een opvallend verschil zien tussen "
-            "geslaagde en uitgevallen studenten."
+            f"'{pos_label}' en '{neg_label}'."
         )
+    for regel in bevindingen.get("kanttekeningen", []):
+        pdf.body_text(f"  {regel}")
 
     if bevindingen["regressie"]:
         pdf.subsection_title("Univariate regressie")
@@ -899,7 +960,13 @@ def genereer_rapport(
         for regel in bevindingen["correlatie"]:
             pdf.body_text(f"  {regel}")
 
-    pdf.subsection_title("Verschillen tussen groepen (eerlijkheid)")
+    pdf.subsection_title("Scoreverschillen naar achtergrond (gestarte studenten)")
+    pdf.body_text(
+        "  De achtergrond komt uit 1CHO en is alleen bekend voor gestarte "
+        "studenten. Of de selectie bepaalde groepen vaker afwijst, is met deze "
+        "data niet te zien. Een verschil in gemiddelde score is op zichzelf geen "
+        "bewijs van vertekening."
+    )
     for regel in bevindingen["fairness"]:
         pdf.body_text(f"  {regel}")
     if not bevindingen["fairness"]:

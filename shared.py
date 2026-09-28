@@ -62,8 +62,8 @@ UITKOMST_PERSPECTIEVEN = {
         "negatief_groepen": [GROEP_GESTART_GEEN_VERVOLG],
         "populatie": GROEP_INGESCHREVEN,
         "beschrijving": (
-            "Vergelijkt gestarte studenten die doorstroomden naar jaar 2 "
-            "(of een diploma haalden) met studenten die zijn uitgevallen."
+            "Vergelijkt gestarte studenten die in jaar 2 nog ingeschreven stonden "
+            "(of een diploma haalden) met studenten bij wie dat niet zo is."
         ),
     },
     "diploma": {
@@ -80,15 +80,25 @@ UITKOMST_PERSPECTIEVEN = {
     },
 }
 
+# Wat de uitkomst wel en niet meet. De tool ziet alleen of een student in jaar 2
+# nog is ingeschreven (retentie), niet of jaar 1 is gehaald of waarom een student
+# wegging. Eén bron voor de perspectieven, de introductie en het rapport.
+RETENTIE_UITLEG = (
+    "De uitkomst is retentie: staat de student in het jaar na de start nog "
+    "ingeschreven bij deze opleiding? Dat is niet hetzelfde als studiesucces. Wie "
+    "het eerste jaar overdoet, telt als doorgestroomd; wie overstapt naar een "
+    "opleiding die beter past, telt als niet doorgestroomd, ook als dat voor de "
+    "student een goede keuze was."
+)
+
 PERSPECTIEF_DOORSTROOM = {
     **UITKOMST_PERSPECTIEVEN["doorstroom"],
+    "label": "Retentie (ingeschreven in jaar 2)",
     # Woorden voor lopende tekst (vervolgstappen, uitleg).
     "succes_meervoud": "doorstromers",
-    "geen_succes_meervoud": "uitvallers",
-    "uitkomst_naam": "doorstroom naar jaar 2",
-    "kanttekening": (
-        "Doorstroom naar jaar 2 is maar een van de manieren om studiesucces te meten."
-    ),
+    "geen_succes_meervoud": "niet-doorstromers",
+    "uitkomst_naam": "retentie (herinschrijving in jaar 2)",
+    "kanttekening": RETENTIE_UITLEG,
 }
 
 # Bij eenjarige opleidingen (masters) is succes een diploma, geen doorstroom.
@@ -106,26 +116,26 @@ _PERSPECTIEF_DIPLOMA = {
     "geen_succes_meervoud": "studenten zonder diploma",
     "uitkomst_naam": "het behalen van het diploma",
     "kanttekening": (
-        "Het diploma halen is maar een van de manieren om studiesucces te meten."
+        "Het diploma in het cohortjaar halen is maar een van de manieren om "
+        "studievoortgang te meten. Deeltijdstudenten en opleidingen die langer dan "
+        "een jaar duren, halen hun diploma later en tellen hier als 'geen diploma'."
     ),
 }
 
 # Data met zowel doorstroom als diploma: een neutrale formulering.
 _PERSPECTIEF_GEMENGD = {
     **PERSPECTIEF_DOORSTROOM,
-    "label": "Studiesucces",
-    "positief_label": "Studiesucces",
-    "negatief_label": "Geen studiesucces",
+    "label": "Retentie of diploma",
+    "positief_label": "Jaar 2 of diploma",
+    "negatief_label": "Geen jaar 2, geen diploma",
     "beschrijving": (
-        "Vergelijkt gestarte studenten met studiesucces (doorstroom naar jaar 2 "
-        "of een diploma) met studenten die zijn uitgevallen."
+        "Vergelijkt gestarte studenten die in jaar 2 nog ingeschreven stonden of "
+        "een diploma haalden met studenten bij wie geen van beide het geval is."
     ),
-    "succes_meervoud": "studenten met studiesucces",
-    "geen_succes_meervoud": "uitvallers",
-    "uitkomst_naam": "studiesucces",
-    "kanttekening": (
-        "Doorstroom en diploma zijn maar een deel van wat studiesucces is."
-    ),
+    "succes_meervoud": "studenten met jaar 2 of diploma",
+    "geen_succes_meervoud": "studenten zonder jaar 2 of diploma",
+    "uitkomst_naam": "retentie of diploma",
+    "kanttekening": RETENTIE_UITLEG,
 }
 
 
@@ -149,7 +159,7 @@ def perspectief_voor(df: pd.DataFrame | None) -> dict:
 
 def uitkomst_perspectief(sleutel: str | None, df: pd.DataFrame | None) -> dict | None:
     """Perspectief voor een waarde uit een 'groepeer op'-keuzelijst: de
-    studiesucces-optie ('doorstroom') krijgt de labels uit de data, andere
+    retentie-optie ('doorstroom') krijgt de labels uit de data, andere
     sleutels komen uit UITKOMST_PERSPECTIEVEN (None als het geen uitkomst is)."""
     if sleutel == "doorstroom":
         return perspectief_voor(df)
@@ -379,6 +389,36 @@ def effect_sterkte(r: float) -> str:
 _Z_95 = 1.959963984540054
 
 
+# Bereiksbeperking: alleen toegelaten, gestarte studenten hebben een uitkomst.
+# Eén tekst voor Wat valt op, de Verschiltoets-tab en het rapport.
+BEREIKSBEPERKING_UITLEG = (
+    "Alleen toegelaten, gestarte studenten hebben een uitkomst. Hun "
+    "selectiescores liggen dichter bij elkaar dan die van alle kandidaten, "
+    "waardoor elk verband in deze data zwakker lijkt dan het in de hele "
+    "kandidatenpool is (bereiksbeperking). Een item dat hier weinig lijkt te "
+    "voorspellen, kan bij de toelating toch goed onderscheid maken."
+)
+
+# z-waarde voor 80% power (eenzijdig kwantiel 0,80).
+_Z_POWER_80 = 0.8416212335729143
+
+
+def kleinste_aantoonbaar_effect(n1: int, n2: int) -> float | None:
+    """Kleinste rank-biseriale effectgrootte die een Mann-Whitney-toets met deze
+    groepsgroottes met 80% power aantoont (tweezijdig, alpha = 0.05).
+
+    Normaalbenadering: onder de nulhypothese is de standaardfout van de AUC
+    ``sqrt((n1 + n2 + 1) / (12 * n1 * n2))``; het aantoonbare AUC-verschil is
+    ``(z_alpha/2 + z_power) * se`` en de effectgrootte ``r = 2 * (AUC - 0.5)``.
+    Zonder correctie voor meervoudig toetsen, dus een ondergrens: na de
+    Benjamini-Hochberg-correctie is een iets groter effect nodig. None als een
+    groep leeg is."""
+    if n1 < 1 or n2 < 1:
+        return None
+    se = math.sqrt((n1 + n2 + 1) / (12 * n1 * n2))
+    return min(1.0, 2 * (_Z_95 + _Z_POWER_80) * se)
+
+
 def _effect_met_bi(auc: float, nx: int, ny: int) -> tuple[float, float, float]:
     """Rank-biseriale effectgrootte met 95%-BI uit de AUC van twee groepen.
 
@@ -491,6 +531,155 @@ def vergelijk_succes_per_item(
     tabel = _voeg_correctie_toe(tabel, tabel["_r"].notna())
     tabel = tabel.sort_values("_sort", ascending=False).drop(columns="_sort")
     return tabel[VERGELIJKING_KOLOMMEN + ["_r", "_p", "_p_bh"]].reset_index(drop=True)
+
+
+# Kleinste aantal studenten dat we in een tabel of rapport als getal tonen.
+# Kleinere aantallen (en percentages daarvan) worden afgeschermd, zodat een
+# student in een kleine groep (bijv. twee HO-instromers) niet herleidbaar is.
+MIN_CEL = 5
+AFGESCHERMD = f"< {MIN_CEL}"
+
+
+def is_klein(n) -> bool:
+    """True als een aantal boven nul maar onder MIN_CEL ligt (0 zegt niets over
+    een individu en blijft zichtbaar)."""
+    return 0 < n < MIN_CEL
+
+
+def cel_tekst(n: int) -> str:
+    """Een aantal als tekst, afgeschermd als het te klein is."""
+    return AFGESCHERMD if is_klein(n) else str(int(n))
+
+
+AFSCHERM_UITLEG = (
+    f"Aantallen onder de {MIN_CEL} tonen we als '{AFGESCHERMD}', zodat studenten in "
+    "een kleine groep niet herleidbaar zijn. Het andere vak in die rij staat dan "
+    "op '-', omdat je het kleine aantal anders uit het totaal kunt terugrekenen."
+)
+
+
+def afgeschermde_kruistabel(
+    ct: pd.DataFrame, kolommen: list[str]
+) -> tuple[pd.DataFrame, set]:
+    """Een kruistabel (rijen = achtergrondgroep, kolommen = uitkomst, zonder
+    totalen) als tekst 'n (pct%)', met kleine aantallen afgeschermd.
+
+    - Rijtotaal onder MIN_CEL: de hele rij wordt afgeschermd.
+    - Eén vak onder MIN_CEL: dat vak wordt '< 5' en de andere vakken in de rij
+      '-', omdat het kleine aantal anders uit het rijtotaal volgt.
+    - Is precies één rij afgeschermd, dan ook de uitkomstvakken van de rij
+      'Totaal', anders reken je die rij terug uit het totaal min de andere.
+
+    Geeft de teksttabel (met rij 'Totaal' en kolom 'Totaal') en de set
+    afgeschermde rijnamen terug."""
+    tekst = pd.DataFrame(
+        index=list(ct.index) + ["Totaal"], columns=kolommen + ["Totaal"]
+    )
+    afgeschermd = set()
+    for rij in ct.index:
+        waarden = [int(ct.loc[rij, k]) if k in ct.columns else 0 for k in kolommen]
+        totaal = sum(waarden)
+        if is_klein(totaal):
+            tekst.loc[rij] = AFGESCHERMD
+            afgeschermd.add(rij)
+            continue
+        tekst.loc[rij, "Totaal"] = str(totaal)
+        if any(is_klein(n) for n in waarden):
+            afgeschermd.add(rij)
+            for k, n in zip(kolommen, waarden):
+                tekst.loc[rij, k] = AFGESCHERMD if is_klein(n) else "-"
+            continue
+        for k, n in zip(kolommen, waarden):
+            pct = n / totaal * 100 if totaal else 0
+            tekst.loc[rij, k] = f"{n} ({pct:.0f}%)"
+
+    tot_waarden = [int(ct[k].sum()) if k in ct.columns else 0 for k in kolommen]
+    tot = sum(tot_waarden)
+    if len(afgeschermd) == 1 or is_klein(tot):
+        tekst.loc["Totaal", kolommen] = "-"
+    else:
+        for k, n in zip(kolommen, tot_waarden):
+            tekst.loc["Totaal", k] = f"{n} ({n / tot * 100 if tot else 0:.0f}%)"
+    tekst.loc["Totaal", "Totaal"] = cel_tekst(tot)
+    return tekst, afgeschermd
+
+
+SCOREGROEP_KOLOMMEN = ["Item", "Scoregroep", "Scores", "n", "Aandeel"]
+
+
+def _fmt_score(x: float) -> str:
+    return f"{round(float(x), 2):g}"
+
+
+def retentie_per_scoregroep(
+    scores_met_groep: pd.DataFrame,
+    perspectief: dict | None = None,
+    item_kolom: str = "item_kort",
+    n_groepen: int = 4,
+) -> pd.DataFrame:
+    """Per item: welk deel van de gestarte studenten in elke scoregroep had de
+    positieve uitkomst? Beleidstaal naast de verschiltoets ("van de studenten met
+    de laagste scores stroomde 55% door").
+
+    De scoregroepen zijn kwartielen van de gestarte studenten; heeft een item
+    niet meer verschillende waarden dan ``n_groepen`` (een 1-3-schaal), dan is
+    elke waarde een eigen groep. Bij veel gelijke scores kunnen kwartielen
+    samenvallen, dan worden het er minder. Groepen onder MIN_CEL studenten
+    worden afgeschermd. `Aandeel` is het percentage met de positieve uitkomst."""
+    if perspectief is None:
+        perspectief = UITKOMST_PERSPECTIEVEN["doorstroom"]
+    deel = scores_met_groep[scores_met_groep["groep"].isin(perspectief["populatie"])]
+    rijen = []
+    for item, d in deel.groupby(item_kolom, observed=True, sort=True):
+        x = pd.to_numeric(d["score"], errors="coerce")
+        ok = x.notna()
+        x = x[ok]
+        positief = d.loc[ok, "groep"].isin(perspectief["positief_groepen"])
+        if x.nunique() < 2:
+            continue
+        per_waarde = x.nunique() <= n_groepen
+        if per_waarde:
+            banden = x.rank(method="dense").astype(int) - 1
+        else:
+            banden = pd.qcut(x, n_groepen, labels=False, duplicates="drop")
+        k = int(banden.max()) + 1
+        for b in range(k):
+            sel = banden == b
+            n = int(sel.sum())
+            if not n:
+                continue
+            lo, hi = x[sel].min(), x[sel].max()
+            if per_waarde:
+                naam = f"Score {_fmt_score(lo)}"
+            else:
+                naam = f"{b + 1} van {k}"
+                if b == 0:
+                    naam += " (laagste)"
+                elif b == k - 1:
+                    naam += " (hoogste)"
+            klein = is_klein(n)
+            rijen.append(
+                {
+                    "Item": item,
+                    "Scoregroep": naam,
+                    "Scores": _fmt_score(lo)
+                    if lo == hi
+                    else f"{_fmt_score(lo)} tot {_fmt_score(hi)}",
+                    "n": cel_tekst(n),
+                    "Aandeel": "-" if klein else f"{positief[sel].mean() * 100:.0f}%",
+                }
+            )
+    return pd.DataFrame(rijen, columns=SCOREGROEP_KOLOMMEN)
+
+
+SCOREGROEP_UITLEG = (
+    "Per item zijn de gestarte studenten in groepen verdeeld op hun score "
+    "(kwartielen; bij een item met weinig verschillende scores per score). "
+    "'Aandeel' is het deel van de groep met de positieve uitkomst. Loopt het "
+    "aandeel op van de laagste naar de hoogste scoregroep, dan hangt het item "
+    "samen met de uitkomst. Dit zegt niets over kandidaten die niet zijn "
+    f"toegelaten. Groepen met minder dan {MIN_CEL} studenten tonen we niet."
+)
 
 
 # Demografische dimensies voor de analyse-tabs en de rapportsectie. Een dimensie
@@ -682,6 +871,7 @@ def genereer_bevindingen(
     regressie: list[str] = []
     model: list[str] = []
     demografie: list[str] = []
+    kanttekeningen: list[str] = []
 
     if groepsgroottes:
         n_tot = groepsgroottes.get("n_totaal", 0)
@@ -720,6 +910,23 @@ def genereer_bevindingen(
                 if n_ruw != len(sig):
                     tekst += f"; zonder die correctie zouden het er {n_ruw} zijn"
             samenvatting.append(tekst + ".")
+            n_kolommen = ["Succes (n)", "Geen succes (n)"]
+            mde = (
+                kleinste_aantoonbaar_effect(
+                    *(int(getoetst[k].max()) for k in n_kolommen)
+                )
+                if all(k in getoetst for k in n_kolommen)
+                else None
+            )
+            if mde is not None:
+                kanttekeningen.append(
+                    f"Met deze groepsgroottes is een verschil pas met redelijke "
+                    f"zekerheid (80%) aan te tonen vanaf een effectgrootte van "
+                    f"ongeveer {mde:.2f} ({effect_sterkte(mde)}). Kleinere verschillen "
+                    "kan de toets missen: 'niet significant' betekent 'niet "
+                    "aangetoond', niet 'geen verband'."
+                )
+            kanttekeningen.append(BEREIKSBEPERKING_UITLEG)
         gesorteerd = sig.sort_values("_r", key=_sorteer_abs, ascending=False)
         pos_label = perspectief["positief_label"].lower()
         neg_label = perspectief["negatief_label"].lower()
@@ -791,6 +998,7 @@ def genereer_bevindingen(
         "model": model,
         "fairness": fairness,
         "demografie": demografie,
+        "kanttekeningen": kanttekeningen,
         "tellingen": tellingen,
     }
 
@@ -885,17 +1093,21 @@ def beleidsvervolgstappen(
         stappen.append(
             f"De verschiltoets vindt {aantal(t['n_sig_positief'], 'item', 'items')} "
             f"waarop {succes} duidelijk hoger scoorden dan {geen_succes}. Dat is een "
-            "aanwijzing dat deze items studiesucces helpen voorspellen. "
+            f"aanwijzing dat deze items {p.get('uitkomst_naam', 'de uitkomst')} "
+            "helpen voorspellen. "
             "Beleidsmatig: behoud ze of laat ze zwaarder meewegen, en bevestig het "
             "patroon eerst op een volgend cohort voordat je de procedure aanpast."
         )
     else:
         stappen.append(
             f"De verschiltoets vindt geen enkel item waarop {succes} significant "
-            f"hoger scoorden dan {geen_succes}. Beleidsmatig betekent dit dat de "
-            "selectie in deze data geen studiesucces voorspelt: ga na of de items "
-            "iets anders meten dat je bewust wilt behouden (motivatie, passendheid), "
-            "of dat de procedure eenvoudiger en goedkoper kan."
+            f"hoger scoorden dan {geen_succes}. Dat is geen bewijs dat de selectie "
+            "niet werkt: bij deze aantallen kan de toets een matig verband missen, "
+            "en omdat alleen toegelaten studenten een uitkomst hebben, lijkt elk "
+            "verband hier zwakker dan het is. Beleidsmatig: schrap of vereenvoudig "
+            "op basis van deze data geen onderdelen. Leg eerst meer cohorten naast "
+            "elkaar en weeg mee wat de items inhoudelijk moeten meten (motivatie, "
+            "passendheid)."
         )
 
     if t.get("n_sig_negatief"):
@@ -916,7 +1128,8 @@ def beleidsvervolgstappen(
             eigen = "Geen item springt eruit als je ze samen bekijkt. "
         stappen.append(
             f"Alle items samen verklaren een {kracht_label(r2)} deel van het "
-            f"verschil in studiesucces (regressie, pseudo R² = {r2:.2f}). "
+            f"verschil in {p.get('uitkomst_naam', 'de uitkomst')} (regressie, "
+            f"pseudo R² = {r2:.2f}). "
             + eigen
             + "Dit gezamenlijke model is bij kleine groepen wankel, dus leun voor "
             "beleid vooral op de verschiltoets."
@@ -924,10 +1137,11 @@ def beleidsvervolgstappen(
 
     if t.get("n_fair_sig"):
         stappen.append(
-            f"Bij {aantal(t['n_fair_sig'], 'item', 'items')} scoorden "
-            "achtergrondgroepen (geslacht, vooropleiding) verschillend. Beleidsmatig: "
-            "onderzoek of dat verschil inhoudelijk te rechtvaardigen is of op "
-            "onbedoelde vertekening wijst."
+            f"Bij {aantal(t['n_fair_sig'], 'item', 'items')} scoorden gestarte "
+            "studenten met een verschillende achtergrond (geslacht, vooropleiding) "
+            "verschillend. Beleidsmatig: onderzoek of dat verschil inhoudelijk te "
+            "rechtvaardigen is of op onbedoelde vertekening wijst. Of de selectie "
+            "zelf groepen onevenredig afwijst, is met deze data niet te zien."
         )
 
     if t.get("n_corr_hoog"):
@@ -1102,9 +1316,12 @@ def _bevindingen_demografie_verdeling(
         if p is None or ct is None:
             continue
         if p < 0.05:
+            # Alleen groepen die groot genoeg zijn om te noemen: een groep van
+            # twee met 100% is geen bevinding en is herleidbaar.
+            ct = ct[ct.sum(axis=1) >= MIN_CEL]
             ct_pct = ct.div(ct.sum(axis=1), axis=0)
             pos_col = perspectief["positief_label"]
-            if pos_col in ct_pct.columns:
+            if pos_col in ct_pct.columns and not ct_pct.empty:
                 beste = ct_pct[pos_col].idxmax()
                 pct = ct_pct.loc[beste, pos_col] * 100
                 resultaten.append(
