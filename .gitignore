@@ -11,7 +11,7 @@ data/configs/
 data/*.xls
 data/*.xlsx
 data/demo/selectiedata.xlsx
-data/demo/*/selectiedata.xlsx
+# data/demo/*/ bevat bewust fictieve demodata en wordt wel getrackt.
 
 # Echte testdata van Radboud en Leiden (bevat persoonsgegevens): hele map negeren
 /testen met echte data/

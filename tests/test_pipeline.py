@@ -11,7 +11,6 @@ class TestEndToEnd:
         df = koppel_data(demo_dataset["cho_df"], demo_dataset["scores_df"])
         assert len(df) > 0
         assert "groep" in df.columns
-        assert "totaalscore" in df.columns
 
     def test_alle_groepen_geldig(self, demo_dataset):
         df = koppel_data(demo_dataset["cho_df"], demo_dataset["scores_df"])

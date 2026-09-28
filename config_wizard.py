@@ -444,7 +444,7 @@ _INST_UITLEG = {
     "jaar": "Selectiejaar (het jaar waarin de selectie heeft plaatsgevonden), bijvoorbeeld '2026'.",
     "blad_naam": "Naam van het tabblad in je selectie-Excel dat de scores bevat.",
     "header_rij": "Rijnummer van de kopregel in het selectiebestand (1 = eerste rij). Sommige bestanden hebben meerdere rijen boven de kolomnamen.",
-    "totaalscore_kolom": "Optioneel: naam van een kolom die al een totaalscore bevat. Laat leeg als er geen totaalscore-kolom is; de tool berekent dan zelf een totaalscore.",
+    "totaalscore_kolom": "Optioneel: naam van een kolom die al een totaalscore bevat. De wizard vinkt die kolom niet automatisch aan als los item, omdat een totaalscore overlapt met de onderdelen waaruit hij bestaat. Laat leeg als er geen totaalscore-kolom is.",
 }
 
 _KOL_UITLEG = {
@@ -453,7 +453,7 @@ _KOL_UITLEG = {
     "instrument": "Het selectie-instrument waaronder dit item valt, bijv. 'Motivatiebrief' of 'Capaciteitentest'. Meerdere items kunnen hetzelfde instrument delen.",
     "item": "De naam van dit specifieke onderdeel, bijv. 'Analytisch vermogen' of 'Totaalscore gesprek'.",
     "criterium": "Optioneel groeperingsniveau tussen instrument en item, bijv. 'Cognitief' of 'Persoonlijkheid'. Laat leeg als je geen extra groepering wilt.",
-    "schaal": "Het scorebereik van dit item, bijv. '1-7' of '0-100'. Wordt gebruikt voor de visualisaties.",
+    "schaal": "Het scorebereik van dit item, bijv. '1-7' of '0-100'. Ter documentatie: de grafieken bepalen het bereik uit de scores zelf.",
 }
 
 _HEADER_FILL = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
@@ -700,7 +700,8 @@ def maak_wizard_layout() -> html.Div:
                                         ),
                                         dbc.FormText(
                                             "Optioneel: de kolom met de eindscore, "
-                                            "als die in je bestand staat."
+                                            "als die in je bestand staat. Die wordt "
+                                            "niet als los item aangevinkt."
                                         ),
                                     ]
                                 ),

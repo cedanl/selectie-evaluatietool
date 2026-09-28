@@ -1085,6 +1085,7 @@ dependencies = [
     { name = "openpyxl" },
     { name = "pandas" },
     { name = "plotly" },
+    { name = "scipy" },
     { name = "statsmodels" },
     { name = "xlrd" },
 ]
@@ -1094,7 +1095,6 @@ dev = [
     { name = "playwright" },
     { name = "pytest" },
     { name = "ruff" },
-    { name = "scipy" },
 ]
 
 [package.metadata]
@@ -1107,6 +1107,7 @@ requires-dist = [
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = ">=2.2.0" },
     { name = "plotly", specifier = ">=5.20.0" },
+    { name = "scipy", specifier = ">=1.12.0" },
     { name = "statsmodels", specifier = ">=0.14.0" },
     { name = "xlrd", specifier = ">=2.0.2" },
 ]
@@ -1116,7 +1117,6 @@ dev = [
     { name = "playwright", specifier = ">=1.60.0" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "ruff", specifier = ">=0.15.11" },
-    { name = "scipy", specifier = ">=1.12.0" },
 ]
 
 [[package]]
