@@ -4,11 +4,14 @@ config tegen selectiedata, en het omzetten van breed naar lang formaat.
 """
 
 import base64
+import functools
 import io
 import re
 import zipfile
 
 import pandas as pd
+
+from shared import shorten_item
 
 # Tekens die niet geldig zijn in XML 1.0. Excel bewaart ze bij opslaan en
 # openpyxl's parser struikelt er dan over met "not well-formed (invalid token)".
@@ -101,6 +104,38 @@ def meegenomen_kolommen(config: dict) -> list[dict]:
     return [k for k in config.get("kolommen", []) if k.get("meenemen", True)]
 
 
+def item_naam(kol: dict) -> str:
+    """De itemnaam van een configregel; een leeg item valt terug op de
+    kolomnaam, zodat lege items niet allemaal op één naam samenvallen."""
+    return str(kol.get("item") or "").strip() or str(kol["kolom_naam"]).strip()
+
+
+def dubbele_itemnamen(kolommen: list[dict]) -> dict[str, list[str]]:
+    """Itemnamen (na shorten_item, zoals de analyses ze gebruiken) die bij
+    meer dan één kolom horen, met die kolomnamen.
+
+    De analyses groeperen op itemnaam. Twee kolommen met dezelfde naam zouden
+    stil samenvallen tot één item, waarin elke student twee keer meetelt: de
+    toets rekent dan met een dubbele n en geeft een te kleine p-waarde."""
+    per_naam: dict[str, list[str]] = {}
+    for kol in kolommen:
+        per_naam.setdefault(shorten_item(item_naam(kol)), []).append(kol["kolom_naam"])
+    return {naam: kols for naam, kols in per_naam.items() if len(kols) > 1}
+
+
+def dubbele_itemnamen_melding(dubbel: dict[str, list[str]]) -> str:
+    voorbeelden = "; ".join(
+        f"'{naam}' ({', '.join(map(str, kols))})"
+        for naam, kols in list(dubbel.items())[:3]
+    )
+    return (
+        f"{len(dubbel)} itemnaam/-namen komen bij meer dan één kolom voor: "
+        f"{voorbeelden}{'...' if len(dubbel) > 3 else ''}. Geef elk item een "
+        "eigen naam, anders worden de kolommen samengevoegd en telt elke "
+        "student dubbel mee."
+    )
+
+
 def normaliseer_studentnummer(serie: pd.Series) -> pd.Series:
     """Breng studentnummers naar een vergelijkbare vorm, zodat het koppelen van
     selectiedata en 1CHO robuust is tegen verschillen in type en opmaak: tekst
@@ -150,11 +185,69 @@ def parse_csv_or_excel(contents: str, filename: str) -> pd.DataFrame:
     return pd.read_csv(io.StringIO(decoded), sep=sep)
 
 
+# Elke validatie-trigger (upload, wizard, keuzemenu) leest dezelfde selectiedata.
+# Een kleine cache op de uploadtekst voorkomt dat het Excel-bestand per trigger
+# meerdere keren wordt gedecodeerd en geparsed. Aanroepers krijgen een kopie,
+# zodat niemand de gecachte tabel kan wijzigen.
+@functools.lru_cache(maxsize=4)
+def _excel_bytes(contents: str) -> bytes:
+    return _repareer_xlsx(_decode_upload(contents))
+
+
+@functools.lru_cache(maxsize=4)
+def _bladnamen(contents: str) -> tuple[str, ...]:
+    return tuple(pd.ExcelFile(io.BytesIO(_excel_bytes(contents))).sheet_names)
+
+
+@functools.lru_cache(maxsize=4)
+def _lees_blad(contents: str, blad: str | int, header_rij: int) -> pd.DataFrame:
+    return pd.read_excel(
+        io.BytesIO(_excel_bytes(contents)), sheet_name=blad, header=header_rij
+    )
+
+
 def parse_selectiedata(contents: str, config: dict) -> pd.DataFrame:
-    raw = _repareer_xlsx(_decode_upload(contents))
     blad = config.get("blad_naam") or 0
     header_rij = parse_header_rij(config.get("header_rij")) - 1
-    return pd.read_excel(io.BytesIO(raw), sheet_name=blad, header=header_rij)
+    return _lees_blad(contents, blad, header_rij).copy()
+
+
+def _smelt_scores(
+    selectiedata_df: pd.DataFrame, id_col: str, data_cols: list[str]
+) -> pd.DataFrame:
+    """Breed naar lang: een rij per (studentnummer, kolom) met een numerieke
+    score. Tekstcellen als 'n.v.t.' tellen als ontbrekend, lege studentnummers
+    vallen weg. Exact dubbele rijen (dezelfde kandidaat twee keer met dezelfde
+    score) blijven één keer staan."""
+    melted = selectiedata_df[[id_col] + data_cols].melt(
+        id_vars=[id_col],
+        value_vars=data_cols,
+        var_name="_kolom",
+        value_name="score",
+    )
+    melted["score"] = pd.to_numeric(melted["score"], errors="coerce")
+    melted = melted.dropna(subset=["score"])
+    melted = melted.rename(columns={id_col: "studentnummer"})
+    melted["studentnummer"] = normaliseer_studentnummer(melted["studentnummer"])
+    melted = melted.dropna(subset=["studentnummer"])
+    return melted.drop_duplicates(["studentnummer", "_kolom", "score"])
+
+
+def _tegenstrijdige_kandidaten(melted: pd.DataFrame) -> list[str]:
+    """Studentnummers die na _smelt_scores nog meer dan één score per kolom
+    hebben: dezelfde kandidaat staat meerdere keren in de selectiedata met
+    verschillende scores. Welke rij klopt, kan de tool niet weten."""
+    dubbel = melted.duplicated(["studentnummer", "_kolom"], keep=False)
+    return sorted(melted.loc[dubbel, "studentnummer"].unique().tolist())
+
+
+def _tegenstrijdig_melding(ids: list[str]) -> str:
+    return (
+        f"{len(ids)} kandidaat/kandidaten staan meerdere keren in de selectiedata "
+        f"met verschillende scores (bijv. {', '.join(ids[:3])}"
+        f"{'...' if len(ids) > 3 else ''}). Elke kandidaat mag maar één rij "
+        "hebben; anders telt die kandidaat meerdere keren mee in de toetsen."
+    )
 
 
 def lees_config(contents: str) -> dict:
@@ -210,13 +303,43 @@ def lees_config(contents: str) -> dict:
     return {**instellingen, "kolommen": kolommen}
 
 
+def _controleer_dubbele_kandidaten(
+    df: pd.DataFrame,
+    id_col: str,
+    id_kolom: str,
+    kolommen: list[dict],
+    headers: list[str],
+) -> list[dict]:
+    """Validatieregels voor kandidaten die meer dan eens in de selectiedata
+    staan: met dezelfde scores een waarschuwing (ze tellen één keer mee), met
+    verschillende scores een blokkerende fout. `df` heeft tekstkoppen."""
+    data_cols = []
+    for kol in kolommen:
+        dc = _find_col(headers, kol["kolom_naam"])
+        if dc is not None and dc in df.columns and dc not in data_cols:
+            data_cols.append(dc)
+    ids = normaliseer_studentnummer(df[id_col]).dropna()
+    n_dubbel = int(ids.duplicated().sum())
+    if not n_dubbel or not data_cols:
+        return []
+    tegenstrijdig = _tegenstrijdige_kandidaten(_smelt_scores(df, id_col, data_cols))
+    if tegenstrijdig:
+        return [{"check": _tegenstrijdig_melding(tegenstrijdig), "ok": False}]
+    return [
+        {
+            "check": f"{n_dubbel} dubbele rij(en) in '{id_kolom}' met dezelfde "
+            "scores; elke kandidaat telt één keer mee",
+            "ok": True,
+            "waarschuwing": True,
+        }
+    ]
+
+
 def valideer_config(config: dict, selectiedata_contents: str) -> list[dict]:
     resultaten = []
-    raw = _repareer_xlsx(_decode_upload(selectiedata_contents))
-    xls = pd.ExcelFile(io.BytesIO(raw))
 
     blad = config.get("blad_naam", "")
-    if blad and blad in xls.sheet_names:
+    if blad and blad in _bladnamen(selectiedata_contents):
         resultaten.append({"check": f"Blad '{blad}' gevonden", "ok": True})
     elif blad:
         resultaten.append(
@@ -225,8 +348,11 @@ def valideer_config(config: dict, selectiedata_contents: str) -> list[dict]:
         return resultaten
 
     header_rij = parse_header_rij(config.get("header_rij")) - 1
-    df = pd.read_excel(xls, sheet_name=blad or 0, header=header_rij, nrows=0)
-    headers = list(df.columns.astype(str))
+    # Eén keer inlezen (gecachet): parse_selectiedata leest daarna dezelfde tabel.
+    df_sample = _lees_blad(selectiedata_contents, blad or 0, header_rij).rename(
+        columns=str
+    )
+    headers = list(df_sample.columns)
 
     id_kolom = config.get("koppel_id_kolom", "")
     if id_kolom:
@@ -249,6 +375,21 @@ def valideer_config(config: dict, selectiedata_contents: str) -> list[dict]:
         )
 
     kolommen = meegenomen_kolommen(config)
+    if not kolommen:
+        # Zonder items valt er niets te analyseren; later in de pijplijn zou
+        # dat een onbegrijpelijke fout geven.
+        resultaten.append(
+            {
+                "check": "Geen enkele kolom staat op Meenemen. Vink in de config "
+                "minimaal één scorekolom aan.",
+                "ok": False,
+            }
+        )
+        return resultaten
+
+    dubbel = dubbele_itemnamen(kolommen)
+    if dubbel:
+        resultaten.append({"check": dubbele_itemnamen_melding(dubbel), "ok": False})
 
     namen = [id_kolom] if id_kolom else []
     namen += [kol["kolom_naam"] for kol in kolommen]
@@ -304,7 +445,6 @@ def valideer_config(config: dict, selectiedata_contents: str) -> list[dict]:
             }
         )
 
-    df_sample = pd.read_excel(xls, sheet_name=blad or 0, header=header_rij)
     n_rijen = len(df_sample)
     resultaten.append(
         {
@@ -324,6 +464,9 @@ def valideer_config(config: dict, selectiedata_contents: str) -> list[dict]:
                         "ok": False,
                     }
                 )
+            resultaten += _controleer_dubbele_kandidaten(
+                df_sample, id_actual, id_kolom, kolommen, headers
+            )
 
     niet_numeriek = []
     deels_tekst = []  # (kolom, aantal tekstcellen) bij verder numerieke kolommen
@@ -378,8 +521,15 @@ def transformeer_naar_lang(selectiedata_df: pd.DataFrame, config: dict) -> pd.Da
     opleiding = config.get("opleiding", "")
     jaar = parse_jaar(config.get("jaar", ""))
     kolommen = meegenomen_kolommen(config)
+    dubbel = dubbele_itemnamen(kolommen)
+    if dubbel:
+        # Niet stil samenvoegen: valideer_config blokkeert dit al bij uploads,
+        # dit vangt andere paden (demo, scripts) af.
+        raise ValueError(dubbele_itemnamen_melding(dubbel))
 
-    headers = list(selectiedata_df.columns.astype(str))
+    # Headers als tekst, zodat een numerieke kop (bijv. 2025) te vinden is.
+    selectiedata_df = selectiedata_df.rename(columns=str)
+    headers = list(selectiedata_df.columns)
 
     id_col_actual = _find_col(headers, id_kolom) if id_kolom else None
     if not id_col_actual:
@@ -398,24 +548,17 @@ def transformeer_naar_lang(selectiedata_df: pd.DataFrame, config: dict) -> pd.Da
         return pd.DataFrame()
 
     data_cols = [dc for dc, _ in col_mapping]
-    melted = selectiedata_df[[id_col_actual] + data_cols].melt(
-        id_vars=[id_col_actual],
-        value_vars=data_cols,
-        var_name="_kolom",
-        value_name="score",
-    )
     # Tekstcellen als 'n.v.t.' of '-' tellen als ontbrekend; valideer_config
     # meldt dat aan de gebruiker.
-    melted["score"] = pd.to_numeric(melted["score"], errors="coerce")
-    melted = melted.dropna(subset=["score"])
-    melted = melted.rename(columns={id_col_actual: "studentnummer"})
-    melted["studentnummer"] = normaliseer_studentnummer(melted["studentnummer"])
-    melted = melted.dropna(subset=["studentnummer"])
+    melted = _smelt_scores(selectiedata_df, id_col_actual, data_cols)
+    tegenstrijdig = _tegenstrijdige_kandidaten(melted)
+    if tegenstrijdig:
+        raise ValueError(_tegenstrijdig_melding(tegenstrijdig))
 
     # Map metadata from config onto each melted row
     meta_lookup = {dc: kol for dc, kol in col_mapping}
     melted["instrument"] = melted["_kolom"].map(lambda c: meta_lookup[c]["instrument"])
-    melted["item"] = melted["_kolom"].map(lambda c: meta_lookup[c]["item"])
+    melted["item"] = melted["_kolom"].map(lambda c: item_naam(meta_lookup[c]))
     melted["criterium"] = melted["_kolom"].map(
         lambda c: meta_lookup[c].get("criterium", "")
     )

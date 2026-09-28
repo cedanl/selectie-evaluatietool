@@ -19,9 +19,11 @@ De app draait lokaal (localhost); de bestanden blijven op deze machine.
 import io
 import re
 import tempfile
+import time
 import uuid
 from collections import OrderedDict
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pandas as pd
 from flask import jsonify, request
@@ -40,11 +42,42 @@ _CACHE: OrderedDict[str, pd.DataFrame] = OrderedDict()
 _CACHE_GROOTTE = 2
 
 
+# Ruim bovengrens voor een instellingsbrede 1CHO-extractie. Controleren vóór
+# Werkzeug het formulier leest, zodat een te groot bestand niet eerst op schijf
+# belandt.
+MAX_UPLOAD_BYTES = 4 * 1024**3
+
+# Uploads uit een eerdere sessie (de app afgesloten zonder 'Nieuw bestand
+# laden') bevatten persoonsgegevens; na deze tijd ruimen we ze op.
+_MAX_LEEFTIJD_SECONDEN = 24 * 60 * 60
+
+
+def _zelfde_herkomst() -> bool:
+    """Komt het verzoek van de app zelf? Een browser stuurt bij een POST vanaf
+    een andere site een Origin-header mee. Zonder deze controle kan elke
+    website die de gebruiker bezoekt bestanden naar localhost:8050 posten en
+    zo, via de opruimregel, de echte 1CHO-upload uit de map duwen."""
+    origin = request.headers.get("Origin")
+    if not origin:
+        return True  # geen browser-cross-origin-verzoek (bijv. tests, curl)
+    return urlsplit(origin).netloc == request.host
+
+
 def registreer_upload_route(server) -> None:
     """Voeg POST /upload-bestand toe aan de Flask-server van de Dash-app."""
+    _ruim_verlopen_uploads_op()
 
     @server.post("/upload-bestand")
     def upload_bestand():
+        if not _zelfde_herkomst():
+            return jsonify({"fout": "Upload geweigerd: onbekende herkomst."}), 403
+        if (request.content_length or 0) > MAX_UPLOAD_BYTES:
+            return jsonify(
+                {
+                    "fout": "Het bestand is te groot (maximaal "
+                    f"{MAX_UPLOAD_BYTES // 1024**3} GB)."
+                }
+            ), 413
         bestand = request.files.get("bestand")
         if bestand is None or not bestand.filename:
             return jsonify({"fout": "Geen bestand ontvangen."}), 400
@@ -145,6 +178,33 @@ def _lees_csv(pad: Path) -> pd.DataFrame:
     raise ValueError(
         "Het CSV-bestand kon niet worden gelezen. Sla het op als UTF-8 en probeer opnieuw."
     ) from fout
+
+
+def verwijder_upload(token) -> None:
+    """Verwijder het bestand bij een token (en uit de cache). Een ongeldig of
+    al verdwenen token is geen fout."""
+    _CACHE.pop(token, None)
+    try:
+        pad = pad_voor_token(token)
+    except ValueError:
+        return
+    try:
+        pad.unlink()
+    except OSError:
+        pass
+
+
+def _ruim_verlopen_uploads_op() -> None:
+    """Verwijder uploads die ouder zijn dan _MAX_LEEFTIJD_SECONDEN."""
+    if not UPLOAD_DIR.exists():
+        return
+    grens = time.time() - _MAX_LEEFTIJD_SECONDEN
+    for pad in UPLOAD_DIR.glob("*"):
+        try:
+            if pad.stat().st_mtime < grens:
+                pad.unlink()
+        except OSError:
+            pass
 
 
 def _ruim_oude_uploads_op(max_bestanden: int = 5) -> None:

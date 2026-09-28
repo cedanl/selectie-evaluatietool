@@ -5,6 +5,8 @@ kleur-helpers die meerdere tabs gebruiken. De statistiek zelf staat in
 shared.py."""
 
 import base64
+import copy
+import functools
 import io
 from pathlib import Path
 
@@ -34,6 +36,8 @@ from shared import (
     GROEP_INGESCHREVEN,
     GROEP_KLEUREN,
     uitkomst_perspectief,
+    perspectief_voor,
+    bereken_gezamenlijk_model,
     binair_kleur_map,
     shorten_item,
     grenzen_van_label,
@@ -56,6 +60,12 @@ if DEMO_DIR.exists():
 
 
 def koppel_data(cho_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.DataFrame:
+    if scores_df.empty or "studentnummer" not in scores_df.columns:
+        raise ValueError(
+            "Er zijn geen selectiescores ingelezen. Controleer of de kolommen die "
+            "in de config op Meenemen staan in de selectiedata voorkomen en "
+            "getallen bevatten."
+        )
     dubbel = cho_df["studentnummer"].dropna().duplicated()
     if dubbel.any():
         # Een student met meerdere 1CHO-spells zou dubbel in de analyse komen,
@@ -87,10 +97,15 @@ def koppel_data(cho_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+# Zonder expliciet type maakt read_json van '00123' het getal 123: voorloopnullen
+# verdwijnen en een koppeling met een niet-geconverteerde bron zou mislukken.
+_STORE_DTYPES = {"studentnummer": str}
+
+
 def df_from_store(store_data: str | None) -> pd.DataFrame:
     if store_data is None:
         return pd.DataFrame()
-    df = pd.read_json(io.StringIO(store_data), orient="split")
+    df = pd.read_json(io.StringIO(store_data), orient="split", dtype=_STORE_DTYPES)
     df["groep"] = pd.Categorical(df["groep"], categories=GROEP_VOLGORDE, ordered=True)
     return df
 
@@ -102,7 +117,25 @@ def scores_df_from_store(store_data: str | None) -> pd.DataFrame:
     orient/StringIO-contract niet elk los hoeven te herhalen."""
     if not store_data:
         return pd.DataFrame()
-    return pd.read_json(io.StringIO(store_data), orient="split")
+    return pd.read_json(io.StringIO(store_data), orient="split", dtype=_STORE_DTYPES)
+
+
+@functools.lru_cache(maxsize=2)
+def _gezamenlijk_model_gecachet(store_data: str, scores_store: str) -> dict:
+    df = df_from_store(store_data)
+    return bereken_gezamenlijk_model(
+        df, scores_df_from_store(scores_store), perspectief_voor(df)
+    )
+
+
+def gezamenlijk_model_uit_stores(store_data: str, scores_store: str) -> dict:
+    """Het gezamenlijke regressiemodel voor de data in de stores.
+
+    De Regressie-tab en 'Wat valt op' hebben hetzelfde model nodig, en 'Wat
+    valt op' rekent bij elk bezoek aan de tab opnieuw. Tientallen logistische
+    fits per keer is merkbaar traag; met deze cache gebeurt het één keer per
+    dataset. Aanroepers krijgen een kopie, zodat ze de cache niet wijzigen."""
+    return copy.deepcopy(_gezamenlijk_model_gecachet(store_data, scores_store))
 
 
 TABLE_STYLE = dict(
@@ -252,19 +285,29 @@ def _meng_met_wit(kleur: str, f: float = 0.80) -> str:
     return f"#{r:02x}{g:02x}{b:02x}"
 
 
+def query_tekst(waarde) -> str:
+    """Een tekstwaarde als string in een DataTable-filter_query. Groepslabels
+    komen uit de data (een vooropleidingsomschrijving kan aanhalingstekens
+    bevatten), dus backslash en aanhalingsteken worden ge-escaped zoals de
+    query-syntax van dash_table dat verwacht."""
+    return '"' + str(waarde).replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
 def _groep_tabel_stijl(groepeer, kleur_map, volgorde) -> list:
     """style_data_conditional dat tabelrijen op de groep kleurt met een lichte
     tint van de bijbehorende boxplot-kleur."""
     stijlen = [
         {
-            "if": {"filter_query": f'{{Groep}} = "{groep}"'},
+            "if": {"filter_query": f"{{Groep}} = {query_tekst(groep)}"},
             "backgroundColor": _meng_met_wit(kleur_map[groep]),
         }
         for groep in volgorde
     ]
     stijlen.append(
         {
-            "if": {"filter_query": f'{{Groep}} = "{GROEP_NIET_IN_VERGELIJKING}"'},
+            "if": {
+                "filter_query": f"{{Groep}} = {query_tekst(GROEP_NIET_IN_VERGELIJKING)}"
+            },
             "backgroundColor": "#f1f5f9",
             "fontStyle": "italic",
             "color": "#64748b",

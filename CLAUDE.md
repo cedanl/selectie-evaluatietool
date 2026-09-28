@@ -128,6 +128,8 @@ The config Excel has two sheets:
 - **instellingen**: key-value pairs (koppel_id_kolom, opleiding, instellingscode, jaar, blad_naam, header_rij, totaalscore_kolom, etc.)
 - **kolommen**: one row per **every** column in the selection sheet, with fields: `meenemen` (boolean, first column), kolom_naam, instrument, item, criterium, schaal. `meenemen` (TRUE/FALSE, also Ja/Nee, 1/0) flags which columns are score items; only those are analyzed. `lees_config` keeps all rows with a `meenemen` key, and `transformatie.meegenomen_kolommen()` / the pipeline filter on it (`transformeer_naar_lang`, `valideer_config`). `schaal` is the score range (e.g. `1-7`, `0-100`); it is documentation only, the charts derive their axis range from the observed scores (`shared.schaal_grenzen`/`schaal_bucket`). `totaalscore_kolom` is only used to keep that column from being auto-checked as an item in the wizard and to check it exists at validation; the tool computes no totaalscore of its own. Backward compatible: an older config whose first column is `kolom_naam` (no `meenemen`) is read with every row defaulting to meenemen=True.
 
+The analyses group scores by **item name** (after `shorten_item`), so item names must be unique among the checked columns: two columns with the same name would silently merge into one item in which every student counts twice (doubled n, too-small p). `transformatie.dubbele_itemnamen` enforces this in `valideer_config`, the wizard's `bevestig_config`, and `transformeer_naar_lang` (raises). An empty item falls back to its `kolom_naam` (`item_naam`). Likewise a candidate may appear only once in the selection data: exact duplicate rows are counted once (validation warning), duplicates with different scores block (`_tegenstrijdige_kandidaten`). A config with no checked columns is a validation error.
+
 ## Demo data
 
 Two datasets in `data/demo/`, deliberately different in shape so the demos don't look alike. Each mirrors a real (gitignored) source file:
@@ -212,9 +214,19 @@ A subtotal next to its parts double-counts and correlates with them by construct
 
 Selection instruments often overlap. A "competentietest reflecteren" and a "competentietest stressbestendigheid" may correlate at r=0.8. In a joint model, neither appears significant because each explains variance the other already covers.
 
-**How we handle it:** Before fitting, the code checks the matrix rank of the predictor matrix. If rank < number of columns, it iteratively removes the column with the highest pairwise correlation until the matrix is full rank. Removed items are reported as "Items niet meegenomen (overlap met andere items)".
+**How we handle it:** `shared._verwijder_collineair` works in two steps. First, while the predictor matrix is rank-deficient, it removes a column from the most correlated pair. Then, while any item has a variance inflation factor above `_MAX_VIF` (10), it removes the item with the highest VIF. The VIF step is needed because derived columns (e.g. Radboud's "Gemiddelde kernvakken", the mean of three other items) keep the matrix just full-rank but blew the joint model up to odds ratios around e^60. Removed items are reported as "Items niet meegenomen (te veel overlap)".
 
-**What it does NOT solve:** This only catches near-perfect collinearity (rank deficiency). High but not perfect correlations (r=0.7-0.8) still inflate standard errors and make individual p-values unreliable. The correlation heatmap on the same tab helps the user spot this.
+**What it does NOT solve:** Correlations below the VIF threshold (r=0.7-0.8 between two items) still inflate standard errors. The correlation heatmap helps the user spot this.
+
+### Problem 5: Separation
+
+When an item (or the items together) splits the outcome groups (almost) perfectly, the maximum-likelihood estimate runs off to infinity. statsmodels does **not** raise; it warns and returns an absurd fit (OR ~1e16, p ~1). Unchecked, the strongest predictor showed as "ns" and was ranked last in the EPV pre-selection.
+
+**How we handle it:** every Logit goes through `shared._fit_logit`, which flags `scheiding` (PerfectSeparationWarning, or fitted probabilities within `_SCHEIDING_EPS` of 0/1) and `niet_geconvergeerd`. Don't flag separation on coefficient size: large coefficients also come from collinearity. Univariate rows get `_probleem`, a NaN p (so they fall out of the BH family) and "scheidt volledig" in Sig. The joint model drops separating items up front (`verwijderd_scheiding`) and returns status `scheiding`/`fout` if the joint fit itself separates or doesn't converge. `SCHEIDING_UITLEG` is the shared user-facing text; "Wat valt op" reports separation as a strong signal and points to the Verschiltoets.
+
+### Caching
+
+`helpers.gezamenlijk_model_uit_stores` caches the joint model per (data-store, scores-store) pair, so the Regressie tab and "Wat valt op" (which recomputes on every visit) fit it once per dataset. It returns a deep copy. The selection Excel is also cached per upload string in `transformatie._lees_blad`/`_bladnamen`, because every validation trigger re-reads it; `parse_selectiedata` returns a copy.
 
 ### Problem 4: Missing data
 
@@ -229,7 +241,9 @@ The regression output is useful for spotting patterns but should not be overinte
 ## Known gotchas
 
 - **No .claudeignore**: the `data/` and `.venv/` directories are large. Don't glob or grep into them.
-- **The data stores hold JSON strings** in `dcc.Store` (data-store, scores-store). Tab callbacks deserialize with `helpers.df_from_store()` and `pd.read_json(orient="split")`.
+- **The data stores hold JSON strings** in `dcc.Store` (data-store, scores-store). Tab callbacks deserialize with `helpers.df_from_store()` / `scores_df_from_store()`, which pin `studentnummer` to `str` (plain `read_json` turns `"00123"` into `123`). Don't call `pd.read_json` on a store directly.
+- **The 1CHO upload route** (`bestandsopslag.py`) rejects cross-origin POSTs (Origin check) and bodies over `MAX_UPLOAD_BYTES`. Uploads contain personal data: "Nieuw bestand laden" deletes the file (`verwijder_upload`) and clears the `cho-bestand` store, and files older than 24h are removed at startup.
+- **Table `filter_query` strings with data values** must go through `helpers.query_tekst()`, which escapes quotes and backslashes. Group labels come from the data (vooropleiding descriptions can contain quotes).
 - **The config wizard** (`config_wizard.py`) registers its own callbacks via `registreer_callbacks(app)`, wired in app.py. It shares the upload components with uploads.py.
 - **fpdf2 SVG support** is limited. The NKO logo uses a PNG version (`assets/nko-logo.png`) for PDF rendering; the SVG (`assets/nko-logo.svg`) is only for the web dashboard.
 - **statsmodels import** is done lazily inside the regression code (`shared.bereken_gezamenlijk_model()`, `shared.bereken_univariaat()`) because it is slow to import and only needed for regression.

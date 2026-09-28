@@ -23,7 +23,12 @@ from dash import dcc, html, dash_table, Input, Output, State, ctx
 import dash
 import dash_bootstrap_components as dbc
 
-from transformatie import _decode_upload, _repareer_xlsx
+from transformatie import (
+    _decode_upload,
+    _repareer_xlsx,
+    dubbele_itemnamen,
+    dubbele_itemnamen_melding,
+)
 
 
 # XML 1.0 staat bepaalde controle-tekens niet toe. openpyxl schrijft ze zonder
@@ -1149,6 +1154,18 @@ def registreer_callbacks(app: dash.Dash) -> None:
                 dash.no_update,
                 dbc.Alert(
                     "Geen kolommen geselecteerd. Vink minimaal een kolom aan.",
+                    color="danger",
+                    className="small py-1",
+                ),
+                {"display": "none"},
+            )
+
+        dubbel = dubbele_itemnamen([k for k in kolommen if k["meenemen"]])
+        if dubbel:
+            return (
+                dash.no_update,
+                dbc.Alert(
+                    dubbele_itemnamen_melding(dubbel),
                     color="danger",
                     className="small py-1",
                 ),

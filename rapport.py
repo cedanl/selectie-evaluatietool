@@ -41,6 +41,7 @@ from shared import (
     model_stats_uit,
     BH_UITLEG,
     VOORSELECTIE_UITLEG,
+    SCHEIDING_UITLEG,
 )
 
 log = logging.getLogger(__name__)
@@ -429,6 +430,11 @@ def _regressie_tekst(
             f"{n_model + len(model['verwijderd_epv'])} predictoren, "
             f"beperkt tot {n_model} sterkste): "
             f"{', '.join(model['verwijderd_epv'])}. {VOORSELECTIE_UITLEG}"
+        )
+    if model.get("verwijderd_scheiding"):
+        tekst += (
+            " Items niet meegenomen (scheiden de groepen volledig): "
+            f"{', '.join(model['verwijderd_scheiding'])}. {SCHEIDING_UITLEG}"
         )
     rijen = [
         [
