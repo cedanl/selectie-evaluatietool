@@ -222,7 +222,9 @@ def registreer_callbacks(app):
                 uitleg=(
                     "Items waar de groep met studiesucces duidelijk anders "
                     "scoorde dan de groep zonder. Komt van het tabblad Verschiltoets; "
-                    "alleen verschillen die waarschijnlijk niet op toeval berusten."
+                    "alleen verschillen die waarschijnlijk niet op toeval berusten, "
+                    "ook na correctie voor het aantal items dat tegelijk getoetst "
+                    "wordt (Benjamini-Hochberg; uitleg op het tabblad Verschiltoets)."
                 ),
             )
         )

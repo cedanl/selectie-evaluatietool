@@ -40,6 +40,18 @@ class TestTransformeerCho:
         result = transformeer_cho(df)
         assert result.iloc[0]["groep"] == GROEP_DOORGESTROOMD
 
+    def test_diploma_alleen_in_cohortjaar(self):
+        # Diploma pas na een tussenjaar (rij in jaar 3, geen rij in jaar 2)
+        # telt niet als succes binnen het cohortjaar.
+        df = self._maak_ruwe_cho([1, 2], 2024, [False, False], diploma=[False, True])
+        later = df[df["persoonsgebonden_nummer"] == 1].copy()
+        later["inschrijvingsjaar"] = 2026
+        later["diploma_behaald"] = True
+        df = pd.concat([df, later], ignore_index=True)
+        groepen = transformeer_cho(df).set_index("studentnummer")["groep"]
+        assert groepen["1"] == GROEP_GESTART_GEEN_VERVOLG
+        assert groepen["2"] == GROEP_DIPLOMA
+
     def test_selectiejaar_wordt_afgeleid(self):
         df = self._maak_ruwe_cho([1], 2024, [True])
         result = transformeer_cho(df)

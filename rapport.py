@@ -39,6 +39,8 @@ from shared import (
     bereken_gezamenlijk_model,
     chi2_per_dimensie,
     model_stats_uit,
+    BH_UITLEG,
+    VOORSELECTIE_UITLEG,
 )
 
 log = logging.getLogger(__name__)
@@ -426,7 +428,7 @@ def _regressie_tekst(
             " Items niet meegenomen (te weinig studenten voor "
             f"{n_model + len(model['verwijderd_epv'])} predictoren, "
             f"beperkt tot {n_model} sterkste): "
-            f"{', '.join(model['verwijderd_epv'])}."
+            f"{', '.join(model['verwijderd_epv'])}. {VOORSELECTIE_UITLEG}"
         )
     rijen = [
         [
@@ -696,9 +698,11 @@ def genereer_rapport(
         "Vuistregels (Cohen, 1988): r < 0.10 verwaarloosbaar, 0.10-0.30 zwak, "
         "0.30-0.50 matig, boven 0.50 sterk. Het 95%-BI geeft de onzekerheid "
         "rond de effectgrootte; loopt het door 0, dan is zelfs de richting "
-        "onzeker. Een p-waarde onder 0.05 geldt als significant. De items "
-        "staan op effectgrootte gesorteerd, de sterkste voorspellers bovenaan."
+        "onzeker. Een gecorrigeerde p-waarde onder 0.05 geldt als significant. "
+        "De items staan op effectgrootte gesorteerd, de sterkste voorspellers "
+        "bovenaan."
     )
+    pdf.body_text(BH_UITLEG)
     vergelijking = vergelijk_succes_per_item(scores_origineel, perspectief=perspectief)
     if vergelijking.empty:
         pdf.body_text(
@@ -710,9 +714,18 @@ def genereer_rapport(
             for _, rij in vergelijking.iterrows()
         ]
         pdf.add_data_table(
-            ["Item", "Succes n", "Geen n", "Effect r", "Sterkte", "95%-BI", "p"],
+            [
+                "Item",
+                "Succes n",
+                "Geen n",
+                "Effect r",
+                "Sterkte",
+                "95%-BI",
+                "p",
+                "p gecorr.",
+            ],
             verg_rows,
-            col_widths=[50, 20, 20, 22, 26, 32, 20],
+            col_widths=[44, 17, 17, 20, 24, 30, 16, 22],
         )
 
     # Section 4: Samenhang en regressie
@@ -809,8 +822,9 @@ def genereer_rapport(
         "met een Kruskal-Wallis of de groepen anders scoren. De effectgrootte is "
         "epsilon-kwadraat (0-1): onder 0.01 verwaarloosbaar, 0.01-0.06 zwak, "
         "0.06-0.14 matig, boven 0.14 sterk. De kolom 'Verschil' toont welke groep "
-        "het hoogst scoort. Een p-waarde onder 0.05 is significant. Groepen met "
-        "minder dan vijf studenten vallen weg."
+        "het hoogst scoort. Een gecorrigeerde p-waarde onder 0.05 is significant "
+        "(correctie per achtergronddimensie, zie de uitleg in sectie 3). Groepen "
+        "met minder dan vijf studenten vallen weg."
     )
 
     if not demo_toetsen:
@@ -824,9 +838,9 @@ def genereer_rapport(
             [str(r[kolom]) for kolom in VERSCHIL_KOLOMMEN] for _, r in tabel.iterrows()
         ]
         pdf.add_data_table(
-            ["Item", "n", "Verschil", "Effect", "Sterkte", "p"],
+            ["Item", "n", "Verschil", "Effect", "Sterkte", "p", "p gecorr."],
             demo_rows,
-            col_widths=[50, 15, 45, 25, 30, 25],
+            col_widths=[46, 14, 42, 20, 24, 20, 24],
         )
 
     # Conclusies

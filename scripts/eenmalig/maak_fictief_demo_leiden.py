@@ -227,8 +227,8 @@ make_config(
             "Gespreksbeoordeling (B2)",
             "Communicatievaardigheid",
         ],
-        ["C_B1_B2_Sc_SubTotaal", "Gesprek", "Subtotaal gesprek B1+B2", ""],
-        ["C_A_Sc_SubTotaal", "Bachelordiploma", "Subtotaal diploma", ""],
+        # De subtotalen (C_B1_B2_Sc_SubTotaal, C_A_Sc_SubTotaal) zijn bewust
+        # geen items: ze tellen hun onderdelen dubbel (pitch #38).
     ],
 )
 

@@ -273,6 +273,65 @@ def fmt_p(p: float) -> str:
     return "< 0.001" if p < 0.001 else f"{p:.3f}"
 
 
+def bh_correctie(p_waarden: Iterable[float]) -> list[float]:
+    """Benjamini-Hochberg-gecorrigeerde p-waarden (NaN blijft NaN).
+
+    Bij veel toetsen tegelijk komt er bij toeval altijd wel iets onder 0.05.
+    BH houdt het verwachte aandeel valse ontdekkingen onder de significante
+    toetsen op 5%, en is minder streng dan Bonferroni of Holm: bij de kleine
+    groepen in selectiedata zou Holm vrijwel alles wegcorrigeren."""
+    p = pd.Series(list(p_waarden), dtype=float)
+    geldig = p.dropna()
+    m = len(geldig)
+    if m == 0:
+        return p.tolist()
+    oplopend = geldig.sort_values()
+    rang = pd.Series(range(1, m + 1), index=oplopend.index, dtype=float)
+    # p * m / rang, daarna van achter naar voren het lopende minimum, zodat
+    # de gecorrigeerde p-waarden dezelfde volgorde houden als de ruwe.
+    gecorr = (oplopend * m / rang)[::-1].cummin()[::-1].clip(upper=1.0)
+    p.loc[gecorr.index] = gecorr
+    return p.tolist()
+
+
+# Kolomnaam voor de BH-gecorrigeerde p-waarde in de toetstabellen. De sterretjes
+# en alle conclusies volgen deze kolom; 'p' is de ongecorrigeerde waarde.
+P_GECORRIGEERD = "p (gecorrigeerd)"
+
+# Eén uitleg voor de tabs en het rapport, zodat die niet uiteenlopen.
+BH_UITLEG = (
+    "Omdat we veel items tegelijk toetsen, komen er bij toeval altijd een paar "
+    "onder p = 0.05 uit: bij 20 toetsen gemiddeld één, ook als geen enkel item "
+    "echt iets voorspelt. Daarom corrigeren we de p-waarden met de "
+    "Benjamini-Hochberg-methode. Die houdt het verwachte aandeel valse "
+    "ontdekkingen onder de significante items op maximaal 5%. De kolom 'p' is de "
+    "ongecorrigeerde p-waarde; de sterretjes en de conclusies gebruiken de "
+    "gecorrigeerde p. Bij kleine groepen blijft er na correctie vaak weinig "
+    "significant over. Dat is geen fout: het voorkomt dat je beleid baseert op "
+    "een toevalstreffer."
+)
+
+
+def _voeg_correctie_toe(tabel: pd.DataFrame, getoetst: pd.Series) -> pd.DataFrame:
+    """Zet `_p_bh` en de displaykolom P_GECORRIGEERD op een toetstabel. Alleen
+    de rijen in `getoetst` tellen mee in de correctie (de familie van toetsen);
+    de overige krijgen NaN en '-'."""
+    tabel = tabel.copy()
+    tabel["_p_bh"] = float("nan")
+    if getoetst.any():
+        tabel.loc[getoetst, "_p_bh"] = bh_correctie(tabel.loc[getoetst, "_p"])
+    tabel[P_GECORRIGEERD] = [
+        f"{fmt_p(p)} {sig_sym(p)}" if p == p else "-" for p in tabel["_p_bh"]
+    ]
+    return tabel
+
+
+def _p_kolom(tabel) -> str:
+    """De p-kolom waarop 'significant' wordt beoordeeld: de gecorrigeerde als
+    die er is (tabellen uit deze module), anders de ruwe."""
+    return "_p_bh" if "_p_bh" in tabel else "_p"
+
+
 VERGELIJKING_KOLOMMEN = [
     "Item",
     "Succes (n)",
@@ -281,6 +340,7 @@ VERGELIJKING_KOLOMMEN = [
     "Sterkte",
     "95%-BI",
     "p",
+    P_GECORRIGEERD,
 ]
 
 VERSCHIL_KOLOMMEN = [
@@ -290,6 +350,7 @@ VERSCHIL_KOLOMMEN = [
     "Effectgrootte",
     "Sterkte",
     "p",
+    P_GECORRIGEERD,
 ]
 
 
@@ -403,7 +464,7 @@ def vergelijk_succes_per_item(
                 "Effectgrootte": f"{r:+.2f}",
                 "Sterkte": effect_sterkte(r),
                 "95%-BI": f"{lo:+.2f} tot {hi:+.2f}",
-                "p": f"{fmt_p(float(toets.pvalue))} {sig_sym(float(toets.pvalue))}",
+                "p": fmt_p(float(toets.pvalue)),
                 "_sort": abs(r),
                 "_r": r,
                 "_p": float(toets.pvalue),
@@ -414,8 +475,9 @@ def vergelijk_succes_per_item(
     tabel = pd.DataFrame(rijen)
     if tabel.empty:
         return tabel
+    tabel = _voeg_correctie_toe(tabel, tabel["_r"].notna())
     tabel = tabel.sort_values("_sort", ascending=False).drop(columns="_sort")
-    return tabel[VERGELIJKING_KOLOMMEN + ["_r", "_p"]].reset_index(drop=True)
+    return tabel[VERGELIJKING_KOLOMMEN + ["_r", "_p", "_p_bh"]].reset_index(drop=True)
 
 
 # Demografische dimensies voor de analyse-tabs en de rapportsectie. Een dimensie
@@ -487,8 +549,8 @@ def toets_verschil_per_item(
 
     Groepen met minder dan ``min_per_groep`` waarnemingen vallen weg, zodat een
     enkeling geen toets stuurt. Returnt een frame met de displaykolommen uit
-    ``VERSCHIL_KOLOMMEN`` plus numerieke hulpkolommen (``_eps2``, ``_p``) voor
-    de conclusietekst, gesorteerd op aflopende effectgrootte.
+    ``VERSCHIL_KOLOMMEN`` plus numerieke hulpkolommen (``_eps2``, ``_p`` en de
+    Benjamini-Hochberg-gecorrigeerde ``_p_bh``) voor de conclusietekst, gesorteerd op aflopende effectgrootte.
     """
     from scipy.stats import kruskal
 
@@ -530,23 +592,21 @@ def toets_verschil_per_item(
         medianen = {naam: float(pd.Series(v).median()) for naam, v in groepen.items()}
         hoog = max(medianen, key=medianen.get)
         laag = min(medianen, key=medianen.get)
-        # Een richting ('man > vrouw') alleen tonen als het verschil significant
-        # is. Anders is de rangschikking ruis en is 'vergelijkbaar' eerlijker.
-        if p >= 0.05 or medianen[hoog] == medianen[laag]:
-            verschil = "vergelijkbaar"
+        if medianen[hoog] == medianen[laag]:
+            richting = None
         elif len(groepen) == 2:
-            verschil = f"{hoog} > {laag}"
+            richting = f"{hoog} > {laag}"
         else:
-            verschil = f"{hoog} hoogst, {laag} laagst"
+            richting = f"{hoog} hoogst, {laag} laagst"
 
         rij.update(
             {
-                "Verschil": verschil,
                 "Effectgrootte": f"{eps2:.3f}",
                 "Sterkte": eta_sterkte(eps2),
-                "p": f"{fmt_p(p)} {sig_sym(p)}",
+                "p": fmt_p(p),
                 "_eps2": eps2,
                 "_p": float(p),
+                "_richting": richting,
             }
         )
         rijen.append(rij)
@@ -554,11 +614,31 @@ def toets_verschil_per_item(
     tabel = pd.DataFrame(rijen)
     if tabel.empty:
         return tabel
+    tabel = _voeg_correctie_toe(tabel, tabel["_eps2"].notna())
+    # Een richting ('man > vrouw') alleen tonen als het verschil na correctie
+    # significant is. Anders is de rangschikking ruis en is 'vergelijkbaar'
+    # eerlijker.
+    if "_richting" in tabel:
+        getoetst = tabel["_eps2"].notna()
+        tabel.loc[getoetst, "Verschil"] = [
+            r if r and p < 0.05 else "vergelijkbaar"
+            for r, p in zip(
+                tabel.loc[getoetst, "_richting"], tabel.loc[getoetst, "_p_bh"]
+            )
+        ]
+        tabel = tabel.drop(columns="_richting")
     return tabel.sort_values("_eps2", ascending=False).reset_index(drop=True)
 
 
 def _sorteer_abs(serie: pd.Series) -> pd.Series:
     return serie.abs()
+
+
+def _p_tekst(rij) -> str:
+    """'gecorrigeerde p = …' als de rij een gecorrigeerde p heeft, anders 'p = …'."""
+    if "_p_bh" in rij and rij["_p_bh"] == rij["_p_bh"]:
+        return f"gecorrigeerde p = {fmt_p(rij['_p_bh'])}"
+    return f"p = {fmt_p(rij['_p'])}"
 
 
 def genereer_bevindingen(
@@ -614,12 +694,19 @@ def genereer_bevindingen(
         and "_r" in succes_tabel.columns
     ):
         getoetst = succes_tabel[succes_tabel["_r"].notna()]
-        sig = getoetst[getoetst["_p"] < 0.05]
+        pk = _p_kolom(getoetst)
+        sig = getoetst[getoetst[pk] < 0.05]
         if len(getoetst):
-            samenvatting.append(
+            tekst = (
                 f"Van de {len(getoetst)} getoetste items tonen er {len(sig)} een "
-                f"significant verband met de uitkomst ({uitkomst_label})."
+                f"significant verband met de uitkomst ({uitkomst_label})"
             )
+            n_ruw = int((getoetst["_p"] < 0.05).sum())
+            if pk == "_p_bh":
+                tekst += ", na correctie voor meervoudig toetsen (Benjamini-Hochberg)"
+                if n_ruw != len(sig):
+                    tekst += f"; zonder die correctie zouden het er {n_ruw} zijn"
+            samenvatting.append(tekst + ".")
         gesorteerd = sig.sort_values("_r", key=_sorteer_abs, ascending=False)
         pos_label = perspectief["positief_label"].lower()
         neg_label = perspectief["negatief_label"].lower()
@@ -627,13 +714,13 @@ def genereer_bevindingen(
             if r["_r"] > 0:
                 validiteit.append(
                     f"'{r['Item']}': de groep '{pos_label}' scoorde hoger "
-                    f"(effect {r['Effectgrootte']}, p = {fmt_p(r['_p'])}). Dit item heeft "
+                    f"(effect {r['Effectgrootte']}, {_p_tekst(r)}). Dit item heeft "
                     "voorspellende waarde."
                 )
             else:
                 validiteit.append(
                     f"'{r['Item']}': juist de groep '{neg_label}' scoorde hoger "
-                    f"(effect {r['Effectgrootte']}, p = {fmt_p(r['_p'])}). Onverwacht en de "
+                    f"(effect {r['Effectgrootte']}, {_p_tekst(r)}). Onverwacht en de "
                     "moeite waard om nader te bekijken."
                 )
         if len(getoetst) and sig.empty:
@@ -644,7 +731,8 @@ def genereer_bevindingen(
                 f"Geen enkel item verschilt significant tussen '{pos_label}' en "
                 f"'{neg_label}'. Het sterkste (niet-significante) signaal is "
                 f"'{sterkste['Item']}' (effect {sterkste['Effectgrootte']}). Bij kleine "
-                "groepen is dat niet ongebruikelijk."
+                "groepen, en na correctie voor het aantal toetsen, is dat niet "
+                "ongebruikelijk."
             )
 
     tellingen = _tel_bevindingen(succes_tabel, demo_tabellen, correlatie_matrix)
@@ -664,7 +752,7 @@ def genereer_bevindingen(
         getoetst = tab[tab["_eps2"].notna()]
         if not len(getoetst):
             continue
-        sig = getoetst[getoetst["_p"] < 0.05]
+        sig = getoetst[getoetst[_p_kolom(getoetst)] < 0.05]
         if sig.empty:
             fairness.append(
                 f"{label}: geen significante verschillen tussen de groepen op de "
@@ -675,7 +763,7 @@ def genereer_bevindingen(
             fairness.append(
                 f"{label}: op '{r['Item']}' verschillen de groepen significant "
                 f"(Kruskal-Wallis, {r['Verschil']}, effectgrootte "
-                f"{r['Effectgrootte']}, p = {fmt_p(r['_p'])}). Beoordeel of dit een "
+                f"{r['Effectgrootte']}, {_p_tekst(r)}). Beoordeel of dit een "
                 "terecht onderscheid is."
             )
 
@@ -722,7 +810,7 @@ def _tel_bevindingen(
     }
     if succes_tabel is not None and not succes_tabel.empty and "_r" in succes_tabel:
         getoetst = succes_tabel[succes_tabel["_r"].notna()]
-        sig = getoetst[getoetst["_p"] < 0.05]
+        sig = getoetst[getoetst[_p_kolom(getoetst)] < 0.05]
         tellingen["n_getoetst"] = len(getoetst)
         tellingen["n_sig_positief"] = int((sig["_r"] > 0).sum())
         tellingen["n_sig_negatief"] = int((sig["_r"] < 0).sum())
@@ -730,7 +818,7 @@ def _tel_bevindingen(
     fair_items = set()
     for tab in demo_tabellen.values():
         if tab is not None and not tab.empty and "_p" in tab:
-            fair_items |= set(tab.loc[tab["_p"] < 0.05, "Item"])
+            fair_items |= set(tab.loc[tab[_p_kolom(tab)] < 0.05, "Item"])
     tellingen["n_fair_sig"] = len(fair_items)
 
     if correlatie_matrix is not None and correlatie_matrix.shape[0] > 1:
@@ -907,29 +995,31 @@ def _bevindingen_univariaat(
 
     sig_items = []
     for row in uni_data:
-        if row.get("p-waarde") in ("-", None):
+        p = row.get(_p_kolom(row), float("nan"))
+        if p != p or row.get("Odds ratio") in ("-", None):
             continue
-        p = 0.0001 if row["p-waarde"] == "< 0.001" else float(row["p-waarde"])
-        if p < 0.05 and row.get("Odds ratio") not in ("-", None):
-            sig_items.append((row["Item"], float(row["Odds ratio"]), p))
+        if p < 0.05:
+            sig_items.append((row["Item"], float(row["Odds ratio"]), row))
 
     if not sig_items:
         resultaten.append(
-            "Geen enkel item voorspelt de uitkomst significant op zichzelf. "
-            "Bij kleine steekproeven is dat niet ongebruikelijk."
+            "Geen enkel item voorspelt de uitkomst significant op zichzelf "
+            "(na correctie voor meervoudig toetsen). Bij kleine steekproeven is "
+            "dat niet ongebruikelijk."
         )
         return
 
-    sig_items.sort(key=lambda x: x[2])
+    sig_items.sort(key=lambda x: x[2][_p_kolom(x[2])])
     resultaten.append(
         f"{len(sig_items)} van de {len(uni_data)} items voorspellen "
-        f"'{pos_label}' significant als je ze afzonderlijk bekijkt."
+        f"'{pos_label}' significant als je ze afzonderlijk bekijkt (na correctie "
+        "voor meervoudig toetsen)."
     )
-    for item, odds, p in sig_items[:top]:
+    for item, odds, row in sig_items[:top]:
         richting = "verhoogt" if odds > 1 else "verlaagt"
         resultaten.append(
             f"'{item}': een standaarddeviatie hoger scoren {richting} de kans op "
-            f"'{pos_label}' (OR = {odds:.2f}, p = {fmt_p(p)})."
+            f"'{pos_label}' (OR = {odds:.2f}, {_p_tekst(row)})."
         )
 
 
@@ -960,6 +1050,11 @@ def _bevindingen_gezamenlijk_model(
             + ", ".join(sig_items)
             + "."
         )
+        if stats.get("voorgeselecteerd"):
+            resultaten.append(
+                "Deze items zijn vooraf gekozen op dezelfde data, dus hun "
+                "p-waarden in het model zijn te gunstig. Zie de Regressie-tab."
+            )
     elif pseudo_r2 is not None:
         resultaten.append(
             "Geen enkel item levert een significant eigen bijdrage als alle "
@@ -1107,17 +1202,32 @@ def _univariaat_rij(item: str, x: pd.Series, y: pd.Series) -> dict:
         }
 
 
+def _corrigeer_univariaat(rijen: list[dict]) -> list[dict]:
+    """Voeg de Benjamini-Hochberg-gecorrigeerde p toe aan univariate rijen
+    (`_p_bh` en P_GECORRIGEERD). Sig. volgt dan de gecorrigeerde p, net als in
+    de verschiltoets: elk item los toetsen is ook meervoudig toetsen."""
+    gecorr = bh_correctie(r["_p"] for r in rijen)
+    for rij, p in zip(rijen, gecorr):
+        rij["_p_bh"] = p
+        rij[P_GECORRIGEERD] = fmt_p(p) if p == p else "-"
+        rij["Sig."] = sig_sym(p) if p == p else "-"
+    return rijen
+
+
 def bereken_univariaat(
     df: pd.DataFrame, scores_df: pd.DataFrame, perspectief: dict
 ) -> list[dict]:
     """Univariate logistische regressie per item (z-gestandaardiseerd).
 
     Een rij per bruikbaar item met Coefficient, Odds ratio, p-waarde (tekst),
-    Sig. en `_p` (numeriek). Leeg als er te weinig data is."""
+    de gecorrigeerde p, Sig. en `_p`/`_p_bh` (numeriek). Leeg als er te weinig
+    data is."""
     data = _bereid_regressiedata(df, scores_df, perspectief)
     if data["status"] != "ok":
         return []
-    return [_univariaat_rij(c, data["X"][c], data["y"]) for c in data["X"].columns]
+    return _corrigeer_univariaat(
+        [_univariaat_rij(c, data["X"][c], data["y"]) for c in data["X"].columns]
+    )
 
 
 def _verwijder_collineair(X: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
@@ -1147,7 +1257,9 @@ def bereken_gezamenlijk_model(
        eruit, rest mean-geïmputeerd).
     2. Collineaire items eruit tot de matrix volle rang heeft.
     3. Te weinig events per variabele (minder dan 5 in de kleinste groep per
-       item): houd de items met de laagste univariate p-waarde over.
+       item): houd de items met de laagste univariate p-waarde over. Die
+       voorselectie gebeurt op dezelfde data als het model, dus de p-waarden
+       van het model zijn dan te gunstig; de tabs en het rapport melden dat.
     4. Fit op z-scores, zodat odds ratios per standaarddeviatie gelden.
 
     Retourneert een dict met `status` ("ok" of een reden), `melding`, en bij
@@ -1163,7 +1275,9 @@ def bereken_gezamenlijk_model(
         return data
     X_all, y = data["X"], data["y"]
 
-    univariaat = [_univariaat_rij(c, X_all[c], y) for c in X_all.columns]
+    univariaat = _corrigeer_univariaat(
+        [_univariaat_rij(c, X_all[c], y) for c in X_all.columns]
+    )
     X, verwijderd_collineair = _verwijder_collineair(X_all)
 
     n_positief = int(y.sum())
@@ -1227,7 +1341,23 @@ def model_stats_uit(model: dict) -> dict | None:
     de vervolgstappen gebruiken: pseudo R² en de items met een eigen bijdrage."""
     if model.get("status") != "ok":
         return None
-    return {"pseudo_r2": model["pseudo_r2"], "sig_items": model["sig_items"]}
+    return {
+        "pseudo_r2": model["pseudo_r2"],
+        "sig_items": model["sig_items"],
+        "voorgeselecteerd": bool(model.get("verwijderd_epv")),
+    }
+
+
+# Kanttekening bij het gezamenlijke model als de items vooraf op hun losse
+# p-waarde zijn gekozen. Eén tekst voor de Regressie-tab, 'Wat valt op' en het
+# rapport.
+VOORSELECTIE_UITLEG = (
+    "Let op: omdat er te weinig studenten zijn voor alle items, zijn de items in "
+    "dit model vooraf gekozen op hun losse p-waarde, op dezelfde data. Een item "
+    "dat daar toevallig gunstig uitkwam, krijgt in het model een tweede kans op "
+    "dezelfde toevalstreffer. De p-waarden van het gezamenlijke model vallen "
+    "daardoor te gunstig uit; lees ze als indicatie, niet als bewijs."
+)
 
 
 def chi2_per_dimensie(df: pd.DataFrame, perspectief: dict) -> dict[str, dict]:
