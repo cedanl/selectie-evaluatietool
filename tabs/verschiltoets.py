@@ -12,6 +12,8 @@ from shared import (
     VERSCHIL_KOLOMMEN,
     DEMO_DIMENSIES,
     demografie_scores,
+    BH_UITLEG,
+    P_GECORRIGEERD,
 )
 
 from helpers import (
@@ -36,7 +38,19 @@ def _uitleg_details(samenvatting, inhoud):
                         className="small text-muted",
                         style={"cursor": "pointer"},
                     ),
-                    html.Div(inhoud, className="small text-muted mt-1"),
+                    html.Div(
+                        [
+                            html.P(inhoud, className="mb-1"),
+                            html.P(
+                                [
+                                    html.Strong("Correctie voor meervoudig toetsen. "),
+                                    BH_UITLEG,
+                                ],
+                                className="mb-0",
+                            ),
+                        ],
+                        className="small text-muted mt-1",
+                    ),
                 ]
             ),
         ],
@@ -49,8 +63,9 @@ def _uitleg_verschil_uitkomst(perspectief):
     neg = perspectief["negatief_label"]
     return _uitleg_details(
         f"Per item vergelijken we of de groep '{pos}' hoger scoorde dan "
-        f"'{neg}'. Een sterretje betekent dat het verschil waarschijnlijk niet "
-        "op toeval berust; dan heeft het item voorspellende waarde. De "
+        f"'{neg}'. Een sterretje in de kolom '{P_GECORRIGEERD}' betekent dat het "
+        "verschil waarschijnlijk niet op toeval berust, ook als je meetelt dat we "
+        "veel items tegelijk toetsen; dan heeft het item voorspellende waarde. De "
         "kolom Effectgrootte zegt hoe groot het verschil is (niet hoeveel keer "
         "groter de kans is, dat staat op het tabblad Regressie).",
         f"We toetsen het verschil met een verdelingsvrije toets (Mann-Whitney U), "
@@ -66,8 +81,9 @@ def _uitleg_verschil_demografisch(label):
     laag = label.lower()
     return _uitleg_details(
         f"Per item kijken we of de scores verschillen tussen {laag}-groepen. "
-        "Een sterretje betekent een verschil dat waarschijnlijk niet op toeval "
-        "berust; dat kan wijzen op onbedoelde vertekening. Staat er 'vergelijkbaar', "
+        f"Een sterretje in de kolom '{P_GECORRIGEERD}' betekent een verschil dat "
+        "waarschijnlijk niet op toeval berust, ook na correctie voor het aantal "
+        "toetsen; dat kan wijzen op onbedoelde vertekening. Staat er 'vergelijkbaar', "
         f"dan is er geen aangetoond verschil. De {laag} komt uit 1CHO en is alleen "
         "bekend voor ingeschreven studenten, dus we vergelijken binnen die groep.",
         "We toetsen het verschil met een verdelingsvrije toets (Kruskal-Wallis, "
@@ -118,7 +134,11 @@ def maak_layout():
                         style_table={"overflowX": "auto"},
                         style_data_conditional=[
                             {
-                                "if": {"filter_query": '{p} contains "*"'},
+                                "if": {
+                                    "filter_query": "{"
+                                    + P_GECORRIGEERD
+                                    + '} contains "*"'
+                                },
                                 "backgroundColor": "#f0fdf4",
                                 "fontWeight": "bold",
                             }

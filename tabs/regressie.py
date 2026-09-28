@@ -3,7 +3,13 @@
 from dash import dcc, html, dash_table, Input, Output, State
 import dash_bootstrap_components as dbc
 
-from shared import perspectief_voor, bereken_gezamenlijk_model
+from shared import (
+    perspectief_voor,
+    bereken_gezamenlijk_model,
+    BH_UITLEG,
+    P_GECORRIGEERD,
+    VOORSELECTIE_UITLEG,
+)
 
 from helpers import (
     scores_df_from_store,
@@ -58,6 +64,11 @@ def maak_layout():
                                             html.Li(
                                                 "Sig.: * = p < 0.05, ** < 0.01, *** < 0.001, ns = niet significant."
                                             ),
+                                            html.Li(
+                                                f"{P_GECORRIGEERD} (alleen bij 'Elk item los getoetst'): "
+                                                "de p-waarde na correctie voor meervoudig toetsen. "
+                                                "Daar volgt Sig. deze gecorrigeerde waarde."
+                                            ),
                                         ],
                                         className="small text-muted mb-1",
                                     ),
@@ -69,6 +80,17 @@ def maak_layout():
                                         "items automatisch weggelaten: per item in het model zijn "
                                         "ongeveer vijf studenten met de uitkomst nodig, anders worden de "
                                         "schattingen onbetrouwbaar.",
+                                        className="small text-muted mb-1",
+                                    ),
+                                    html.P(
+                                        [
+                                            html.Strong(
+                                                "Correctie voor meervoudig toetsen. "
+                                            ),
+                                            BH_UITLEG,
+                                            " Het gezamenlijke model is één toets van "
+                                            "alle items samen; daar corrigeren we niet.",
+                                        ],
                                         className="small text-muted mb-0",
                                     ),
                                 ],
@@ -120,11 +142,22 @@ def maak_layout():
 
 
 _KOLOMMEN = ["Item", "Coefficient", "Odds ratio", "p-waarde", "Sig."]
+_KOLOMMEN_UNIVARIAAT = [
+    "Item",
+    "Coefficient",
+    "Odds ratio",
+    "p-waarde",
+    P_GECORRIGEERD,
+    "Sig.",
+]
 
 
-def _tabel(rijen: list[dict]) -> tuple[list[dict], list[dict], list[dict]]:
-    """Data, kolommen en de groene markering van significante rijen."""
-    data = [{k: r[k] for k in _KOLOMMEN} for r in rijen]
+def _tabel(
+    rijen: list[dict], kolommen: list[str] = _KOLOMMEN
+) -> tuple[list[dict], list[dict], list[dict]]:
+    """Data, kolommen en de groene markering van significante rijen. Rijen
+    met een gecorrigeerde p (univariaat) worden daarop beoordeeld."""
+    data = [{k: r[k] for k in kolommen} for r in rijen]
     stijl = [
         {
             "if": {"row_index": i, "column_id": "Sig."},
@@ -133,9 +166,9 @@ def _tabel(rijen: list[dict]) -> tuple[list[dict], list[dict], list[dict]]:
             "fontWeight": "600",
         }
         for i, r in enumerate(rijen)
-        if r["_p"] < 0.05
+        if r.get("_p_bh", r["_p"]) < 0.05
     ]
-    return data, [{"name": c, "id": c} for c in _KOLOMMEN], stijl
+    return data, [{"name": c, "id": c} for c in kolommen], stijl
 
 
 def _samenvatting(model: dict, perspectief: dict):
@@ -170,6 +203,10 @@ def _samenvatting(model: dict, perspectief: dict):
                     className="small text-muted",
                 ),
             ]
+    if model.get("verwijderd_epv"):
+        delen += [
+            dbc.Alert(VOORSELECTIE_UITLEG, color="warning", className="small mt-2 mb-0")
+        ]
     return html.Div(delen)
 
 
@@ -201,7 +238,9 @@ def registreer_callbacks(app):
             )
             return (waarschuwing, [], [], [], [], [], [])
 
-        uni_data, uni_cols, uni_stijl = _tabel(model["univariaat"])
+        uni_data, uni_cols, uni_stijl = _tabel(
+            model["univariaat"], _KOLOMMEN_UNIVARIAAT
+        )
         if model["status"] != "ok":
             waarschuwing = dbc.Alert(
                 model["melding"], color="warning", className="small"
