@@ -494,7 +494,10 @@ def registreer_callbacks(app):
                     if demo_missing:
                         cho_status = dbc.Alert(
                             "Ontbrekende achtergrondkolommen in 1CHO (nodig voor de "
-                            f"demografie- en eerlijkheidsanalyse): {', '.join(demo_missing)}",
+                            f"demografie- en eerlijkheidsanalyse): {', '.join(demo_missing)}. "
+                            "Gebruik je de 1cijferho-tool, upload dan het bestand dat "
+                            "eindigt op _enriched.csv of _decoded.csv; het gewone "
+                            "EV-bestand bevat alleen codes.",
                             color="danger",
                             className="small py-1",
                         )
@@ -538,7 +541,10 @@ def registreer_callbacks(app):
                             f"Geen overlap tussen selectiedata ({len(sel_ids)} studenten) "
                             f"en 1CHO-data ({cho['info']['n_studenten_totaal']} "
                             "studenten). "
-                            "Controleer of beide bestanden hetzelfde studentnummer gebruiken.",
+                            "Controleer of beide bestanden hetzelfde studentnummer gebruiken. "
+                            "Komt het 1CHO-bestand uit de 1cijferho-tool, draai die dan "
+                            "met een koppelbestand (BSN naar studentnummer), zodat er een "
+                            "kolom 'studentnummer' in staat.",
                             color="danger",
                             className="small py-1",
                         )

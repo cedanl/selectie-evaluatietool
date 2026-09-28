@@ -60,6 +60,17 @@ CHO_OPLEIDING_KOLOM = "cho_opleiding"
 # is in plaats van doorstroom naar jaar 2.
 _DIPLOMA_KOLOM = "diploma_behaald"
 
+# Kolommen uit de uitvoer van de 1cijferho-pipeline (github.com/cedanl/1cijferho)
+# die normaliseer_1cijferho() omzet naar wat de tool verwacht:
+# - `studentnummer`: het eigen studentnummer, dat 1cijferho toevoegt als je een
+#   koppelbestand (BSN -> studentnummer) meegeeft. `persoonsgebonden_nummer`
+#   is daar het DUO-nummer en koppelt niet aan de selectiedata.
+# - `diplomajaar` + opleidingsfase: daaruit leiden we `diploma_behaald` af voor
+#   masters.
+_1CIJFERHO_ID_KOLOM = "studentnummer"
+_1CIJFERHO_DIPLOMAJAAR = "diplomajaar"
+_1CIJFERHO_FASE_KOLOMMEN = ("opleidingsfase_actueel", "opleidingsfase")
+
 # Alle 1CHO-kolommen die de tool gebruikt. Bij het inlezen van een groot
 # bestand laten we de rest weg (bestandsopslag.lees_cho_bestand).
 CHO_BENODIGDE_KOLOMMEN = {
@@ -69,7 +80,42 @@ CHO_BENODIGDE_KOLOMMEN = {
     *_META_KOLOMMEN,
     "opleidingscode_naam_opleiding",
     _DIPLOMA_KOLOM,
+    _1CIJFERHO_ID_KOLOM,
+    _1CIJFERHO_DIPLOMAJAAR,
+    *_1CIJFERHO_FASE_KOLOMMEN,
 }
+
+
+def normaliseer_1cijferho(df: pd.DataFrame) -> pd.DataFrame:
+    """Maak de EV-uitvoer van de 1cijferho-pipeline direct bruikbaar.
+
+    - Heeft het bestand een kolom `studentnummer` (1cijferho voegt die toe met
+      een koppelbestand), dan wordt die de koppelsleutel in plaats van het
+      DUO-nummer in `persoonsgebonden_nummer`.
+    - Ontbreekt `diploma_behaald`, dan leiden we die af uit `diplomajaar` voor
+      rijen in de masterfase: een geldig jaartal betekent dat er bij die
+      inschrijving een diploma is geregistreerd. Bachelors krijgen geen
+      diplomakolom, daar is doorstroom naar jaar 2 de uitkomst.
+
+    Een bestand in het eigen formaat van de tool (zoals de demodata) blijft
+    ongewijzigd."""
+    if _1CIJFERHO_ID_KOLOM in df.columns:
+        df = df.drop(columns=["persoonsgebonden_nummer"], errors="ignore").rename(
+            columns={_1CIJFERHO_ID_KOLOM: "persoonsgebonden_nummer"}
+        )
+    fase_kolom = next((k for k in _1CIJFERHO_FASE_KOLOMMEN if k in df.columns), None)
+    if (
+        _DIPLOMA_KOLOM not in df.columns
+        and _1CIJFERHO_DIPLOMAJAAR in df.columns
+        and fase_kolom
+    ):
+        master = (
+            df[fase_kolom].astype(str).str.strip().str.lower().isin({"m", "master"})
+        )
+        if master.any():
+            jaar = pd.to_numeric(df[_1CIJFERHO_DIPLOMAJAAR], errors="coerce")
+            df = df.assign(**{_DIPLOMA_KOLOM: master & jaar.gt(0)})
+    return df
 
 
 def ontbrekende_cho_kolommen(df: pd.DataFrame) -> list[str]:

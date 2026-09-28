@@ -28,7 +28,7 @@ from urllib.parse import urlsplit
 import pandas as pd
 from flask import jsonify, request
 
-from cho_transform import CHO_BENODIGDE_KOLOMMEN
+from cho_transform import CHO_BENODIGDE_KOLOMMEN, normaliseer_1cijferho
 from transformatie import _repareer_xlsx
 
 UPLOAD_DIR = Path(tempfile.gettempdir()) / "selectie-evaluatietool-uploads"
@@ -148,7 +148,7 @@ def lees_cho_bestand(pad: Path) -> pd.DataFrame:
     else:
         df = _lees_csv(pad)
     df.columns = [str(c).strip() for c in df.columns]
-    return df
+    return normaliseer_1cijferho(df)
 
 
 def _lees_csv(pad: Path) -> pd.DataFrame:
@@ -169,7 +169,7 @@ def _lees_csv(pad: Path) -> pd.DataFrame:
                 sep=sep,
                 encoding=encoding,
                 usecols=_benodigd,
-                dtype={"persoonsgebonden_nummer": str},
+                dtype={"persoonsgebonden_nummer": str, "studentnummer": str},
                 low_memory=False,
             )
         except UnicodeDecodeError as e:
