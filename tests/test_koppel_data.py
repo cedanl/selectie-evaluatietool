@@ -40,28 +40,6 @@ class TestKoppelData:
         student1 = df[df["studentnummer"] == 1].iloc[0]
         assert student1["groep"] == GROEP_DOORGESTROOMD
 
-    def test_totaalscore_berekend(self, cho_df, scores_df):
+    def test_een_rij_per_kandidaat(self, cho_df, scores_df):
         df = koppel_data(cho_df, scores_df)
-        assert "totaalscore" in df.columns
-        assert df["totaalscore"].notna().all()
-
-    def test_zscore_scalar_bug_fixed(self):
-        cho_df = pd.DataFrame(
-            {
-                "studentnummer": [1, 2],
-                "selectiejaar": [2024, 2024],
-                "groep": [GROEP_DOORGESTROOMD, GROEP_GESTART_GEEN_VERVOLG],
-            }
-        )
-        scores_df = pd.DataFrame(
-            {
-                "studentnummer": [1, 2],
-                "item": ["a", "a"],
-                "score": [50, 50],
-                "instrument": ["Test", "Test"],
-                "criterium": ["c1", "c1"],
-            }
-        )
-        df = koppel_data(cho_df, scores_df)
-        assert "totaalscore" in df.columns
-        assert df["totaalscore"].notna().all()
+        assert sorted(df["studentnummer"]) == [1, 2, 3]

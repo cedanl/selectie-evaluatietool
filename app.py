@@ -10,6 +10,7 @@ helpers.py (gedeelde app-helpers). Elke module levert een maak_layout()- en/of
 registreer_callbacks(app)-functie, net als config_wizard.py.
 """
 
+import os
 from urllib.parse import parse_qs, urlsplit
 
 import dash
@@ -119,4 +120,6 @@ def laad_via_url(search):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # De Werkzeug-debugger laat code uitvoeren vanuit de browser: alleen lokaal
+    # aanzetten, via DASH_DEBUG=1.
+    app.run(debug=os.environ.get("DASH_DEBUG", "").lower() in ("1", "true", "ja"))

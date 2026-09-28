@@ -42,7 +42,9 @@ from shared import (
 )
 
 
-DEMO_DIR = Path("data/demo")
+# Relatief aan dit bestand, zodat de demo's ook gevonden worden als de app
+# vanuit een andere werkmap wordt gestart.
+DEMO_DIR = Path(__file__).resolve().parent / "data" / "demo"
 
 DEMO_DATASETS = []
 if DEMO_DIR.exists():
@@ -63,34 +65,14 @@ def koppel_data(cho_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.DataFrame:
             f"1CHO bevat {int(dubbel.sum())} studentnummers met meerdere "
             "inschrijvingen; kies eerst één inschrijving per student."
         )
-    instrument_gem = (
-        scores_df.groupby(["studentnummer", "instrument"])["score"].mean().reset_index()
-    )
-    pivot = instrument_gem.pivot(
-        index="studentnummer", columns="instrument", values="score"
-    )
-    score_cols = [f"{c}_score" for c in pivot.columns]
-    pivot.columns = score_cols
-    zscores = pivot[score_cols].apply(
-        lambda s: (
-            (s - s.mean()) / s.std() if s.std() > 0 else pd.Series(0, index=s.index)
-        )
-    )
-    pivot["totaalscore"] = zscores.mean(axis=1).round(2)
-    pivot = pivot.reset_index()
+    # Eén rij per kandidaat met de selectie-metadata. De scores zelf blijven in
+    # scores_df (long format); de tabs koppelen die per item via studentnummer.
+    meta_cols = [
+        c for c in ["selectiejaar", "opleiding", "instellingscode"] if c in scores_df
+    ]
+    kandidaten = scores_df.groupby("studentnummer")[meta_cols].first().reset_index()
 
-    meta_cols = ["studentnummer"]
-    for col in ["selectiejaar", "opleiding", "instellingscode"]:
-        if col in scores_df.columns:
-            meta_cols.append(col)
-    meta = (
-        scores_df.groupby("studentnummer")
-        .first()[[c for c in meta_cols if c != "studentnummer"]]
-        .reset_index()
-    )
-    pivot = pivot.merge(meta, on="studentnummer", how="left")
-
-    df = pivot.merge(cho_df, on="studentnummer", how="left", suffixes=("", "_cho"))
+    df = kandidaten.merge(cho_df, on="studentnummer", how="left", suffixes=("", "_cho"))
     for col in ["selectiejaar", "opleiding", "instellingscode"]:
         cho_col = f"{col}_cho"
         if cho_col in df.columns:
