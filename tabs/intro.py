@@ -172,7 +172,7 @@ def maak_layout():
                             _tab_uitleg(
                                 "Demografie",
                                 "hoe achtergrondkenmerken zoals geslacht en "
-                                "vooropleiding samenhangen met doorstroom.",
+                                "vooropleiding samenhangen met de uitkomst.",
                             ),
                             _tab_uitleg(
                                 "Verschiltoets",

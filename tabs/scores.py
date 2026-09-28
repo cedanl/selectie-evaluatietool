@@ -2,6 +2,7 @@
 
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from dash import dcc, html, dash_table, Input, Output, State
 import dash_bootstrap_components as dbc
 
@@ -23,6 +24,60 @@ from helpers import (
     _groep_tabel_stijl,
     _sorteer_bereik,
 )
+
+
+def _boxplot_per_schaal(scores, bereik_per_item, schalen, volgorde, kleur_map, n):
+    """Boxplots onder elkaar, één paneel per schaal, elk met een eigen y-as op
+    de afgeronde schaalgrenzen. De legenda (groepen) staat één keer bovenaan."""
+    # Vaste pixelmaten: elk paneel even hoog, en tussen de panelen ruimte voor
+    # de schuine itemnamen plus de titel van het volgende paneel.
+    paneel, tussenruimte, boven = 300, 150, 80
+    hoogte = boven + len(schalen) * paneel + (len(schalen) - 1) * tussenruimte + 90
+    fig = make_subplots(
+        rows=len(schalen),
+        cols=1,
+        subplot_titles=[f"Schaal {s}" for s in schalen],
+        vertical_spacing=tussenruimte / (hoogte - boven - 90),
+    )
+    # Titels links, zodat ze niet over de legenda (rechtsboven) vallen.
+    for titel in fig.layout.annotations:
+        titel.update(x=0, xanchor="left", font_size=13)
+    for rij, schaal in enumerate(schalen, start=1):
+        deel = scores[scores["item"].map(bereik_per_item) == schaal]
+        items = sorted(deel["item_kort"].unique())
+        for groep in volgorde:
+            g = deel[deel["groep"] == groep]
+            if g.empty:
+                continue
+            fig.add_trace(
+                go.Box(
+                    x=g["item_kort"],
+                    y=g["score"],
+                    name=str(groep),
+                    legendgroup=str(groep),
+                    offsetgroup=str(groep),
+                    showlegend=rij == 1,
+                    marker_color=(kleur_map or {}).get(groep),
+                    boxpoints="all" if n <= 30 else False,
+                ),
+                row=rij,
+                col=1,
+            )
+        fig.update_xaxes(
+            categoryorder="array", categoryarray=items, tickangle=-20, row=rij, col=1
+        )
+        grenzen = schaal_grenzen(deel["score"])
+        if grenzen is not None:
+            fig.update_yaxes(range=list(grenzen), title_text="Score", row=rij, col=1)
+    fig.update_layout(
+        boxmode="group",
+        boxgap=0.15,
+        height=hoogte,
+        legend=dict(orientation="h", y=1.0, yanchor="bottom", x=1, xanchor="right"),
+        **CHART_BASE,
+        margin=dict(t=boven, b=90),
+    )
+    return fig
 
 
 def maak_layout():
@@ -60,8 +115,9 @@ def maak_layout():
                     ),
                     html.H6("Aantal studenten per groep"),
                     html.P(
-                        "Bij geslacht en vooropleiding tellen alleen ingeschreven studenten "
-                        "mee (uit 1CHO). Bij 'Gestart met de opleiding' tellen alle kandidaten mee.",
+                        "Alleen gestarte studenten tellen mee: de uitkomst en de "
+                        "achtergrond (geslacht, vooropleiding) komen uit 1CHO en zijn "
+                        "alleen bekend voor wie is ingeschreven.",
                         className="text-muted small",
                     ),
                     dash_table.DataTable(
@@ -372,24 +428,37 @@ def registreer_callbacks(app):
                 margin=dict(t=30, b=10),
             )
         else:
-            fig = px.box(
-                scores,
-                x="item_kort",
-                y="score",
-                color="groep",
-                category_orders={"groep": volgorde, "item_kort": items_kort},
-                points="all" if n_studenten <= 30 else False,
-                height=520,
-                labels={"item_kort": "", "score": "Score", "groep": ""},
-                **kleur,
+            bereik_per_item = bucket_per_item(scores_df)
+            schalen = sorted(
+                {bereik_per_item.get(it) for it in scores["item"].unique()},
+                key=_sorteer_bereik,
             )
-            fig.update_layout(
-                boxgap=0.15,
-                legend=dict(orientation="h", y=1.05, yanchor="bottom"),
-                xaxis_tickangle=-25,
-                **CHART_BASE,
-                margin=dict(t=60, b=10),
-            )
+            if len(schalen) > 1:
+                # Items met verschillende schalen (1-3 naast 0-100): één paneel per
+                # schaal met een eigen y-as, zoals in het rapport. Op één as worden
+                # de kleine schalen platgedrukt tot streepjes.
+                fig = _boxplot_per_schaal(
+                    scores, bereik_per_item, schalen, volgorde, kleur_map, n_studenten
+                )
+            else:
+                fig = px.box(
+                    scores,
+                    x="item_kort",
+                    y="score",
+                    color="groep",
+                    category_orders={"groep": volgorde, "item_kort": items_kort},
+                    points="all" if n_studenten <= 30 else False,
+                    height=520,
+                    labels={"item_kort": "", "score": "Score", "groep": ""},
+                    **kleur,
+                )
+                fig.update_layout(
+                    boxgap=0.15,
+                    legend=dict(orientation="h", y=1.05, yanchor="bottom"),
+                    xaxis_tickangle=-25,
+                    **CHART_BASE,
+                    margin=dict(t=60, b=10),
+                )
 
         # Bij een gekozen schaal de y-as op de afgeronde grenzen vastzetten, zodat
         # items met een vergelijkbaar bereik eerlijk naast elkaar staan.

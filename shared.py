@@ -93,11 +93,12 @@ RETENTIE_UITLEG = (
 
 PERSPECTIEF_DOORSTROOM = {
     **UITKOMST_PERSPECTIEVEN["doorstroom"],
-    "label": "Retentie (ingeschreven in jaar 2)",
-    # Woorden voor lopende tekst (vervolgstappen, uitleg).
+    "label": "Retentie in jaar 2",
+    # Woorden voor lopende tekst (vervolgstappen, uitleg). Zonder haakjes: ze
+    # staan in zinnen die zelf al haakjes gebruiken.
     "succes_meervoud": "doorstromers",
     "geen_succes_meervoud": "niet-doorstromers",
-    "uitkomst_naam": "retentie (herinschrijving in jaar 2)",
+    "uitkomst_naam": "retentie in jaar 2",
     "kanttekening": RETENTIE_UITLEG,
 }
 
