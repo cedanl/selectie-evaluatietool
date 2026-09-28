@@ -5,16 +5,16 @@ import dash_bootstrap_components as dbc
 
 from shared import (
     perspectief_voor,
-    bereken_gezamenlijk_model,
     BH_UITLEG,
     P_GECORRIGEERD,
     VOORSELECTIE_UITLEG,
+    SCHEIDING_UITLEG,
 )
 
 from helpers import (
-    scores_df_from_store,
     TABLE_STYLE,
     df_from_store,
+    gezamenlijk_model_uit_stores,
 )
 
 
@@ -193,6 +193,10 @@ def _samenvatting(model: dict, perspectief: dict):
             "Items niet meegenomen (te weinig studenten met de uitkomst; "
             f"de {len(model.get('coefficienten', []))} sterkste behouden)",
         ),
+        (
+            "verwijderd_scheiding",
+            "Items niet meegenomen (scheiden de groepen volledig)",
+        ),
     ]
     for sleutel, tekst in redenen:
         if model.get(sleutel):
@@ -206,6 +210,10 @@ def _samenvatting(model: dict, perspectief: dict):
     if model.get("verwijderd_epv"):
         delen += [
             dbc.Alert(VOORSELECTIE_UITLEG, color="warning", className="small mt-2 mb-0")
+        ]
+    if model.get("verwijderd_scheiding"):
+        delen += [
+            dbc.Alert(SCHEIDING_UITLEG, color="info", className="small mt-2 mb-0")
         ]
     return html.Div(delen)
 
@@ -228,9 +236,7 @@ def registreer_callbacks(app):
             return ("", [], [], [], [], [], [])
 
         perspectief = perspectief_voor(df)
-        model = bereken_gezamenlijk_model(
-            df, scores_df_from_store(scores_store), perspectief
-        )
+        model = gezamenlijk_model_uit_stores(store_data, scores_store)
         if "univariaat" not in model:
             # Te weinig data om ook maar iets te schatten.
             waarschuwing = dbc.Alert(

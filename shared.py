@@ -1,4 +1,6 @@
 import math
+import re
+import warnings
 from collections.abc import Iterable
 
 import pandas as pd
@@ -221,11 +223,16 @@ def grenzen_van_label(label: str) -> tuple[float, float] | None:
     plek die het labelformaat van ``schaal_bucket`` kent, zodat sorteer-helpers
     in app.py en rapport.py niet elk los op '-' hoeven te splitsen.
     """
-    try:
-        onder, boven = (float(deel) for deel in label.split("-"))
-        return onder, boven
-    except ValueError:
+    match = _LABEL_PATROON.match(str(label))
+    if match is None:
         return None
+    return float(match.group(1)), float(match.group(2))
+
+
+# 'onder-boven', waarbij beide grenzen negatief kunnen zijn ('-5-5', '-10--2')
+# en _fmt_grens bij grote getallen een exponent schrijft ('1e+06').
+_GETAL = r"-?\d+(?:\.\d+)?(?:e[+-]?\d+)?"
+_LABEL_PATROON = re.compile(rf"^\s*({_GETAL})-({_GETAL})\s*$")
 
 
 def meta_per_item(scores_df: pd.DataFrame) -> pd.DataFrame:
@@ -382,12 +389,18 @@ def _effect_met_bi(auc: float, nx: int, ny: int) -> tuple[float, float, float]:
     een analytische normaalbenadering in plaats van een bootstrap, zodat de
     tabel bij elke filterwijziging in het dashboard direct herberekent. Bij
     kleine groepen wordt het interval breed, wat de onzekerheid eerlijk weergeeft.
+
+    Bij een volledige scheiding (AUC 0 of 1) is de Hanley-McNeil-variantie nul
+    en zou het interval tot één punt krimpen ('+1.00 tot +1.00'), alsof er geen
+    onzekerheid is. Daarom rekenen we de variantie met een AUC die een halve
+    rangpositie van de rand af ligt (continuïteitscorrectie); de effectgrootte
+    zelf blijft ongewijzigd.
     """
-    q1 = auc / (2 - auc)
-    q2 = 2 * auc**2 / (1 + auc)
-    var = (auc * (1 - auc) + (nx - 1) * (q1 - auc**2) + (ny - 1) * (q2 - auc**2)) / (
-        nx * ny
-    )
+    rand = 0.5 / (nx * ny)
+    a = min(max(auc, rand), 1 - rand)
+    q1 = a / (2 - a)
+    q2 = 2 * a**2 / (1 + a)
+    var = (a * (1 - a) + (nx - 1) * (q1 - a**2) + (ny - 1) * (q2 - a**2)) / (nx * ny)
     se = math.sqrt(max(var, 0.0))
     lo = max(0.0, auc - _Z_95 * se)
     hi = min(1.0, auc + _Z_95 * se)
@@ -993,6 +1006,15 @@ def _bevindingen_univariaat(
     """Voeg bevindingen toe op basis van de univariate regressieresultaten."""
     pos_label = perspectief["positief_label"].lower()
 
+    scheidend = [r["Item"] for r in uni_data if r.get("_probleem") == "scheiding"]
+    if scheidend:
+        resultaten.append(
+            f"{', '.join(repr(i) for i in scheidend)} "
+            f"{'scheidt' if len(scheidend) == 1 else 'scheiden'} de groepen "
+            "(vrijwel) volledig: een heel sterk signaal, maar de regressie kan "
+            "het niet schatten. Kijk voor het effect naar de Verschiltoets."
+        )
+
     sig_items = []
     for row in uni_data:
         p = row.get(_p_kolom(row), float("nan"))
@@ -1001,6 +1023,8 @@ def _bevindingen_univariaat(
         if p < 0.05:
             sig_items.append((row["Item"], float(row["Odds ratio"]), row))
 
+    if not sig_items and scheidend:
+        return
     if not sig_items:
         resultaten.append(
             "Geen enkel item voorspelt de uitkomst significant op zichzelf "
@@ -1173,14 +1197,80 @@ def _bereid_regressiedata(
     }
 
 
+# Voorspelde kansen binnen deze afstand van 0 of 1 betekenen dat het model een
+# deel van de studenten 'zeker' indeelt: (bijna) volledige scheiding. De
+# schatting loopt dan weg naar oneindig en de p-waarde wordt zinloos. (Een grote
+# coëfficiënt alleen is geen goed teken van scheiding; die ontstaat ook door
+# sterk overlappende items, zie _verwijder_collineair.)
+_SCHEIDING_EPS = 1e-6
+
+# Tekst in de Sig.-kolom voor een item waarvoor de regressie geen bruikbare
+# schatting geeft.
+_PROBLEEM_LABELS = {
+    "scheiding": "scheidt volledig",
+    "niet_geconvergeerd": "geen schatting",
+}
+
+# Uitleg bij items die de groepen (vrijwel) volledig scheiden. Eén tekst voor
+# de Regressie-tab, 'Wat valt op' en het rapport.
+SCHEIDING_UITLEG = (
+    "Een item 'scheidt volledig' als vrijwel alle studenten boven een bepaalde "
+    "score in de ene groep zitten en eronder in de andere. Dat is een heel sterk "
+    "signaal, maar een logistische regressie kan het niet schatten: de odds ratio "
+    "loopt dan naar oneindig en de p-waarde zegt niets meer. Zulke items staan "
+    "daarom niet in het gezamenlijke model. Kijk voor hun effect naar de "
+    "Verschiltoets."
+)
+
+
+def _fit_logit(y: pd.Series, X: pd.DataFrame, maxiter: int):
+    """Fit een logistische regressie en beoordeel of de schatting bruikbaar is.
+
+    statsmodels gooit bij (bijna) volledige scheiding of bij het niet
+    convergeren geen fout, maar geeft alleen een waarschuwing en een absurde
+    schatting terug (odds ratio in de biljarden, p ≈ 1). Zonder deze controle
+    zou juist het sterkste item als 'niet significant' in de tabel staan.
+
+    Retourneert (model, probleem) met probleem None, 'scheiding' of
+    'niet_geconvergeerd'."""
+    import statsmodels.api as sm
+    from statsmodels.tools.sm_exceptions import (
+        ConvergenceWarning,
+        PerfectSeparationWarning,
+    )
+
+    with warnings.catch_warnings(record=True) as gevangen:
+        warnings.simplefilter("always")
+        model = sm.Logit(y, X).fit(disp=0, maxiter=maxiter)
+    soorten = {type(w.message) for w in gevangen}
+    kansen = model.predict()
+    zeker = (kansen < _SCHEIDING_EPS) | (kansen > 1 - _SCHEIDING_EPS)
+    if PerfectSeparationWarning in soorten or zeker.any():
+        return model, "scheiding"
+    if ConvergenceWarning in soorten or not model.mle_retvals.get("converged", True):
+        return model, "niet_geconvergeerd"
+    return model, None
+
+
 def _univariaat_rij(item: str, x: pd.Series, y: pd.Series) -> dict:
     """Een univariate logistische regressie van y op het (gestandaardiseerde)
-    item. Mislukt de fit, dan een rij met '-'."""
+    item. Mislukt de fit of is de schatting onbruikbaar (scheiding, geen
+    convergentie), dan een rij met '-' en de reden in `_probleem`."""
     import numpy as np
     import statsmodels.api as sm
 
     try:
-        m = sm.Logit(y, sm.add_constant(_z(x).to_frame(item))).fit(disp=0, maxiter=50)
+        m, probleem = _fit_logit(y, sm.add_constant(_z(x).to_frame(item)), maxiter=50)
+        if probleem:
+            return {
+                "Item": item,
+                "Coefficient": "-",
+                "Odds ratio": "-",
+                "p-waarde": "-",
+                "Sig.": _PROBLEEM_LABELS[probleem],
+                "_p": float("nan"),
+                "_probleem": probleem,
+            }
         p = float(m.pvalues.iloc[-1])
         return {
             "Item": item,
@@ -1210,7 +1300,8 @@ def _corrigeer_univariaat(rijen: list[dict]) -> list[dict]:
     for rij, p in zip(rijen, gecorr):
         rij["_p_bh"] = p
         rij[P_GECORRIGEERD] = fmt_p(p) if p == p else "-"
-        rij["Sig."] = sig_sym(p) if p == p else "-"
+        if not rij.get("_probleem"):  # anders blijft de reden staan
+            rij["Sig."] = sig_sym(p) if p == p else "-"
     return rijen
 
 
@@ -1230,9 +1321,30 @@ def bereken_univariaat(
     )
 
 
+# Variance inflation factor waarboven een item als (bijna) overbodig geldt: meer
+# dan 90% van zijn variantie wordt verklaard door de andere items. Gangbare
+# vuistregel; boven deze grens worden de coëfficiënten onbetrouwbaar groot.
+_MAX_VIF = 10.0
+
+
+def _vifs(X: pd.DataFrame):
+    """VIF per kolom: de diagonaal van de inverse correlatiematrix."""
+    import numpy as np
+
+    corr = X.corr().fillna(0).to_numpy().copy()
+    np.fill_diagonal(corr, 1.0)  # een constante kolom geeft NaN op de diagonaal
+    return np.diag(np.linalg.inv(corr))
+
+
 def _verwijder_collineair(X: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
-    """Haal kolommen weg tot de matrix volle rang heeft: telkens een kolom uit
-    het sterkst correlerende paar. Vangt alleen (bijna) perfecte overlap."""
+    """Haal overlappende items weg in twee stappen.
+
+    1. Tot de matrix volle rang heeft: telkens een kolom uit het sterkst
+       correlerende paar (perfecte overlap, bijv. een kolom twee keer).
+    2. Zolang een item een VIF boven _MAX_VIF heeft: het item met de hoogste
+       VIF. Dit vangt ook afgeleide kolommen die de rangcontrole mist, zoals
+       een gemiddelde van drie andere items: de matrix heeft dan net volle
+       rang, maar de coëfficiënten lopen op tot absurde odds ratios."""
     import numpy as np
 
     verwijderd = []
@@ -1240,6 +1352,17 @@ def _verwijder_collineair(X: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
         corr = X.corr().abs().fillna(0).to_numpy().copy()
         np.fill_diagonal(corr, 0)
         _, kolom = divmod(int(corr.argmax()), corr.shape[1])
+        verwijderd.append(X.columns[kolom])
+        X = X.drop(columns=[X.columns[kolom]])
+
+    while len(X.columns) > 1:
+        try:
+            vif = _vifs(X)
+        except np.linalg.LinAlgError:
+            break
+        kolom = int(np.argmax(vif))
+        if vif[kolom] <= _MAX_VIF:
+            break
         verwijderd.append(X.columns[kolom])
         X = X.drop(columns=[X.columns[kolom]])
     return X, verwijderd
@@ -1278,7 +1401,16 @@ def bereken_gezamenlijk_model(
     univariaat = _corrigeer_univariaat(
         [_univariaat_rij(c, X_all[c], y) for c in X_all.columns]
     )
-    X, verwijderd_collineair = _verwijder_collineair(X_all)
+    # Items die de groepen op zichzelf al volledig scheiden, maken ook het
+    # gezamenlijke model onschatbaar. Ze gaan er vooraf uit (en worden apart
+    # gemeld), in plaats van met hun zinloze p ≈ 1 als eerste bij de
+    # EPV-voorselectie te sneuvelen.
+    verwijderd_scheiding = [
+        r["Item"] for r in univariaat if r.get("_probleem") == "scheiding"
+    ]
+    X, verwijderd_collineair = _verwijder_collineair(
+        X_all.drop(columns=verwijderd_scheiding)
+    )
 
     n_positief = int(y.sum())
     n_negatief = int(len(y) - n_positief)
@@ -1301,16 +1433,41 @@ def bereken_gezamenlijk_model(
         "verwijderd_nan": data["verwijderd_nan"],
         "verwijderd_collineair": verwijderd_collineair,
         "verwijderd_epv": verwijderd_epv,
+        "verwijderd_scheiding": verwijderd_scheiding,
     }
+    if X.columns.empty:
+        return {
+            **basis,
+            "status": "scheiding",
+            "melding": "Er blijven geen items over voor het gezamenlijke model. "
+            + SCHEIDING_UITLEG,
+        }
     try:
         X_z = sm.add_constant(X.apply(_z))
-        model = sm.Logit(y, X_z).fit(disp=0, maxiter=100)
+        model, probleem = _fit_logit(y, X_z, maxiter=100)
     except Exception as e:
         print(f"[shared] gezamenlijk model mislukt: {e}", flush=True)
         return {
             **basis,
             "status": "fout",
             "melding": f"Regressie kon niet worden uitgevoerd: {e}",
+        }
+    if probleem == "scheiding":
+        return {
+            **basis,
+            "status": "scheiding",
+            "melding": "De items samen voorspellen de uitkomst (vrijwel) perfect, "
+            "waardoor het gezamenlijke model niet te schatten is. Dat is een sterk "
+            "signaal, maar lees de effecten af in de Verschiltoets en de tabel "
+            "'Elk item los getoetst'.",
+        }
+    if probleem:
+        return {
+            **basis,
+            "status": "fout",
+            "melding": "Het gezamenlijke model kwam niet tot een stabiele "
+            "schatting (geen convergentie), meestal door te weinig studenten "
+            "voor het aantal items. Lees de items los af in de tabel hierboven.",
         }
 
     coefficienten = []

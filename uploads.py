@@ -19,7 +19,7 @@ from cho_transform import (
     ontbrekende_cho_kolommen,
     ontbrekende_demografie_kolommen,
 )
-from bestandsopslag import lees_cho_upload
+from bestandsopslag import lees_cho_upload, verwijder_upload
 from config_wizard import maak_wizard_layout
 from tabs.intro import maak_upload_intro
 from rapport import genereer_rapport
@@ -597,6 +597,9 @@ def registreer_callbacks(app):
     @app.callback(
         Output("data-store", "data"),
         Output("scores-store", "data"),
+        Output("validatie-resultaat", "children", allow_duplicate=True),
+        Output("cho-bestand", "data", allow_duplicate=True),
+        Output("cho-status", "children", allow_duplicate=True),
         Input("btn-open-dashboard", "n_clicks"),
         Input("btn-demodata", "n_clicks"),
         Input("btn-reset", "n_clicks"),
@@ -622,24 +625,51 @@ def registreer_callbacks(app):
         bron,
     ):
         trigger = ctx.triggered_id
+        no = dash.no_update
 
         if trigger == "btn-reset":
-            return None, None
+            # Het 1CHO-bestand bevat persoonsgegevens: niet laten staan in de
+            # tijdelijke map als de gebruiker opnieuw begint.
+            if cho_upload:
+                verwijder_upload(cho_upload.get("token"))
+            return None, None, no, None, ""
 
-        if trigger == "btn-demodata":
-            return _laad_demodata(demo_dataset)
+        # Zonder deze afvanging gebeurt er bij een fout niets na de klik (de
+        # callback faalt stil). De validatie draait dezelfde pijplijn, maar het
+        # tijdelijke 1CHO-bestand kan inmiddels zijn opgeruimd.
+        try:
+            if trigger == "btn-demodata":
+                return (*_laad_demodata(demo_dataset), no, no, no)
 
-        bron = actieve_config_bron(None, bron, cfg_contents, wiz_config)
-        if trigger == "btn-open-dashboard" and sel_contents and bron and cho_upload:
-            config = lees_actieve_config(bron, cfg_contents, wiz_config)
-            return bouw_data_stores(
-                config,
-                sel_contents,
-                lees_cho_upload(cho_upload["token"]),
-                cho_opleiding,
+            bron = actieve_config_bron(None, bron, cfg_contents, wiz_config)
+            if trigger == "btn-open-dashboard" and sel_contents and bron and cho_upload:
+                config = lees_actieve_config(bron, cfg_contents, wiz_config)
+                return (
+                    *bouw_data_stores(
+                        config,
+                        sel_contents,
+                        lees_cho_upload(cho_upload["token"]),
+                        cho_opleiding,
+                    ),
+                    no,
+                    no,
+                    no,
+                )
+        except Exception as e:
+            log.exception("Dashboard laden mislukt")
+            return (
+                no,
+                no,
+                dbc.Alert(
+                    f"Het dashboard kon niet worden geopend: {e}",
+                    color="danger",
+                    className="small py-1",
+                ),
+                no,
+                no,
             )
 
-        return dash.no_update, dash.no_update
+        return no, no, no, no, no
 
     @app.callback(
         Output("cohort-stats", "children"),

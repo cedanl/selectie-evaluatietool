@@ -100,7 +100,7 @@ def test_wizard_na_upload_wordt_ook_geladen(callbacks):
     assert "gegenereerd met de wizard" in str(uit[2])
 
     with _met_trigger("btn-open-dashboard"):
-        data, _ = callbacks["laad_dashboard"](
+        data, *_ = callbacks["laad_dashboard"](
             1, None, None, sel, cfg, cho, None, wiz_json, None, bron
         )
     assert "Wizardopleiding" in data
