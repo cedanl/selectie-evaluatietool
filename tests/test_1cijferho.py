@@ -61,6 +61,17 @@ def test_master_diploma_uit_diplomajaar():
     assert groepen["S0003"] == GROEP_GESTART_GEEN_VERVOLG
 
 
+def test_diploma_in_later_studiejaar_telt_niet():
+    # diplomajaar is een studiejaar, net als inschrijvingsjaar. Een diploma uit
+    # 2025-2026 op de rij van 2024-2025 is niet in het startjaar gehaald.
+    ev = _ev("master")
+    ev.loc[2, "diplomajaar"] = "2025"
+    df = normaliseer_1cijferho(ev)
+    assert not df["diploma_behaald"].any()
+    groepen = transformeer_cho(df).set_index("studentnummer")["groep"]
+    assert groepen["S0002"] == GROEP_GESTART_GEEN_VERVOLG
+
+
 def test_ruwe_fasecode_m_telt_ook_als_master():
     df = normaliseer_1cijferho(_ev("M"))
     assert df["diploma_behaald"].sum() == 1

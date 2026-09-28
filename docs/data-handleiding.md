@@ -123,7 +123,9 @@ De tool herkent de uitvoer van de 1cijferho-tool vanzelf:
 - de kolom `studentnummer` (die de 1cijferho-tool toevoegt met het
   koppelbestand) wordt de koppelsleutel, in plaats van het DUO-nummer in
   `persoonsgebonden_nummer`;
-- bij masters leidt de tool `diploma_behaald` af uit `diplomajaar`.
+- bij masters leidt de tool `diploma_behaald` af uit `diplomajaar`. Dat is
+  een studiejaar, net als `inschrijvingsjaar`; het diploma telt alleen als
+  het in het studiejaar van de start is gehaald.
 
 Maak je het bestand op een andere manier, zorg dan dat het de kolommen
 hieronder heeft.
