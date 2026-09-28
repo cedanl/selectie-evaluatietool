@@ -54,7 +54,7 @@ Raw 1CHO data has no ready-made group column. It is enrollment data in long form
 - **Niet gestart**: not in 1CHO at all. Either rejected or chose not to enroll. Assigned in `koppel_data()` as the fillna for non-matches, not in `transformeer_cho()`.
 - **Gestart, niet naar jaar 2**: has a first-year row but no `eerste_jaar + 1` row and no diploma.
 - **Doorgestroomd naar jaar 2**: has an enrollment row in the year after the first year.
-- **Gestart, diploma gehaald**: no year-2 row, but `diploma_behaald` is true in the cohort year. For one-year programmes (masters) where success means a diploma, not progression to year 2.
+- **Gestart, diploma gehaald**: no year-2 row, but `diploma_behaald` is true on the cohort-year row (`inschrijvingsjaar == eerste_jaar`; a diploma flagged on a later row does not count). For one-year programmes (masters) where success means a diploma, not progression to year 2.
 
 The group labels and the helper lists `GROEP_INGESCHREVEN` (all started) and `GROEP_SUCCES` (doorstroom or diploma) live in `shared.py`. Regression and VO analyses use `GROEP_INGESCHREVEN` (students who actually started) and treat `GROEP_SUCCES` as the positive outcome, so they work for both multi-year and one-year programmes.
 
@@ -77,7 +77,7 @@ Each tab is its own module under `tabs/`, with `maak_layout()` for the layout an
 | Wat valt op | `tabs/bevindingen.py` | `update_bevindingen` | Auto-generated findings from `shared.genereer_bevindingen`. Every line follows from a measured effect size or p-value, nothing invented. |
 | Selectiescores | `tabs/scores.py` | `update_scores_tab` | Boxplots per item per group, mean/SD table. "Groepeer op" dropdown: gestart, doorstroom, or a demographic dimension (geslacht, vooropleiding). Filters: instrument, criterium, item, schaal/bereik (cascading, via `update_score_filters`). |
 | Demografie | `tabs/demografie.py` | `update_demografie_tab` | Per background dimension (geslacht, vooropleiding), crosstab of the dimension against doorstroom outcome. |
-| Verschiltoets | `tabs/verschiltoets.py` | `update_verschiltoets_tab` | Per-item significance test (Mann-Whitney for doorstroom, Kruskal-Wallis for demographic dimensions) with effect size and p-value. |
+| Verschiltoets | `tabs/verschiltoets.py` | `update_verschiltoets_tab` | Per-item significance test (Mann-Whitney for doorstroom, Kruskal-Wallis for demographic dimensions) with effect size, raw p and Benjamini-Hochberg-corrected p (see "Multiple testing" below). |
 | Correlatie | `tabs/correlatie.py` | `update_correlatie_tab` | Inter-item correlation heatmap with Cohen 1988 interpretation. Own instrument/criterium filters (filled by `update_filters_on_data_change`, which also sets the app-subtitle). |
 | Regressie | `tabs/regressie.py` | `update_regressie_tab` | Univariate + joint logistic regression predicting study success (doorstroom or diploma). |
 
@@ -131,7 +131,7 @@ The config Excel has two sheets:
 ## Demo data
 
 Two datasets in `data/demo/`, deliberately different in shape so the demos don't look alike. Each mirrors a real (gitignored) source file:
-- `demo_leiden_2026/` (Farmacie master, Universiteit Leiden, 140 candidates, 70 enrolled). Mirrors `dummy data selectie FAR Leiden 2025`: a master selection on sheet "2 Master beoordelingen" with a single header row (header_rij=1). Bachelordiploma assessment (gemiddeld cijfer + studietempo) plus two assessors (B1, B2) scoring NL documents, gesprek/schrijfopdracht and the selection interview. The `C_*_Sc_*` point columns add up to subtotals and `C_Sc_Totaal`. Because it is a master, the outcome is `diploma_behaald`, not year-2 doorstroom. 11 config items across instruments Bachelordiploma and Gesprek.
+- `demo_leiden_2026/` (Farmacie master, Universiteit Leiden, 140 candidates, 70 enrolled). Mirrors `dummy data selectie FAR Leiden 2025`: a master selection on sheet "2 Master beoordelingen" with a single header row (header_rij=1). Bachelordiploma assessment (gemiddeld cijfer + studietempo) plus two assessors (B1, B2) scoring NL documents, gesprek/schrijfopdracht and the selection interview. The `C_*_Sc_*` point columns add up to subtotals and `C_Sc_Totaal`. Because it is a master, the outcome is `diploma_behaald`, not year-2 doorstroom. 9 config items across instruments Bachelordiploma and Gesprek; the subtotals (`C_B1_B2_Sc_SubTotaal`, `C_A_Sc_SubTotaal`) are deliberately unchecked because they double-count their parts.
 - `demo_radboud_2026/` (Psychologie bachelor, Radboud Universiteit, 200 candidates, 70 enrolled). Mirrors `2026-2027 Totaalscores Psychologie (dummy)`: schooldiploma kernvakken + combinatiecijfer + matchingsvragenlijst, header_rij=3. Keuzevakken are in the raw Excel but not config items, only via the combinatiecijfer. Outcome is year-2 doorstroom. 7 config items.
 
 Each contains: `selectiedata.xlsx`, `config.xlsx`, `1cho_data.csv`
@@ -198,7 +198,15 @@ The "events per variable" (EPV) rule says you need at least 5-10 events (student
 
 **How we handle it:** `shared.bereken_gezamenlijk_model` (the single implementation shared by the Regressie tab, Wat valt op and the PDF report) computes `max_predictoren = max(2, min(n_positief, n_negatief) // 5)`. If there are more items than that, it runs univariate logistic regressions for each item, ranks them by p-value, and keeps only the top `max_predictoren`. Dropped items are listed above the regression table so the user knows what was excluded and why.
 
-**What it does NOT solve:** Even with selection, the model may be overfitted. With small samples, a single outlier can flip a coefficient from significant to not. We don't bootstrap or cross-validate. The results should be read as "suggestive patterns", not definitive evidence.
+**What it does NOT solve:** Even with selection, the model may be overfitted. With small samples, a single outlier can flip a coefficient from significant to not. We don't bootstrap or cross-validate. The results should be read as "suggestive patterns", not definitive evidence. Because the items are pre-selected on their univariate p-value on the same data, the joint model's p-values are too optimistic; whenever `verwijderd_epv` is non-empty the Regressie tab, Wat valt op and the report say so (`shared.VOORSELECTIE_UITLEG`).
+
+### Multiple testing
+
+The per-item tests (verschiltoets per outcome, per demographic dimension, and the univariate regressions) test many items at once, so some come out below p = 0.05 by chance. `shared.bh_correctie` applies Benjamini-Hochberg (chosen over Holm, which is too strict for 50-150 students) per family of tests: one table = one family. Tables show the raw `p` and `p (gecorrigeerd)` (`shared.P_GECORRIGEERD`, numeric `_p_bh`); significance stars, the "Verschil" direction, `genereer_bevindingen`, `_tel_bevindingen` and the vervolgstappen all use the corrected p (`shared._p_kolom` falls back to `_p` for tables without `_p_bh`). The user-facing explanation is one constant, `shared.BH_UITLEG`, reused by the tabs and the report. The joint model is a single test and is not corrected.
+
+### Subtotals
+
+A subtotal next to its parts double-counts and correlates with them by construction, so it tends to top the findings. `config_wizard.detecteer_somkolommen` flags a column whose name contains a (sub)totaal/som word (as a word part, see `_naam_delen`) or that equals the sum of a contiguous run of ≥2 other score columns. The wizard leaves those unchecked (with suggestions filled in) and explains why in `_somkolom_tip`.
 
 ### Problem 3: Multicollinearity
 
@@ -216,7 +224,7 @@ Some items have missing values for a subset of candidates (optional modules, keu
 
 ### Summary for developers
 
-The regression output is useful for spotting patterns but should not be overinterpreted given typical sample sizes (50-150 enrolled students). The dashboard communicates this through the toelichting text and the pseudo R-squared. When changing the regression code, test with both demo datasets: demo_leiden (Farmacie master, 11 items, 70 enrolled, header_rij=1, diploma outcome) and demo_radboud (Psychologie bachelor, 7 items, 70 enrolled, header_rij=3, doorstroom outcome). They differ in shape on purpose, so passing both exercises both the master/diploma and bachelor/doorstroom paths.
+The regression output is useful for spotting patterns but should not be overinterpreted given typical sample sizes (50-150 enrolled students). The dashboard communicates this through the toelichting text and the pseudo R-squared. When changing the regression code, test with both demo datasets: demo_leiden (Farmacie master, 9 items, 70 enrolled, header_rij=1, diploma outcome) and demo_radboud (Psychologie bachelor, 7 items, 70 enrolled, header_rij=3, doorstroom outcome). They differ in shape on purpose, so passing both exercises both the master/diploma and bachelor/doorstroom paths.
 
 ## Known gotchas
 

@@ -163,13 +163,18 @@ def transformeer_cho(ruwe_df: pd.DataFrame) -> pd.DataFrame:
     )
     df["_retentie"] = df.groupby(spell_sleutel)["_is_jaar2"].transform("any")
 
-    # Diploma in het cohortjaar (eenjarige opleidingen). Per spell: heeft een
-    # van de rijen een diploma?
+    # Diploma in het cohortjaar (eenjarige opleidingen): alleen de rij van het
+    # eerste jaar telt. Een diploma in een later jaar zonder inschrijving in
+    # jaar 2 (bijv. na een tussenjaar) is geen succes binnen het cohortjaar;
+    # wie wel in jaar 2 staat ingeschreven, telt al als doorgestroomd.
     heeft_diploma_kolom = _DIPLOMA_KOLOM in df.columns
     if heeft_diploma_kolom:
         # Robuust parsen: een CSV kan "True"/"False", "Ja"/"Nee" of 1/0 bevatten;
         # een kale astype(bool) maakt van "False" en "Nee" ten onrechte True.
-        df["_diploma_bool"] = df[_DIPLOMA_KOLOM].map(parse_bool)
+        is_cohortjaar = (
+            df["inschrijvingsjaar"] == df["eerste_jaar_aan_deze_opleiding_instelling"]
+        )
+        df["_diploma_bool"] = df[_DIPLOMA_KOLOM].map(parse_bool) & is_cohortjaar
         df["_diploma"] = df.groupby(spell_sleutel)["_diploma_bool"].transform("any")
 
     # Houd alleen de eerstejaars-rij per spell over.
