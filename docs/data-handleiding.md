@@ -27,8 +27,10 @@ selectie regelt, of van een extern testbureau dat de toetsen afneemt.
   een andere in een of ander puntenaantal. Dat geeft niet.
 - Eventueel een totaalscore.
 
-Het is geen probleem als er ook andere kolommen in staan, zoals namen,
-e-mailadressen of datums. De tool slaat die vanzelf over.
+Staan er ook andere kolommen in, zoals namen, e-mailadressen of datums, dan
+analyseert de tool die niet. Hij leest ze wel in, dus haal persoonsgegevens
+die je niet nodig hebt er liever uit (zie de
+[privacy-handleiding](privacy-handleiding.md)).
 
 **Voorbeeld:**
 
@@ -108,23 +110,32 @@ overheidsdienst die onder andere studiefinanciering en
 studentgegevens regelt).
 
 **Let op: je uploadt hier niet het ruwe DUO-bestand.** DUO levert
-1CHO-data op BSN, niet op studentnummer, en in een andere vorm dan deze
-tool verwacht. Je hebt eerst een verwerkingsstap nodig die het BSN aan het
-studentnummer koppelt en de data omzet naar het formaat hieronder. Daarvoor
-gebruik je de [1cijferho tool](https://github.com/cedanl/1cijferho) van
-CEDA: die pipeline neemt het ruwe DUO-bestand en het
-BSN/studentnummer-koppelbestand van je instelling, en levert een bestand op
-met de kolommen die hieronder staan beschreven. **Dat uitvoerbestand van de
-1cijferho-pipeline upload je hier**, niet het ruwe DUO-bestand. Je
-hogeschool of universiteit (vaak de afdeling institutional research/BI)
-kan je hierbij helpen.
+1CHO-data op BSN, niet op studentnummer, en met codes in plaats van
+omschrijvingen. Zet de levering eerst om met de
+[1cijferho-tool](https://github.com/cedanl/1cijferho) van CEDA, met de
+instelmodus **Evaluatietool Selectie** en een koppelbestand
+BSN → studentnummer. Upload daarna het bestand dat eindigt op
+**`_enriched.csv`** (of `_decoded.csv`). De [README](../README.md#stap-2-de-1cho-data-klaarmaken-met-de-1cijferho-tool)
+beschrijft dit stap voor stap.
 
-**Formaat:** CSV of Excel (.csv, .xlsx, .xls)
+De tool herkent de uitvoer van de 1cijferho-tool vanzelf:
+
+- de kolom `studentnummer` (die de 1cijferho-tool toevoegt met het
+  koppelbestand) wordt de koppelsleutel, in plaats van het DUO-nummer in
+  `persoonsgebonden_nummer`;
+- bij masters leidt de tool `diploma_behaald` af uit `diplomajaar`. Het
+  diploma telt als het is gehaald tussen september van het startjaar en
+  september van het jaar erna. (DUO laat diplomajaar T lopen van oktober T
+  tot en met september T+1, een maand later dan het inschrijvingsjaar.)
+
+Maak je het bestand op een andere manier, zorg dan dat het de kolommen
+hieronder heeft.
+
+**Formaat:** CSV of Excel (.csv, .txt, .xlsx, .xls), tot 4 GB
 
 ### Hoe het 1CHO-bestand is opgebouwd
 
-Het 1CHO-bestand komt precies zoals DUO het levert: het zijn
-inschrijfgegevens. Het belangrijkste om te snappen is dit: er staat **een
+Het 1CHO-bestand bevat inschrijfgegevens, zoals DUO ze registreert. Het belangrijkste om te snappen is dit: er staat **een
 regel per student per studiejaar**, niet een regel per student. Een student
 die twee jaar ingeschreven stond, heeft dus twee regels.
 
@@ -138,25 +149,27 @@ die afleiding voor je (zie "Hoe bepaalt de tool de doorstroom?" hieronder).
 
 | Kolom | Wat het is | Voorbeeld |
 |---|---|---|
-| `persoonsgebonden_nummer` | Hetzelfde nummer als het studentnummer in de selectiedata | 12345678 |
+| `persoonsgebonden_nummer` of `studentnummer` | Hetzelfde nummer als het studentnummer in de selectiedata. Staan beide erin (zoals bij de 1cijferho-tool), dan telt `studentnummer`. | 12345678 |
 | `inschrijvingsjaar` | Het jaar van deze inschrijfregel | 2026 |
 | `eerste_jaar_aan_deze_opleiding_instelling` | Het eerste jaar dat de student aan deze opleiding stond | 2026 |
+| `geslacht` | Man, vrouw of anders | vrouw |
+| `hoogste_vooropleiding_omschrijving_vooropleiding` | De opleiding die de student hiervoor deed (1CHO-omschrijving) | vwo profiel natuur & gezondheid |
+
+Geslacht en vooropleiding zijn nodig voor de analyses naar achtergrond; zonder
+die kolommen opent het dashboard niet. De lange omschrijving van de
+vooropleiding wordt automatisch ingekort tot een korte categorie (VWO, HAVO,
+MBO, HO, Buitenlands diploma).
 
 **Optionele kolommen:**
 
 | Kolom | Wat het is | Voorbeeld |
 |---|---|---|
-| `geslacht` | Man, vrouw of anders | vrouw |
-| `herkomst` | Achtergrond van de student | Nederlands |
-| `hoogste_vooropleiding_omschrijving_vooropleiding` | De opleiding die de student hiervoor deed (1CHO-omschrijving) | vwo profiel natuur/gezondheid |
-| `gem_eindcijfer_vo` | Gemiddeld eindexamencijfer op de middelbare school | 7.3 |
-| `diploma_behaald` | Of de student in het cohortjaar een diploma haalde (voor eenjarige opleidingen) | True |
+| `opleidingscode_naam_opleiding` | Naam van de opleiding. Nodig als het bestand meerdere opleidingen bevat: de tool vraagt dan welke bij de selectie hoort. | B Psychologie |
+| `diploma_behaald` | Of de student in het cohortjaar een diploma haalde (voor eenjarige opleidingen). Ontbreekt deze, dan leidt de tool hem bij masters af uit `diplomajaar` en `opleidingsfase_actueel`. | True |
+| `instellingscode` | Code of naam van de instelling | 21RI |
 
-Deze kolommen zijn niet verplicht. Maar als ze erin staan, kun je in het
-dashboard filteren op geslacht en vooropleiding, en krijg je extra grafieken
-over de samenstelling van de groep en over de eindexamencijfers. De lange
-omschrijving van de vooropleiding wordt automatisch ingekort tot een korte
-categorie (VWO, HAVO, MBO, HO).
+Andere kolommen (de uitvoer van de 1cijferho-tool heeft er zo'n 180) laat de
+tool bij het inlezen weg.
 
 ### Hoe bepaalt de tool de doorstroom?
 
@@ -270,13 +283,13 @@ persoonsgebonden_nummer;inschrijvingsjaar;eerste_jaar_aan_deze_opleiding_instell
 Student 34567890 staat hier niet tussen. Als die wel in de selectiedata
 zit, wordt hij vanzelf "Niet gestart".
 
-Met optionele kolommen erbij:
+Met geslacht en vooropleiding erbij (zo ziet een bruikbaar bestand eruit):
 
 ```
-persoonsgebonden_nummer;inschrijvingsjaar;eerste_jaar_aan_deze_opleiding_instelling;geslacht;hoogste_vooropleiding_omschrijving_vooropleiding;gem_eindcijfer_vo
-12345678;2026;2026;vrouw;vwo profiel natuur/gezondheid;7.3
-12345678;2027;2026;vrouw;vwo profiel natuur/gezondheid;7.3
-23456789;2026;2026;man;havo;6.8
+persoonsgebonden_nummer;inschrijvingsjaar;eerste_jaar_aan_deze_opleiding_instelling;geslacht;hoogste_vooropleiding_omschrijving_vooropleiding
+12345678;2026;2026;vrouw;vwo profiel natuur & gezondheid
+12345678;2027;2026;vrouw;vwo profiel natuur & gezondheid
+23456789;2026;2026;man;havo profiel economie & maatschappij
 ```
 
 Let op: de puntkomma (;) tussen de waarden is de standaard. Een komma werkt

@@ -111,6 +111,12 @@ instellingen_uitleg = [
         "Kies een korte, herkenbare naam.",
     ],
     [
+        "instellingscode",
+        "Naam of BRIN-code van de instelling. Wordt label in het dashboard en het rapport.",
+        "Radboud Universiteit\n21RI",
+        "Optioneel.",
+    ],
+    [
         "jaar",
         "Het selectiejaar.",
         "2025\n2026",
@@ -133,18 +139,6 @@ instellingen_uitleg = [
         "De exacte kolomnaam van de definitieve totaalscore.",
         "TOTAALSCORE\nC_Sc_Totaal",
         "Dit is een uitkomst, geen los item.",
-    ],
-    [
-        "rangnummer_kolom",
-        "De exacte kolomnaam van het definitieve rangnummer.",
-        "Rangnummer definitief\nRangnummer",
-        "Het uiteindelijke rangnummer na eventuele loting.",
-    ],
-    [
-        "loting_kolom",
-        "Kolomnaam van het lotingsrangnummer. Leeg als niet van toepassing.",
-        "Random rangnummer",
-        "Niet elk bestand heeft loting.",
     ],
 ]
 
@@ -225,7 +219,7 @@ ws_uitleg.row_dimensions[24].height = 30
 
 tips = [
     "Neem alleen kolommen op die je wilt analyseren. De rest wordt genegeerd. Liever te weinig dan te veel.",
-    "Totaalscore en rangnummer staan in de instellingen, niet in het kolommen-tabblad. Ze zijn uitkomsten, geen losse items.",
+    "De totaalscore staat in de instellingen en krijgt in het kolommen-tabblad ONWAAR. Het is een uitkomst, geen los item.",
     "Als er meerdere versies van een score zijn (bijv. schaalscore en normscore), kies er dan een. Neem niet allebei op.",
     "Als er twee beoordelaars zijn, neem dan de samengevoegde score op, of neem beide apart op (met duidelijke itemnamen).",
     "Tekstvelden, toelichtingen, datums en persoonsgegevens hoef je niet op te nemen.",
@@ -267,6 +261,13 @@ velden = [
         "Naam van de opleiding. Vrij in te vullen.\nWordt gebruikt als label in het dashboard.\n\n"
         "Voorbeelden: Farmacie, Psychologie",
     ),
+    (
+        "instellingscode",
+        "",
+        "Naam of BRIN-code van de instelling. Optioneel.\n"
+        "Wordt gebruikt als label in het dashboard en het rapport.\n\n"
+        "Voorbeelden: Radboud Universiteit, 21RI",
+    ),
     ("jaar", "", "Het selectiejaar.\n\nVoorbeelden: 2025, 2026"),
     (
         "blad_naam",
@@ -289,19 +290,6 @@ velden = [
         "De exacte kolomnaam van de definitieve totaalscore.\nDit is de score waarop de ranglijst is gebaseerd.\n\n"
         "Dit is een uitkomst van de selectie, geen los item.\n\n"
         "Voorbeelden:\n- TOTAALSCORE\n- C_Sc_Totaal\n- Totale selectiescore %",
-    ),
-    (
-        "rangnummer_kolom",
-        "",
-        "De exacte kolomnaam van het definitieve rangnummer.\n\n"
-        "Voorbeelden:\n- Rangnummer definitief\n- Rangnummer\n- Uiteindelijke rangnummer master FMC 26-27",
-    ),
-    (
-        "loting_kolom",
-        "",
-        "De kolomnaam van het willekeurig rangnummer bij gelijke scores.\n"
-        "Laat LEEG als er geen loting is.\n\n"
-        "Voorbeelden:\n- Random rangnummer\n- Random rangnummer bepaald 13-04-2026",
     ),
 ]
 
