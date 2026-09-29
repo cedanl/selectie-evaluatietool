@@ -14,6 +14,10 @@
 
 ---
 
+<p align="center">
+  <img src="docs/img/demo.gif" alt="Demo: de voorbeelddata laden en langs de tabbladen Wat valt op, Selectiescores, Verschiltoets en Correlatie gaan" width="800">
+</p>
+
 Deze tool legt de scores uit een selectieprocedure naast de 1CHO-inschrijvingen
 en laat per selectieonderdeel zien of kandidaten die hoger scoorden vaker in
 jaar 2 nog ingeschreven staan (bij een eenjarige master: vaker hun diploma
