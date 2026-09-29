@@ -43,6 +43,9 @@ from shared import (
     grenzen_van_label,
     DEMO_DIMENSIES,
     demografie_scores,
+    MIN_CEL,
+    is_klein,
+    cel_tekst,
 )
 
 
@@ -342,16 +345,49 @@ def _aantallen_per_groep(df, groepeer):
             return pd.DataFrame()
         telling = ingeschr[groepeer].dropna().value_counts()
         n_buiten = 0
-    totaal = int(telling.sum())
-    if totaal == 0:
+    if int(telling.sum()) == 0:
         return pd.DataFrame()
+    # Kleine groepen tonen we als '< 5' zonder percentage. De percentages van de
+    # andere groepen gaan over de getoonde groepen, anders reken je het kleine
+    # aantal terug uit n en % van een grote groep.
+    totaal = int(sum(n for n in telling if not is_klein(n)))
     rijen = [
-        {"Groep": str(groep), "n": int(n), "%": f"{n / totaal * 100:.0f}%"}
+        {
+            "Groep": str(groep),
+            "n": cel_tekst(n),
+            "%": "-" if is_klein(n) or not totaal else f"{n / totaal * 100:.0f}%",
+        }
         for groep, n in telling.items()
     ]
     if n_buiten > 0:
-        rijen.append({"Groep": GROEP_NIET_IN_VERGELIJKING, "n": n_buiten, "%": ""})
+        rijen.append(
+            {"Groep": GROEP_NIET_IN_VERGELIJKING, "n": cel_tekst(n_buiten), "%": ""}
+        )
     return pd.DataFrame(rijen)
+
+
+def _scherm_kleine_groepen(scores, volgorde):
+    """Laat per item de groepen weg met minder dan MIN_CEL studenten met een
+    score, zodat een boxplot of gemiddelde niet naar een enkeling herleidbaar
+    is. Returnt (scores, volgorde, afgeschermd): de overgebleven scores, de
+    groepen die nog voorkomen, en de groepen die bij minstens één item zijn
+    weggelaten (in de volgorde van ``volgorde``)."""
+    met_score = scores[pd.to_numeric(scores["score"], errors="coerce").notna()]
+    n_per_cel = met_score.groupby(["groep", "item"], observed=True)[
+        "studentnummer"
+    ].nunique()
+    klein = n_per_cel[n_per_cel < MIN_CEL].index
+    if len(klein) == 0:
+        return scores, volgorde, []
+    sleutel = pd.MultiIndex.from_arrays([scores["groep"], scores["item"]])
+    scores = scores[~sleutel.isin(klein)]
+    afgeschermd = {groep for groep, _ in klein}
+    aanwezig = set(scores["groep"])
+    return (
+        scores,
+        [g for g in volgorde if g in aanwezig],
+        [g for g in volgorde if g in afgeschermd],
+    )
 
 
 def _scores_per_groep(df, scores_df, groepeer):

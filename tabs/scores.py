@@ -8,6 +8,8 @@ import dash_bootstrap_components as dbc
 
 from shared import (
     CHART_BASE,
+    MIN_CEL,
+    AFGESCHERMD,
     shorten_item,
     schaal_grenzen,
     bucket_per_item,
@@ -21,6 +23,7 @@ from helpers import (
     df_from_store,
     _scores_per_groep,
     _aantallen_per_groep,
+    _scherm_kleine_groepen,
     _groep_tabel_stijl,
     _sorteer_bereik,
 )
@@ -117,7 +120,9 @@ def maak_layout():
                     html.P(
                         "Alleen gestarte studenten tellen mee: de uitkomst en de "
                         "achtergrond (geslacht, vooropleiding) komen uit 1CHO en zijn "
-                        "alleen bekend voor wie is ingeschreven.",
+                        "alleen bekend voor wie is ingeschreven. Groepen met minder "
+                        f"dan {MIN_CEL} studenten tonen we als '{AFGESCHERMD}', zonder "
+                        "percentage; de percentages gaan over de getoonde groepen.",
                         className="text-muted small",
                     ),
                     dash_table.DataTable(
@@ -214,6 +219,7 @@ def maak_layout():
                         ],
                         className="mb-3",
                     ),
+                    html.P(id="scores-afscherm-melding", className="text-muted small"),
                     dcc.Loading(
                         dcc.Graph(id="fig-totaal"),
                         type="dot",
@@ -229,6 +235,164 @@ def maak_layout():
                 className="tab-body",
             ),
         ],
+    )
+
+
+def update_scores_tab(
+    groepeer,
+    instrument_filter,
+    criterium_filter,
+    item_filter,
+    bereik_filter,
+    store_data,
+    scores_store,
+):
+    leeg = go.Figure().update_layout(**CHART_BASE, margin=dict(t=10, b=10))
+    df = df_from_store(store_data)
+    if df.empty or not scores_store:
+        return leeg, [], [], [], [], [], [], None
+
+    scores_df = scores_df_from_store(scores_store)
+    basis = _scores_per_groep(df, scores_df, groepeer)
+    if basis is None:
+        return leeg, [], [], [], [], [], [], None
+    scores, kleur_map, volgorde = basis
+
+    # Teltabel met groepsgroottes, los van de itemfilters zodat hij de volledige
+    # groepering toont.
+    aantallen = _aantallen_per_groep(df, groepeer)
+    aant_data = aantallen.to_dict("records")
+    aant_cols = (
+        [{"name": c, "id": c} for c in ["Groep", "n", "%"]]
+        if not aantallen.empty
+        else []
+    )
+    groep_stijl = _groep_tabel_stijl(groepeer, kleur_map, volgorde)
+
+    if instrument_filter and instrument_filter != "Alle":
+        scores = scores[scores["instrument"] == instrument_filter]
+    if criterium_filter and criterium_filter != "Alle":
+        scores = scores[scores["criterium"] == criterium_filter]
+    if item_filter and item_filter != "Alle":
+        scores = scores[scores["item"] == item_filter]
+    if bereik_filter and bereik_filter != "Alle":
+        # Op de volledige verdeling bucketen, zodat de keuze dezelfde items
+        # raakt als de dropdown en niet meeschuift met de groepsselectie.
+        bereik_per_item = bucket_per_item(scores_df)
+        items_in_bereik = bereik_per_item.index[bereik_per_item == bereik_filter]
+        scores = scores[scores["item"].isin(items_in_bereik)]
+
+    # Groepen met minder dan MIN_CEL studenten bij een item laten we weg uit de
+    # figuur en de gemiddelden: een boxplot van één student is die student.
+    scores, volgorde, afgeschermd = _scherm_kleine_groepen(scores, volgorde)
+    melding = (
+        f"Niet getoond in de figuur en de gemiddelden, omdat de groep (bij een of "
+        f"meer items) minder dan {MIN_CEL} studenten heeft: "
+        f"{', '.join(map(str, afgeschermd))}."
+        if afgeschermd
+        else None
+    )
+
+    if scores.empty:
+        return leeg, aant_data, aant_cols, groep_stijl, [], [], [], melding
+
+    items_kort = sorted(scores["item_kort"].unique())
+    enkel_item = len(items_kort) == 1
+    kleur = {"color_discrete_map": kleur_map} if kleur_map else {}
+    n_studenten = scores["studentnummer"].nunique()
+
+    if enkel_item:
+        fig = px.box(
+            scores,
+            x="groep",
+            y="score",
+            color="groep",
+            category_orders={"groep": volgorde},
+            points="all" if n_studenten <= 50 else False,
+            height=480,
+            labels={"groep": "", "score": items_kort[0]},
+            **kleur,
+        )
+        fig.update_layout(
+            showlegend=False,
+            **CHART_BASE,
+            margin=dict(t=30, b=10),
+        )
+    else:
+        bereik_per_item = bucket_per_item(scores_df)
+        schalen = sorted(
+            {bereik_per_item.get(it) for it in scores["item"].unique()},
+            key=_sorteer_bereik,
+        )
+        if len(schalen) > 1:
+            # Items met verschillende schalen (1-3 naast 0-100): één paneel per
+            # schaal met een eigen y-as, zoals in het rapport. Op één as worden
+            # de kleine schalen platgedrukt tot streepjes.
+            fig = _boxplot_per_schaal(
+                scores, bereik_per_item, schalen, volgorde, kleur_map, n_studenten
+            )
+        else:
+            fig = px.box(
+                scores,
+                x="item_kort",
+                y="score",
+                color="groep",
+                category_orders={"groep": volgorde, "item_kort": items_kort},
+                points="all" if n_studenten <= 30 else False,
+                height=520,
+                labels={"item_kort": "", "score": "Score", "groep": ""},
+                **kleur,
+            )
+            fig.update_layout(
+                boxgap=0.15,
+                legend=dict(orientation="h", y=1.05, yanchor="bottom"),
+                xaxis_tickangle=-25,
+                **CHART_BASE,
+                margin=dict(t=60, b=10),
+            )
+
+    # Bij een gekozen schaal de y-as op de afgeronde grenzen vastzetten, zodat
+    # items met een vergelijkbaar bereik eerlijk naast elkaar staan.
+    if bereik_filter and bereik_filter != "Alle":
+        grenzen = schaal_grenzen(scores["score"])
+        if grenzen is not None:
+            fig.update_yaxes(range=list(grenzen))
+
+    tabel_pivot = (
+        scores.groupby(["groep", "item_kort"], observed=True)["score"]
+        .agg(["mean", "std"])
+        .round(2)
+        .reset_index()
+        .merge(meta_per_item(scores), on="item_kort", how="left")
+    )
+    tabel_pivot[["instrument", "criterium"]] = tabel_pivot[
+        ["instrument", "criterium"]
+    ].fillna("")
+    tabel_pivot = tabel_pivot.rename(
+        columns={
+            "item_kort": "Item",
+            "mean": "Gem.",
+            "std": "SD",
+            "groep": "Groep",
+            "instrument": "Instrument",
+            "criterium": "Criterium",
+        }
+    )
+    tabel_pivot = tabel_pivot[
+        ["Groep", "Instrument", "Criterium", "Item", "Gem.", "SD"]
+    ]
+    gem_data = tabel_pivot.to_dict("records")
+    gem_cols = [{"name": c, "id": c} for c in tabel_pivot.columns]
+
+    return (
+        fig,
+        aant_data,
+        aant_cols,
+        groep_stijl,
+        gem_data,
+        gem_cols,
+        groep_stijl,
+        melding,
     )
 
 
@@ -342,7 +506,7 @@ def registreer_callbacks(app):
             geldig(sel["bereik"], bereik_opts),
         )
 
-    @app.callback(
+    app.callback(
         Output("fig-totaal", "figure"),
         Output("tabel-aantallen", "data"),
         Output("tabel-aantallen", "columns"),
@@ -350,6 +514,7 @@ def registreer_callbacks(app):
         Output("tabel-gemiddelden", "data"),
         Output("tabel-gemiddelden", "columns"),
         Output("tabel-gemiddelden", "style_data_conditional"),
+        Output("scores-afscherm-melding", "children"),
         Input("groepeer-op", "value"),
         Input("instrument-filter", "value"),
         Input("criterium-filter", "value"),
@@ -357,140 +522,4 @@ def registreer_callbacks(app):
         Input("bereik-filter", "value"),
         State("data-store", "data"),
         State("scores-store", "data"),
-    )
-    def update_scores_tab(
-        groepeer,
-        instrument_filter,
-        criterium_filter,
-        item_filter,
-        bereik_filter,
-        store_data,
-        scores_store,
-    ):
-        leeg = go.Figure().update_layout(**CHART_BASE, margin=dict(t=10, b=10))
-        df = df_from_store(store_data)
-        if df.empty or not scores_store:
-            return leeg, [], [], [], [], [], []
-
-        scores_df = scores_df_from_store(scores_store)
-        basis = _scores_per_groep(df, scores_df, groepeer)
-        if basis is None:
-            return leeg, [], [], [], [], [], []
-        scores, kleur_map, volgorde = basis
-
-        # Teltabel met groepsgroottes, los van de itemfilters zodat hij de volledige
-        # groepering toont.
-        aantallen = _aantallen_per_groep(df, groepeer)
-        aant_data = aantallen.to_dict("records")
-        aant_cols = (
-            [{"name": c, "id": c} for c in ["Groep", "n", "%"]]
-            if not aantallen.empty
-            else []
-        )
-        groep_stijl = _groep_tabel_stijl(groepeer, kleur_map, volgorde)
-
-        if instrument_filter and instrument_filter != "Alle":
-            scores = scores[scores["instrument"] == instrument_filter]
-        if criterium_filter and criterium_filter != "Alle":
-            scores = scores[scores["criterium"] == criterium_filter]
-        if item_filter and item_filter != "Alle":
-            scores = scores[scores["item"] == item_filter]
-        if bereik_filter and bereik_filter != "Alle":
-            # Op de volledige verdeling bucketen, zodat de keuze dezelfde items
-            # raakt als de dropdown en niet meeschuift met de groepsselectie.
-            bereik_per_item = bucket_per_item(scores_df)
-            items_in_bereik = bereik_per_item.index[bereik_per_item == bereik_filter]
-            scores = scores[scores["item"].isin(items_in_bereik)]
-
-        if scores.empty:
-            return leeg, aant_data, aant_cols, groep_stijl, [], [], []
-
-        items_kort = sorted(scores["item_kort"].unique())
-        enkel_item = len(items_kort) == 1
-        kleur = {"color_discrete_map": kleur_map} if kleur_map else {}
-        n_studenten = scores["studentnummer"].nunique()
-
-        if enkel_item:
-            fig = px.box(
-                scores,
-                x="groep",
-                y="score",
-                color="groep",
-                category_orders={"groep": volgorde},
-                points="all" if n_studenten <= 50 else False,
-                height=480,
-                labels={"groep": "", "score": items_kort[0]},
-                **kleur,
-            )
-            fig.update_layout(
-                showlegend=False,
-                **CHART_BASE,
-                margin=dict(t=30, b=10),
-            )
-        else:
-            bereik_per_item = bucket_per_item(scores_df)
-            schalen = sorted(
-                {bereik_per_item.get(it) for it in scores["item"].unique()},
-                key=_sorteer_bereik,
-            )
-            if len(schalen) > 1:
-                # Items met verschillende schalen (1-3 naast 0-100): één paneel per
-                # schaal met een eigen y-as, zoals in het rapport. Op één as worden
-                # de kleine schalen platgedrukt tot streepjes.
-                fig = _boxplot_per_schaal(
-                    scores, bereik_per_item, schalen, volgorde, kleur_map, n_studenten
-                )
-            else:
-                fig = px.box(
-                    scores,
-                    x="item_kort",
-                    y="score",
-                    color="groep",
-                    category_orders={"groep": volgorde, "item_kort": items_kort},
-                    points="all" if n_studenten <= 30 else False,
-                    height=520,
-                    labels={"item_kort": "", "score": "Score", "groep": ""},
-                    **kleur,
-                )
-                fig.update_layout(
-                    boxgap=0.15,
-                    legend=dict(orientation="h", y=1.05, yanchor="bottom"),
-                    xaxis_tickangle=-25,
-                    **CHART_BASE,
-                    margin=dict(t=60, b=10),
-                )
-
-        # Bij een gekozen schaal de y-as op de afgeronde grenzen vastzetten, zodat
-        # items met een vergelijkbaar bereik eerlijk naast elkaar staan.
-        if bereik_filter and bereik_filter != "Alle":
-            grenzen = schaal_grenzen(scores["score"])
-            if grenzen is not None:
-                fig.update_yaxes(range=list(grenzen))
-
-        tabel_pivot = (
-            scores.groupby(["groep", "item_kort"], observed=True)["score"]
-            .agg(["mean", "std"])
-            .round(2)
-            .reset_index()
-            .merge(meta_per_item(scores), on="item_kort", how="left")
-        )
-        tabel_pivot[["instrument", "criterium"]] = tabel_pivot[
-            ["instrument", "criterium"]
-        ].fillna("")
-        tabel_pivot = tabel_pivot.rename(
-            columns={
-                "item_kort": "Item",
-                "mean": "Gem.",
-                "std": "SD",
-                "groep": "Groep",
-                "instrument": "Instrument",
-                "criterium": "Criterium",
-            }
-        )
-        tabel_pivot = tabel_pivot[
-            ["Groep", "Instrument", "Criterium", "Item", "Gem.", "SD"]
-        ]
-        gem_data = tabel_pivot.to_dict("records")
-        gem_cols = [{"name": c, "id": c} for c in tabel_pivot.columns]
-
-        return fig, aant_data, aant_cols, groep_stijl, gem_data, gem_cols, groep_stijl
+    )(update_scores_tab)

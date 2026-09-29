@@ -18,6 +18,7 @@ from shared import (
     retentie_per_scoregroep,
     SCOREGROEP_KOLOMMEN,
     SCOREGROEP_UITLEG,
+    cel_tekst,
 )
 
 from helpers import (
@@ -210,6 +211,10 @@ def registreer_callbacks(app):
             )
             scores["item_kort"] = scores["item"].apply(shorten_item)
             tabel = vergelijk_succes_per_item(scores, perspectief=perspectief)
+            # De groepsaantallen per item afschermen zoals elders (MIN_CEL).
+            for kolom in ("Succes (n)", "Geen succes (n)"):
+                if kolom in tabel:
+                    tabel[kolom] = tabel[kolom].map(cel_tekst)
             kolommen = VERGELIJKING_KOLOMMEN
             uitleg = _uitleg_verschil_uitkomst(perspectief)
             scoregroepen = _scoregroep_blok(
