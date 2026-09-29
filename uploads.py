@@ -185,10 +185,11 @@ _UPLOAD_KOLOM = dbc.Col(
             html.Div(id="validatie-resultaat", className="mb-3"),
             _grote_upload_card(
                 "1CHO-data",
-                "Inschrijvingsdata per kandidaat. Dit is de output van de "
-                "1cijferho-pipeline (BSN al gekoppeld aan studentnummer), "
-                "niet het ruwe DUO-bestand. Een groot bestand van de hele "
-                "instelling kan ook.",
+                "Inschrijvingsdata per kandidaat: het bestand uit de "
+                "1cijferho-tool dat eindigt op _enriched.csv (met het BSN al "
+                "gekoppeld aan het nummer uit de selectiedata). Niet het ruwe "
+                "DUO-bestand en niet het EV-bestand zonder toevoeging. Een "
+                "groot bestand van de hele instelling kan ook.",
             ),
             # Verschijnt alleen als het 1CHO-bestand meerdere opleidingen bevat
             # (een instellingsbrede extractie): dan moet duidelijk zijn welke

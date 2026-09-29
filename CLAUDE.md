@@ -15,26 +15,26 @@ Tests live in `tests/` (pytest). Run with `uv run pytest -q`. Still verify UI ch
 
 ## Source files
 
-app.py was split into modules per responsibility (pitch [#15](https://github.com/cedanl/selectie-evaluatietool/issues/15)). Each tab module and uploads.py exports `maak_layout()` and/or `registreer_callbacks(app)`, the same pattern config_wizard.py uses. app.py only composes the layout and wires the callbacks.
+The code is split into modules per responsibility. Each tab module and uploads.py exports `maak_layout()` and/or `registreer_callbacks(app)`, the same pattern config_wizard.py uses. app.py only composes the layout and wires the callbacks.
 
-| File | Lines | Role |
-|---|---|---|
-| `app.py` | ~120 | App init, layout composition, `registreer_callbacks` wiring, the embed-via-URL callback, server start. Entry point. |
-| `helpers.py` | ~360 | Shared app-level helpers: `koppel_data`, `bouw_data_stores` (runs parse→transform→join, shared by the upload and demo load paths), `df_from_store`, `_laad_demodata`, `TABLE_STYLE`, `GROEPEER_OPTIES`, the groep-/kleur-helpers (`_scores_per_groep`, `_aantallen_per_groep`, `_groep_tabel_stijl`, `_meng_met_wit`), `DEMO_DATASETS` (`DEMO_DIR` is resolved relative to `helpers.py`, not the working directory). |
-| `bestandsopslag.py` | ~160 | Server-side storage for large 1CHO uploads: a Flask route the browser streams the file to (`assets/grote_upload.js`), returning a token the callbacks use instead of a base64 string. |
-| `uploads.py` | ~450 | Upload overlay + sidebar layout and the upload/validation/demodata-load/cohort/download callbacks. |
-| `tabs/intro.py` | ~190 | "Introductie"-tab: static, accessible welcome/context page. No callbacks (kept out of the `registreer_callbacks` loop). First tab, active by default. Group labels/colors come from `shared.GROEP_KLEUREN`. |
-| `tabs/bevindingen.py` | ~315 | "Wat valt op"-tab: layout + `update_bevindingen`. |
-| `tabs/scores.py` | ~430 | Selectiescores-tab: layout + cascading score-filters + `update_scores_tab`. |
-| `tabs/demografie.py` | ~200 | Demografie-tab: layout + `update_demografie_tab`. |
-| `tabs/verschiltoets.py` | ~165 | Verschiltoets-tab: layout + `update_verschiltoets_tab`. |
-| `tabs/correlatie.py` | ~245 | Correlatie-tab: layout + `update_correlatie_tab` + the data-change callback that fills the correlatie filters and the app-subtitle. |
-| `tabs/regressie.py` | ~395 | Regressie-tab: layout + `update_regressie_tab`. |
-| `rapport.py` | ~960 | PDF report generation. Uses fpdf2 + kaleido. Called from uploads.py download button. |
-| `config_wizard.py` | ~895 | Auto-detection of columns from uploaded Excel. Wired in app.py via `registreer_callbacks`. |
-| `transformatie.py` | ~240 | File parsing, config reading, data validation, wide-to-long transformation. |
-| `cho_transform.py` | ~240 | Raw 1CHO handling. `transformeer_cho()` derives the doorstroom group from long-format enrollment rows; `bouw_ruwe_cho()` builds synthetic raw 1CHO for the data scripts. |
-| `shared.py` | ~850 | Shared constants and analysis functions used by the tabs and rapport.py (perspectieven, effectgroottes, `vergelijk_succes_per_item`, `toets_verschil_per_item`, `bereken_univariaat`, `chi2_per_dimensie`, `genereer_bevindingen`, demografie-helpers). |
+| File | Role |
+|---|---|
+| `app.py` | App init, layout composition, `registreer_callbacks` wiring, the embed-via-URL callback, server start. Entry point. |
+| `helpers.py` | Shared app-level helpers: `koppel_data`, `bouw_data_stores` (runs parse→transform→join, shared by the upload and demo load paths), `df_from_store`, `_laad_demodata`, `TABLE_STYLE`, `GROEPEER_OPTIES`, the groep-/kleur-helpers (`_scores_per_groep`, `_aantallen_per_groep`, `_groep_tabel_stijl`, `_meng_met_wit`), `DEMO_DATASETS` (`DEMO_DIR` is resolved relative to `helpers.py`, not the working directory). |
+| `bestandsopslag.py` | Server-side storage for large 1CHO uploads: a Flask route the browser streams the file to (`assets/grote_upload.js`), returning a token the callbacks use instead of a base64 string. |
+| `uploads.py` | Upload overlay + sidebar layout and the upload/validation/demodata-load/cohort/download callbacks. |
+| `tabs/intro.py` | "Introductie"-tab: static, accessible welcome/context page. No callbacks (kept out of the `registreer_callbacks` loop). First tab, active by default. Group labels/colors come from `shared.GROEP_KLEUREN`. |
+| `tabs/bevindingen.py` | "Wat valt op"-tab: layout + `update_bevindingen`. |
+| `tabs/scores.py` | Selectiescores-tab: layout + cascading score-filters + `update_scores_tab`. |
+| `tabs/demografie.py` | Demografie-tab: layout + `update_demografie_tab`. |
+| `tabs/verschiltoets.py` | Verschiltoets-tab: layout + `update_verschiltoets_tab`. |
+| `tabs/correlatie.py` | Correlatie-tab: layout + `update_correlatie_tab` + the data-change callback that fills the correlatie filters and the app-subtitle. |
+| `tabs/regressie.py` | Regressie-tab: layout + `update_regressie_tab`. |
+| `rapport.py` | PDF report generation. Uses fpdf2 + kaleido. Called from uploads.py download button. |
+| `config_wizard.py` | Auto-detection of columns from uploaded Excel. Wired in app.py via `registreer_callbacks`. |
+| `transformatie.py` | File parsing, config reading, data validation, wide-to-long transformation. |
+| `cho_transform.py` | Raw 1CHO handling. `transformeer_cho()` derives the doorstroom group from long-format enrollment rows; `bouw_ruwe_cho()` builds synthetic raw 1CHO for the data scripts. |
+| `shared.py` | Shared constants and analysis functions used by the tabs and rapport.py (perspectieven, effectgroottes, `vergelijk_succes_per_item`, `toets_verschil_per_item`, `bereken_univariaat`, `chi2_per_dimensie`, `genereer_bevindingen`, demografie-helpers). |
 
 ## Data flow
 
@@ -101,7 +101,7 @@ Kaleido 1.x spawns a new headless Chromium per `to_image()` call, taking ~4-5s e
 ## Key constants and shared code (shared.py)
 
 - `GROEP_VOLGORDE`: canonical group order list
-- `GROEP_KLEUREN`: color map (gray/orange/green) for the three groups
+- `GROEP_KLEUREN`: color map (gray/orange/green/blue) for the four groups
 - `CHART_BASE`: white background for all Plotly charts
 - `shorten_item()`: strips " schaalscore", " Schaalscore", " (1-2-3)" from item names
 - `sig_sym()` / `fmt_p()`: significance symbols and p-value formatting
@@ -186,7 +186,7 @@ The `scripts/eenmalig/` scripts were used during project setup. They still work 
 
 ## Logistic regression: limitations and how we handle them
 
-The samenhang tab runs a logistic regression predicting doorstroom (year 2) from all selection items. This is the most fragile part of the tool because selection datasets are small and the items have wildly different scales.
+The Regressie tab runs a logistic regression predicting study success (doorstroom or diploma) from all selection items. This is the most fragile part of the tool because selection datasets are small and the items have wildly different scales.
 
 ### Problem 1: Different scales
 
@@ -259,75 +259,22 @@ The regression output is useful for spotting patterns but should not be overinte
 - **The config wizard** (`config_wizard.py`) registers its own callbacks via `registreer_callbacks(app)`, wired in app.py. It shares the upload components with uploads.py.
 - **fpdf2 SVG support** is limited. The NKO logo uses a PNG version (`assets/nko-logo.png`) for PDF rendering; the SVG (`assets/nko-logo.svg`) is only for the web dashboard.
 - **statsmodels import** is done lazily inside the regression code (`shared.bereken_gezamenlijk_model()`, `shared.bereken_univariaat()`) because it is slow to import and only needed for regression.
+- **No Configuratie tab**: it was removed at the user's request, along with its `config-store`/`raw-selectie-store`/`raw-cho-store` stores. Don't re-add those stores unless that feature comes back.
 
 ## Multi-session coordination
 
 Multiple Claude Code sessions work on this project in parallel. Rules:
 
 - **config_wizard.py** is self-contained. Changes there don't conflict with other work.
-- **app.py** is now small (layout composition + wiring only). Tab work is isolated per `tabs/*.py` module, so two sessions on different tabs no longer conflict. Shared helpers live in helpers.py; touching those is the higher-conflict area now. (Pitch [#15](https://github.com/cedanl/selectie-evaluatietool/issues/15) to split app.py is implemented.)
+- **app.py** holds only layout composition and wiring. Tab work is isolated per `tabs/*.py` module, so two sessions on different tabs don't conflict. Shared helpers live in helpers.py; touching those is the higher-conflict area.
 - **rapport.py** and **shared.py** are owned by the rapport/dashboard session.
 - **scripts/eenmalig/maak_presentatie.py** generates the PowerPoint. Update it when features change.
 - Always check `git status` before committing. Another session may have staged or committed while you were working.
 - Never commit data files, PDFs, or docx. The gitignore handles this, but double-check.
-
-## Recent changes (2026-06-05, session A)
-
-This session did the bulk of the multi-programme work:
-
-- **Multi-programme support**: pipeline tested and working for FAR Leiden 2025/2026, Psychologie 2022/2026, plus two fictive datasets.
-- **Config wizard**: auto-detects opleiding/instelling/jaar from filename. Opleiding/instelling/jaar fields live in the wizard (not separate inputs). score_type removed from config format entirely (4 columns: kolom_naam, instrument, item, criterium).
-- **Upload flow**: split into validate + explicit "Open dashboard" button. Validates studentnummer overlap between selectiedata and 1CHO. Shows opleiding/instelling/jaar from config in validation feedback.
-- **Cascading filters on scores tab**: instrument/criterium/item dropdowns are linked. Selecting an instrument narrows criterium and item options. Impossible combinations auto-reset.
-- **Single-item boxplot**: when one item is selected (via filter or because only one item matches), shows group-level boxplot with correct y-axis scale.
-- **Samenhang tab filters**: own instrument/criterium dropdowns. Filters only affect the correlation matrix, not the regression.
-- **Regression robustness**: items with >30% missing data excluded, multicollinear items auto-removed (matrix rank check). Both dashboard and PDF report show which items were dropped and why.
-- **Toelichtingen**: all explanatory text rewritten for a broad audience. Collapsible interpretation guides for correlation (Cohen 1988), regression table, and VO-cijfer. Demographic tab explains 1CHO data origin and how doorstroom is determined.
-- **Fictive demo data**: an early master + bachelor pair, later replaced by the current `demo_leiden_2026` (Farmacie master) and `demo_radboud_2026` (Psychologie bachelor). The demo picker shows only fictive data.
-- **Pitch created**: [#14](https://github.com/cedanl/evaluatietool-voorbeeld/issues/14) Diploma as alternative outcome measure for 1-year masters.
-
-## Recent changes (2026-06-05, audit session)
-
-This session audited the full codebase for bugs, dead code, and data safety. All fixes are committed.
-
-### Bugs fixed
-- **Z-score crash in koppel_data()**: `lambda s: ... if s.std() > 0 else 0` returned scalar 0, which broke `mean(axis=1)`. Fixed to return `pd.Series(0, index=s.index)`.
-- **int("") crash in transformatie.py**: `int(config.get("header_rij", 1))` crashes when header_rij is empty string `""`. Fixed to `int(config.get("header_rij") or 1)`.
-- **split without maxsplit**: `contents.split(",")` in `_decode_upload()` could split base64 data containing commas. Fixed to `split(",", 1)`.
-- **Early return wiped validation state**: `valideer_uploads` returned `""` for store components instead of `dash.no_update`, wiping previously loaded data on partial re-uploads. Fixed.
-- **Double lees_config call**: config was parsed twice in the upload callback. Refactored to parse once with a `config = None` guard.
-
-### Dead code removed
-- `get_score_cols()`, `col_to_label()`, `score_opties_uit_df()` in app.py (unused after filter refactor)
-- `detecteer_bladen()` in config_wizard.py (never called)
-- `item_opties` variable in app.py (superseded by cascading filters)
-
-### Cleanup
-- `python-pptx` removed from runtime dependencies (only used by scripts/eenmalig/)
-- Extracted `bereken_pct()` helper in app.py to replace 4 inline groupby-percentage calculations
-- `kandidaat_id_kolom` renamed to `koppel_id_kolom` in maak_template.py to match what transformatie.py expects
-
-### Data safety audit
-- Verified gitignore blocks all PII-containing files (selectiedata with names/emails/student numbers)
-- Confirmed data/demo/ only contains fictive data generated by scripts/eenmalig/maak_fictief_*.py
-- Fixed over-broad gitignore that was blocking config.xlsx and demo data from being committed
-- Added path-specific gitignore rules instead of global `*.csv` / `*.xlsx` blocks
-
-## Recent changes (2026-06-25, accessibility session)
-
-Focused on making the tool clearer for non-technical users. All committed.
-
-- **Introductie tab** (`tabs/intro.py`): new static, accessible welcome page, first tab and active by default. Explains what the tool answers, three steps, the groups, and a per-tab guide. No callbacks, so it stays out of the `registreer_callbacks` loop. Group labels/colors come from `shared.GROEP_KLEUREN`. The intro compares only started students (gestart-zonder-vervolg vs studiesucces); "Niet gestart" is not shown as a comparison group.
-- **Config wizard is now a flat full-screen page** (was an inline collapse, briefly a stepwise flow). Opened by a clear outlined "Config automatisch genereren" button, closed by a red "Sluiten" button. The explanation is rewritten around the build-up of a selection procedure (instruments → items/criteria → scores → linking column).
-- **Wizard column table uses checkboxes** (`row_selectable="multi"`) instead of a Meenemen-dropdown; the column name is read-only.
-- **Schaal field added** to the config: a per-column range like `1-7`/`0-100`. The wizard auto-suggests it via `_raad_schaal` (rounds the observed max up to a tidy bound 3/5/7/10/20/25/50/100 or tens; lower bound 0 or 1). `lees_config`/`exporteer_config_excel` read/write it; older four-column configs still load.
-- **`bouw_data_stores` helper** (helpers.py) runs the parse→transform→join pipeline once, shared by the upload and demo load paths to prevent drift.
-- **"Univariate regressie" relabeled** to "Elk onderdeel apart" in the Wat valt op tab.
-- **Configuratie tab was built and then removed** at the user's request, along with its `config-store`/`raw-selectie-store`/`raw-cho-store` stores. Don't re-add those stores unless that feature comes back.
 
 ## Known issues (not yet fixed)
 
 These were identified during the audit but left unfixed. Pick them up when relevant.
 
 ### Code quality
-- **Large callbacks**: `update_regressie_tab` and `update_verschiltoets_tab` still do a lot of work inline. Splitting data prep from layout would improve readability. (The old `update_samenhang_tab`/`update_vo_tab` were already split: Samenhang became the Correlatie + Regressie tabs and the VO-cijfer tab was removed.)
+- **Large callbacks**: `update_regressie_tab` and `update_verschiltoets_tab` do a lot of work inline. Splitting data prep from layout would improve readability.
