@@ -15,7 +15,7 @@
 ---
 
 <p align="center">
-  <img src="docs/img/demo.gif" alt="Demo: de voorbeelddata laden en langs de tabbladen Wat valt op, Selectiescores, Verschiltoets en Correlatie gaan" width="800">
+  <img src="docs/img/demo.gif" alt="Demo: de voorbeelddata laden, langs alle tabbladen gaan (Introductie, Wat valt op, Selectiescores, Demografie, Verschiltoets, Correlatie, Regressie), groeperen op geslacht en vooropleiding, en het PDF-rapport downloaden" width="720">
 </p>
 
 Deze tool legt de scores uit een selectieprocedure naast de 1CHO-inschrijvingen
