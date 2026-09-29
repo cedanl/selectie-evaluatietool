@@ -14,6 +14,10 @@
 
 ---
 
+<p align="center">
+  <img src="docs/img/demo.gif" alt="Demo: de voorbeelddata laden en langs de tabbladen Wat valt op, Selectiescores, Verschiltoets en Correlatie gaan" width="800">
+</p>
+
 Veel opleidingen selecteren hun studenten met een toets, een gesprek, een
 cijferlijst of een vragenlijst. De vraag die daarna vaak blijft liggen: **werkt
 die selectie?** Staan de kandidaten die hoog scoorden na het eerste jaar ook
