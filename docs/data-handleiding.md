@@ -19,13 +19,21 @@ selectie regelt, of van een extern testbureau dat de toetsen afneemt.
 
 **Wat moet erin staan:**
 
+- **Alle kandidaten**, dus ook wie is afgewezen of niet is begonnen. De tool
+  deelt ze in als "Niet gestart". Ze tellen niet mee in de vergelijking, maar
+  zo klopt het overzicht van wie er is binnengekomen.
+- **Eén rij per kandidaat.** Staat dezelfde rij twee keer in het bestand, dan
+  telt de tool hem één keer. Staat een kandidaat twee keer met verschillende
+  scores, dan blokkeert de tool het inladen.
 - Een kolom met een uniek nummer per kandidaat (bijvoorbeeld studentnummer
   of aanvraagnummer). Met dit nummer koppelt de tool later de selectiescore
   aan de studiegegevens van diezelfde persoon.
-- Een of meer kolommen met scores. Elke score mag een eigen schaal hebben.
-  De ene kolom mag van 1 tot 10 lopen, de andere in percentages, en weer
-  een andere in een of ander puntenaantal. Dat geeft niet.
-- Eventueel een totaalscore.
+- Een of meer kolommen met scores, **als getallen**. Elke score mag een eigen
+  schaal hebben. De ene kolom mag van 1 tot 10 lopen, de andere in
+  percentages, en weer een andere in een of ander puntenaantal. Dat geeft
+  niet.
+- Een totaalscore of subtotaal mag in het bestand staan, maar neem die niet
+  samen met de onderdelen mee als score (zie "Geen dubbele informatie").
 
 Staan er ook andere kolommen in, zoals namen, e-mailadressen of datums, dan
 analyseert de tool die niet. Hij leest ze wel in, dus haal persoonsgegevens
@@ -86,7 +94,10 @@ In de README staat hoe dat werkt.
 ### Geen dubbele informatie
 
 Neem geen kolommen mee die statistisch (bijna) hetzelfde zeggen over een
-kandidaat. Bijvoorbeeld: een toets die zowel "percentage goed" als "aantal
+kandidaat. Een subtotaal naast zijn onderdelen is het duidelijkste voorbeeld:
+het telt dezelfde informatie dubbel en hangt per definitie sterk samen met die
+onderdelen. Kies het subtotaal of de onderdelen, niet allebei. De config wizard
+herkent de meeste subtotalen en vinkt ze standaard uit. Een ander voorbeeld: een toets die zowel "percentage goed" als "aantal
 goed" rapporteert, meet in de praktijk hetzelfde ten opzichte van de andere
 kandidaten (wie hoger scoort op de een, scoort ook hoger op de ander).
 Zulke kolommen allebei meenemen voegt geen nieuwe informatie toe, maar kan
@@ -114,8 +125,11 @@ studentgegevens regelt).
 omschrijvingen. Zet de levering eerst om met de
 [1cijferho-tool](https://github.com/cedanl/1cijferho) van CEDA, met de
 instelmodus **Evaluatietool Selectie** en een koppelbestand
-BSN → studentnummer. Upload daarna het bestand dat eindigt op
-**`_enriched.csv`** (of `_decoded.csv`). De [README](../README.md#stap-2-de-1cho-data-klaarmaken-met-de-1cijferho-tool)
+BSN → studentnummer. Noem de tweede kolom van het koppelbestand
+`studentnummer`, ook als er een ander nummer in staat (bijvoorbeeld een
+aanvraagnummer): gebruik het nummer zoals het in het selectiebestand staat.
+Upload daarna het bestand dat eindigt op
+**`_enriched.csv`** (of `_decoded.csv`). De [README](../README.md#2-1cho-omzetten-met-1cijferho)
 beschrijft dit stap voor stap.
 
 De tool herkent de uitvoer van de 1cijferho-tool vanzelf:
@@ -268,7 +282,10 @@ er vanzelf uit.
 
 ### 1CHO-data (CSV)
 
-Een minimaal 1CHO-bestand. Let op de opbouw met een regel per studiejaar:
+Een 1CHO-bestand met alleen de kolommen om de doorstroom af te leiden. Dit
+laat de opbouw zien, maar de tool laat het niet toe: er ontbreken nog geslacht
+en vooropleiding (zie het voorbeeld hieronder). Let op de opbouw met een regel
+per studiejaar:
 student 12345678 heeft twee regels (2026 en 2027) en is dus doorgestroomd;
 student 23456789 heeft alleen een regel in 2026 en is gestart maar niet
 doorgestroomd:
