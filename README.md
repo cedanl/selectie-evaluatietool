@@ -18,7 +18,7 @@
   <img src="docs/img/demo.gif" alt="Demo: de voorbeelddata laden, langs alle tabbladen gaan (Introductie, Wat valt op, Selectiescores, Demografie, Verschiltoets, Correlatie, Regressie), groeperen op geslacht en vooropleiding, en het PDF-rapport downloaden" width="720">
 </p>
 
-Deze tool legt de scores uit een selectieprocedure naast de 1CHO-inschrijvingen
+Deze tool legt de scores uit een selectieprocedure naast de 1cijferho-inschrijvingen van DUO
 en laat per selectieonderdeel zien of kandidaten die hoger scoorden vaker in
 jaar 2 nog ingeschreven staan (bij een eenjarige master: vaker hun diploma
 haalden). Je krijgt een dashboard met boxplots, toetsen, correlaties en een
@@ -26,13 +26,13 @@ logistische regressie, plus een PDF-rapport om te delen met de opleiding.
 
 De tool draait lokaal in je browser; er gaan geen gegevens de deur uit.
 
-**Voor wie:** institutioneel onderzoekers en BI-medewerkers die met 1CHO werken.
+**Voor wie:** institutioneel onderzoekers en BI-medewerkers die met 1cijferho-data van DUO werken.
 Je hoeft niet te programmeren, maar je moet een paar opdrachten in een terminal
 kunnen draaien.
 
 - [Checklist: heb je dit klaar?](#checklist-heb-je-dit-klaar)
 - [1. Installeren en uitproberen](#1-installeren-en-uitproberen)
-- [2. 1CHO omzetten met 1cijferho](#2-1cho-omzetten-met-1cijferho)
+- [2. De 1cijferho-data van DUO klaarmaken](#2-de-1cijferho-data-van-duo-klaarmaken)
 - [3. Het selectiebestand](#3-het-selectiebestand)
 - [4. De config](#4-de-config)
 - [5. Inladen en analyseren](#5-inladen-en-analyseren)
@@ -46,7 +46,7 @@ Loop dit na voordat je begint. Bijna alle problemen bij het inladen komen door
 een van deze punten.
 
 - [ ] **uv** is geïnstalleerd (zie stap 1), of je mag het installeren.
-- [ ] De **1CHO-levering van DUO** (`EV*.asc`, `Bestandsbeschrijving_*.txt`,
+- [ ] De **levering van DUO** (`EV*.asc`, `Bestandsbeschrijving_*.txt`,
       `Dec_*.asc`), en die bevat ook het studiejaar **ná** de start van het
       cohort. Voor het cohort van september 2025 heb je inschrijvingen in
       2026-2027 nodig.
@@ -56,7 +56,7 @@ een van deze punten.
 - [ ] Het **selectiebestand** van de opleiding: één Excel-bestand, één rij per
       kandidaat, met **alle** kandidaten (ook afgewezen), een kolom met
       het koppelnummer en de scores als getallen.
-- [ ] Het 1CHO-bestand is omgezet met 1cijferho en je hebt het bestand dat
+- [ ] De DUO-levering is omgezet met 1cijferho en je hebt het bestand dat
       eindigt op **`_enriched.csv`** klaarstaan, met een kolom `studentnummer`
       (stap 2c).
 - [ ] Het koppelnummer staat in het selectiebestand en het koppelbestand op
@@ -112,7 +112,7 @@ data?** een van de twee verzonnen voorbeelden:
 Klik alle tabbladen een keer door. Dan weet je wat je bij je eigen data krijgt.
 
 
-## 2. 1CHO omzetten met 1cijferho
+## 2. De 1cijferho-data van DUO klaarmaken
 
 De ruwe DUO-levering is fixed-width, gecodeerd en staat op BSN. De
 [1cijferho-tool](https://github.com/cedanl/1cijferho) van CEDA zet die om naar
@@ -121,7 +121,7 @@ uitvoer rechtstreeks.
 
 ### 2a. Koppelbestand
 
-Het koppelbestand verbindt het BSN uit 1CHO met het nummer waarmee de
+Het koppelbestand verbindt het BSN uit de DUO-levering met het nummer waarmee de
 kandidaten in het selectiebestand staan: het **koppelnummer**. Vaak is dat het
 studentnummer, maar gebruikt de opleiding een Studielink-aanvraagnummer of een
 eigen kandidaatnummer, dan zet je dát nummer erin.
@@ -245,7 +245,7 @@ overeenkomen met het selectiebestand, inclusief hoofdletters en spaties.
    stap 2.
 2. De tool controleert alles: groen is in orde, geel is een waarschuwing, rood
    moet eerst opgelost worden (zie [Problemen oplossen](#problemen-oplossen)).
-3. Bevat het 1CHO-bestand meerdere opleidingen, kies dan welke bij deze selectie
+3. Bevat het 1cijferho-bestand meerdere opleidingen, kies dan welke bij deze selectie
    hoort.
 4. Je ziet bijvoorbeeld *70 van 200 kandidaten gekoppeld*. Dat is normaal: de
    rest is afgewezen of niet begonnen.
@@ -263,7 +263,7 @@ overeenkomen met het selectiebestand, inclusief hoofdletters en spaties.
 
 **Download rapport (PDF)** zet alles in één document (duurt ongeveer een halve
 minuut). Klik na afloop op **Nieuw bestand laden**: dan wordt het geüploade
-1CHO-bestand meteen verwijderd, in plaats van na 24 uur.
+1cijferho-bestand meteen verwijderd, in plaats van na 24 uur.
 
 
 ## De uitkomsten lezen
@@ -275,7 +275,7 @@ de uitkomst het diploma in het startjaar.
 
 | Groep | Betekenis |
 |---|---|
-| **Niet gestart** | Niet in 1CHO bij deze opleiding: afgewezen, of toegelaten maar niet begonnen. Zit niet in de vergelijking. |
+| **Niet gestart** | Niet in de 1cijferho-data bij deze opleiding: afgewezen, of toegelaten maar niet begonnen. Zit niet in de vergelijking. |
 | **Gestart, niet naar jaar 2** | Begonnen, het jaar daarna niet meer ingeschreven, geen diploma |
 | **Doorgestroomd naar jaar 2** | Het jaar na de start nog ingeschreven |
 | **Gestart, diploma gehaald** | Eenjarige master: diploma in het startjaar |
@@ -294,7 +294,7 @@ de uitkomst het diploma in het startjaar.
   model zijn dan te optimistisch. De tool meldt dat.
 - **Eén cohort is een momentopname.** Herhaal met het volgende cohort voordat je
   de procedure aanpast.
-- **Achtergrond** (geslacht, vooropleiding) komt uit 1CHO en is alleen bekend
+- **Achtergrond** (geslacht, vooropleiding) komt uit de 1cijferho-data en is alleen bekend
   voor wie begon. Of de selectie bepaalde groepen vaker afwijst, kan de tool
   niet zien.
 - Groepen kleiner dan vijf worden getoond als `< 5`.
@@ -304,7 +304,7 @@ de uitkomst het diploma in het startjaar.
 
 | Melding | Oorzaak | Oplossing |
 |---|---|---|
-| **Geen overlap tussen selectiedata en 1CHO-data** | De koppelnummers komen niet overeen | Staat er een kolom `studentnummer` in het 1CHO-bestand? Zo niet, draai 1cijferho opnieuw met koppelbestand. Zo wel: bevat het koppelbestand hetzelfde soort nummer als de ID-kolom in de config (studentnummer vs. aanvraagnummer)? Vergelijk een paar nummers uit beide bestanden (prefix, voorloopnullen). |
+| **Geen overlap tussen selectiedata en 1CHO-data** | De koppelnummers komen niet overeen | Staat er een kolom `studentnummer` in het 1cijferho-bestand? Zo niet, draai 1cijferho opnieuw met koppelbestand. Zo wel: bevat het koppelbestand hetzelfde soort nummer als de ID-kolom in de config (studentnummer vs. aanvraagnummer)? Vergelijk een paar nummers uit beide bestanden (prefix, voorloopnullen). |
 | **Ontbrekende achtergrondkolommen in 1CHO** | Het kale `EV....csv` is geüpload | Gebruik `EV..._enriched.csv` |
 | **Ontbrekende kolommen in 1CHO** | Geen 1cijferho-uitvoer, of het bestand is in Excel bewerkt | Upload het `_enriched.csv` zoals 1cijferho het maakte |
 | **Blad / ID-kolom / kolom … niet gevonden** | Tikfout, verkeerd tabblad of verkeerde headerrij | Laat de wizard de config opnieuw maken |

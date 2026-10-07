@@ -109,19 +109,18 @@ samenhangen (r ≥ 0,95) als waarschuwing, maar controleert dit niet
 uitputtend; gebruik ook je eigen kennis van hoe de scores zijn opgebouwd.
 
 
-## 3. 1CHO-data (studiegegevens)
+## 3. 1cijferho-data (studiegegevens)
 
 Dit bestand vertelt wat er na de selectie met de studenten is gebeurd: wie
 is begonnen aan de opleiding, wie is na het eerste jaar gestopt, en wie is
 doorgegaan naar het tweede jaar.
 
-1CHO is een afkorting van "1 Cijfer Hoger Onderwijs". Het is een landelijke
-verzameling studiegegevens die door DUO wordt beheerd (DUO is de
-overheidsdienst die onder andere studiefinanciering en
-studentgegevens regelt).
+De 1cijferho-data zijn de landelijke inschrijfgegevens van DUO ("1 Cijfer
+Hoger Onderwijs"). DUO is de overheidsdienst die onder andere
+studiefinanciering en studentgegevens regelt.
 
 **Let op: je uploadt hier niet het ruwe DUO-bestand.** DUO levert
-1CHO-data op BSN, niet op studentnummer, en met codes in plaats van
+de data op BSN, niet op studentnummer, en met codes in plaats van
 omschrijvingen. Zet de levering eerst om met de
 [1cijferho-tool](https://github.com/cedanl/1cijferho) van CEDA, met de
 instelmodus **Evaluatietool Selectie** en een koppelbestand
@@ -129,7 +128,7 @@ BSN → studentnummer. Noem de tweede kolom van het koppelbestand
 `studentnummer`, ook als er een ander nummer in staat (bijvoorbeeld een
 aanvraagnummer): gebruik het nummer zoals het in het selectiebestand staat.
 Upload daarna het bestand dat eindigt op
-**`_enriched.csv`** (of `_decoded.csv`). De [README](../README.md#2-1cho-omzetten-met-1cijferho)
+**`_enriched.csv`** (of `_decoded.csv`). De [README](../README.md#2-de-1cijferho-data-van-duo-klaarmaken)
 beschrijft dit stap voor stap.
 
 De tool herkent de uitvoer van de 1cijferho-tool vanzelf:
@@ -147,9 +146,9 @@ hieronder heeft.
 
 **Formaat:** CSV of Excel (.csv, .txt, .xlsx, .xls), tot 4 GB
 
-### Hoe het 1CHO-bestand is opgebouwd
+### Hoe het 1cijferho-bestand is opgebouwd
 
-Het 1CHO-bestand bevat inschrijfgegevens, zoals DUO ze registreert. Het belangrijkste om te snappen is dit: er staat **een
+Het 1cijferho-bestand bevat inschrijfgegevens, zoals DUO ze registreert. Het belangrijkste om te snappen is dit: er staat **een
 regel per student per studiejaar**, niet een regel per student. Een student
 die twee jaar ingeschreven stond, heeft dus twee regels.
 
@@ -167,7 +166,7 @@ die afleiding voor je (zie "Hoe bepaalt de tool de doorstroom?" hieronder).
 | `inschrijvingsjaar` | Het jaar van deze inschrijfregel | 2026 |
 | `eerste_jaar_aan_deze_opleiding_instelling` | Het eerste jaar dat de student aan deze opleiding stond | 2026 |
 | `geslacht` | Man, vrouw of anders | vrouw |
-| `hoogste_vooropleiding_omschrijving_vooropleiding` | De opleiding die de student hiervoor deed (1CHO-omschrijving) | vwo profiel natuur & gezondheid |
+| `hoogste_vooropleiding_omschrijving_vooropleiding` | De opleiding die de student hiervoor deed (1cijferho-omschrijving) | vwo profiel natuur & gezondheid |
 
 Geslacht en vooropleiding zijn nodig voor de analyses naar achtergrond; zonder
 die kolommen opent het dashboard niet. De lange omschrijving van de
@@ -200,12 +199,12 @@ deze groepen in:
 - `Gestart, niet naar jaar 2` - er is wel een regel in het eerste jaar, maar
   geen vervolgregel in jaar 2 en geen diploma. De student is dus gestopt.
 - `Niet gestart` - de kandidaat staat wel in de selectiedata, maar komt
-  helemaal niet voor in de 1CHO-data. Niet toegelaten, of wel toegelaten maar
+  helemaal niet voor in de 1cijferho-data. Niet toegelaten, of wel toegelaten maar
   nooit begonnen.
 
 Doorstromen naar jaar 2 telt het zwaarst, daarna telt een diploma in het
 eerste jaar als succes. Zit er geen `diploma_behaald`-kolom in je
-1CHO-data, dan ontstaan alleen de groepen rond doorstroom naar jaar 2.
+1cijferho-data, dan ontstaan alleen de groepen rond doorstroom naar jaar 2.
 
 Een voorbeeld met twee studenten:
 
@@ -231,14 +230,14 @@ bij een dubbele studie. De doorstroom wordt dan **per opleiding apart**
 bepaald, niet voor de student als geheel. Iemand kan dus bij de ene opleiding
 doorstromen en bij de andere stoppen. De tool kijkt daarvoor naar de
 combinatie van studentnummer, opleiding en eerste studiejaar. Bevat jouw
-1CHO-bestand maar een opleiding, dan hoef je je hier niets van aan te
+1cijferho-bestand maar een opleiding, dan hoef je je hier niets van aan te
 trekken; dan heeft elke student vanzelf maar een studieloopbaan.
 
-Upload je een 1CHO-bestand van de hele instelling, dan kiest de tool alleen
+Upload je een 1cijferho-bestand van de hele instelling, dan kiest de tool alleen
 de inschrijvingen die bij deze selectie horen:
 
 - **Opleiding**: de tool zoekt de opleiding uit je config op in het
-  1CHO-bestand. Lukt dat niet eenduidig, dan verschijnt bij het uploaden een
+  1cijferho-bestand. Lukt dat niet eenduidig, dan verschijnt bij het uploaden een
   keuzemenu "Welke opleiding in het 1CHO-bestand hoort bij deze selectie?".
   Inschrijvingen bij andere opleidingen tellen niet mee; een afgewezen
   kandidaat die elders begon, blijft dus **niet gestart**.
@@ -247,15 +246,15 @@ de inschrijvingen die bij deze selectie horen:
 - **Meerdere inschrijvingen**: blijven er dan nog meerdere over, dan telt de
   inschrijving die het dichtst bij het selectiejaar begon.
 
-Wat er is weggefilterd, zie je in de meldingen onder de 1CHO-upload.
+Wat er is weggefilterd, zie je in de meldingen onder de upload van de 1cijferho-data.
 
 
 ## Hoe koppelt de tool de bestanden?
 
-De tool legt de selectiedata en de 1CHO-data naast elkaar en zoekt bij
+De tool legt de selectiedata en de 1cijferho-data naast elkaar en zoekt bij
 elke kandidaat de bijbehorende studiegegevens. Dat doet hij via het
-studentnummer (in de 1CHO-data heet die kolom `persoonsgebonden_nummer`).
-Kandidaten die wel in de selectiedata staan maar niet in de 1CHO-data,
+studentnummer (in de 1cijferho-data heet die kolom `persoonsgebonden_nummer`).
+Kandidaten die wel in de selectiedata staan maar niet in de 1cijferho-data,
 worden vanzelf ingedeeld als "Niet gestart".
 
 Let er wel op dat het studentnummer in beide bestanden op precies dezelfde
@@ -280,9 +279,9 @@ In het echt hebben selectiebestanden vaak tientallen kolommen, waarvan maar
 een deel scores zijn. Dat is prima. De config wizard haalt de scorekolommen
 er vanzelf uit.
 
-### 1CHO-data (CSV)
+### 1cijferho-data (CSV)
 
-Een 1CHO-bestand met alleen de kolommen om de doorstroom af te leiden. Dit
+Een 1cijferho-bestand met alleen de kolommen om de doorstroom af te leiden. Dit
 laat de opbouw zien, maar de tool laat het niet toe: er ontbreken nog geslacht
 en vooropleiding (zie het voorbeeld hieronder). Let op de opbouw met een regel
 per studiejaar:
