@@ -171,7 +171,7 @@ scripts/
     update_datawoordenboek.py
 
 docs/
-  data-handleiding.md    # explains expected data formats for end users
+  handleiding.md         # explains the files, formats and how the tool works, for end users
   config_template.xlsx   # empty config with cell-level instructions
 
 data/
