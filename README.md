@@ -205,7 +205,7 @@ Twee dingen vertekenen de uitkomsten:
 - **Twee versies van dezelfde score** (percentage goed en aantal goed). Kies er
   één.
 
-Voorbeelden staan in de [handleiding](docs/handleiding.md).
+Voorbeelden staan in [Welke data heb je nodig?](docs/bestanden.md).
 
 
 ## 4. De config
@@ -325,7 +325,7 @@ Een patroon dat twee jaar terugkomt, is een steviger basis dan één jaar.
 
 ## Meer lezen
 
-- [Handleiding](docs/handleiding.md): de bestanden in detail
+- [Bestanden](docs/bestanden.md): de bestanden in detail
 - [Privacy-handleiding](docs/privacy-handleiding.md): wat de tool met gegevens
   doet, met een checklist voor je FG
 - [1cijferho documentatie](https://cedanl.github.io/1cijferho/)
