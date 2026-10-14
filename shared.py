@@ -50,7 +50,7 @@ UITKOMST_PERSPECTIEVEN = {
         "populatie": GROEP_VOLGORDE,
         "beschrijving": (
             "Vergelijkt kandidaten die met de opleiding zijn begonnen (staan in "
-            "1CHO) met kandidaten die niet zijn begonnen (afgewezen of niet "
+            "1CijferHO) met kandidaten die niet zijn begonnen (afgewezen of niet "
             "ingeschreven)."
         ),
     },
@@ -702,7 +702,7 @@ def demografie_scores(
     groepskolom erbij, of ``None`` als de dimensie niet beschikbaar is.
 
     Eén bron voor de demografische tab, het 'wat valt op'-overzicht en het PDF-
-    rapport, zodat die niet uiteenlopen. De demografie komt uit 1CHO en bestaat
+    rapport, zodat die niet uiteenlopen. De demografie komt uit 1CijferHO en bestaat
     alleen voor ingeschreven studenten (``GROEP_INGESCHREVEN``).
     """
     kolom = dim["kolom"]

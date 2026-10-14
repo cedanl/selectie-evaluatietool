@@ -1,8 +1,8 @@
 """
-Genereer synthetische 1CHO-data voor de echte selectiebestanden.
+Genereer synthetische 1CijferHO-data voor de echte selectiebestanden.
 
 Kopieert selectiedata en configs naar data/test/ subdirectories en
-genereert 1CHO-data zodat je de pipeline lokaal kunt testen. Output
+genereert 1CijferHO-data zodat je de pipeline lokaal kunt testen. Output
 gaat NIET naar data/demo/ (die bevat alleen fictieve data voor de
 demo-picker).
 
@@ -210,7 +210,7 @@ def verwerk_dataset(cfg):
     else:
         n_succes = int((studie_df["inschrijvingsjaar"] == cfg["jaar"] + 1).sum())
         label = "Doorgestroomd"
-    print(f"  {naam}: {n_total} kandidaten, {n_ingeschreven} in 1CHO")
+    print(f"  {naam}: {n_total} kandidaten, {n_ingeschreven} in 1CijferHO")
     print(f"    {label}: {n_succes}, overig gestart: {n_ingeschreven - n_succes}")
     print(f"    Bestanden in {demo_subdir}/")
 

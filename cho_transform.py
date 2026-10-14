@@ -1,18 +1,18 @@
 """
-1CHO-transformaties: van ruwe inschrijvingsdata naar retentie-uitkomst.
+1CijferHO-transformaties: van ruwe inschrijvingsdata naar retentie-uitkomst.
 
-Echte 1CHO-data (1 Cijfer Hoger Onderwijs, beheerd door DUO) kent geen
+Echte 1CijferHO-data (1 Cijfer Hoger Onderwijs, beheerd door DUO) kent geen
 kant-en-klare 'groep'-kolom. Het zijn inschrijvingsgegevens in lang
 formaat: een rij per student per inschrijvingsjaar. Of iemand is
 doorgestroomd naar jaar 2 leid je af uit het bestaan van een inschrijfrij
 in het jaar na het eerste studiejaar.
 
-Deze module bundelt alle 1CHO-logica op een plek:
+Deze module bundelt alle 1CijferHO-logica op een plek:
 
 - `transformeer_cho()` leidt de doorstroomgroep af en wordt door de app
   gebruikt vlak voor `koppel_data()`.
 - `bouw_ruwe_cho()` zet demografie + een doorstroom-indicator om in ruwe
-  long-format 1CHO en wordt door de datageneratie-scripts gebruikt.
+  long-format 1CijferHO en wordt door de datageneratie-scripts gebruikt.
 
 De afleidingslogica volgt de no-fairness-without-awareness pipeline
 (R/transform_ev_data.R), waar retentie wordt bepaald met
@@ -30,7 +30,7 @@ from shared import (
 )
 from transformatie import parse_bool, normaliseer_studentnummer
 
-# Kolommen die een ruw 1CHO-bestand minimaal moet bevatten om de
+# Kolommen die een ruw 1CijferHO-bestand minimaal moet bevatten om de
 # doorstroomgroep te kunnen afleiden.
 RUWE_CHO_KOLOMMEN = [
     "persoonsgebonden_nummer",
@@ -52,7 +52,7 @@ _DEMO_KOLOMMEN = ["geslacht"]
 _META_KOLOMMEN = ["opleiding", "instellingscode"]
 
 # Uitvoerkolom met de opleiding van de spell (uit opleidingscode_naam_opleiding
-# of opleiding), gebruikt om een instellingsbreed 1CHO-bestand te filteren.
+# of opleiding), gebruikt om een instellingsbreed 1CijferHO-bestand te filteren.
 CHO_OPLEIDING_KOLOM = "cho_opleiding"
 
 # Optionele kolom die aangeeft of de student in het cohortjaar een diploma
@@ -71,7 +71,7 @@ _1CIJFERHO_ID_KOLOM = "studentnummer"
 _1CIJFERHO_DIPLOMAJAAR = "diplomajaar"
 _1CIJFERHO_FASE_KOLOMMEN = ("opleidingsfase_actueel", "opleidingsfase")
 
-# Alle 1CHO-kolommen die de tool gebruikt. Bij het inlezen van een groot
+# Alle 1CijferHO-kolommen die de tool gebruikt. Bij het inlezen van een groot
 # bestand laten we de rest weg (bestandsopslag.lees_cho_bestand).
 CHO_BENODIGDE_KOLOMMEN = {
     *RUWE_CHO_KOLOMMEN,
@@ -127,7 +127,7 @@ def normaliseer_1cijferho(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def ontbrekende_cho_kolommen(df: pd.DataFrame) -> list[str]:
-    """Geef de verplichte ruwe 1CHO-kolommen die in df ontbreken."""
+    """Geef de verplichte ruwe 1CijferHO-kolommen die in df ontbreken."""
     return [c for c in RUWE_CHO_KOLOMMEN if c not in df.columns]
 
 
@@ -138,7 +138,7 @@ def ontbrekende_demografie_kolommen(df: pd.DataFrame) -> list[str]:
 
 
 def _classificeer_vooropleiding(omschrijving: object) -> str:
-    """Vat de lange 1CHO-vooropleidingsomschrijving samen tot een korte
+    """Vat de lange 1CijferHO-vooropleidingsomschrijving samen tot een korte
     categorie, zoals transform_ev_data.R doet. Valt terug op de
     oorspronkelijke tekst als er geen standaard-prefix matcht (bijvoorbeeld
     bachelor-namen die als vooropleiding bij een master gelden)."""
@@ -159,7 +159,7 @@ def _classificeer_vooropleiding(omschrijving: object) -> str:
 
 
 def transformeer_cho(ruwe_df: pd.DataFrame) -> pd.DataFrame:
-    """Leid per student de doorstroomgroep af uit ruwe 1CHO-inschrijvingen.
+    """Leid per student de doorstroomgroep af uit ruwe 1CijferHO-inschrijvingen.
 
     Verwacht lang formaat (een rij per inschrijvingsjaar). Retourneert een
     rij per student met de afgeleide kolom `groep` plus `studentnummer`,
@@ -170,13 +170,13 @@ def transformeer_cho(ruwe_df: pd.DataFrame) -> pd.DataFrame:
     `diploma_behaald`, voor eenjarige opleidingen), en anders 'Gestart, niet
     naar jaar 2'. Zonder diploma-kolom ontstaan alleen de eerste en laatste.
 
-    Studenten die helemaal niet in 1CHO voorkomen worden hier niet
+    Studenten die helemaal niet in 1CijferHO voorkomen worden hier niet
     aangeraakt; die krijgen later in `koppel_data()` de groep 'Niet gestart'.
     """
     ontbreekt = ontbrekende_cho_kolommen(ruwe_df)
     if ontbreekt:
         raise ValueError(
-            "Ruwe 1CHO-data mist verplichte kolommen: " + ", ".join(ontbreekt)
+            "Ruwe 1CijferHO-data mist verplichte kolommen: " + ", ".join(ontbreekt)
         )
 
     df = ruwe_df.rename(columns={"persoonsgebonden_nummer": "studentnummer"})
@@ -186,7 +186,7 @@ def transformeer_cho(ruwe_df: pd.DataFrame) -> pd.DataFrame:
         df[jaarkolom] = pd.to_numeric(df[jaarkolom], errors="coerce")
         if df[jaarkolom].notna().sum() == 0:
             raise ValueError(
-                f"Ruwe 1CHO-data: kolom '{jaarkolom}' bevat geen geldige jaartallen."
+                f"Ruwe 1CijferHO-data: kolom '{jaarkolom}' bevat geen geldige jaartallen."
             )
 
     df = df.dropna(
@@ -284,7 +284,7 @@ def transformeer_cho(ruwe_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def opleidingen_in_cho(cho_df: pd.DataFrame) -> list[str]:
-    """De opleidingen in een (via transformeer_cho afgeleide) 1CHO-tabel,
+    """De opleidingen in een (via transformeer_cho afgeleide) 1CijferHO-tabel,
     meest voorkomende eerst. Leeg als het bestand geen opleidingskolom heeft."""
     if CHO_OPLEIDING_KOLOM not in cho_df.columns:
         return []
@@ -292,9 +292,9 @@ def opleidingen_in_cho(cho_df: pd.DataFrame) -> list[str]:
 
 
 def beste_opleiding_match(opleidingen: list[str], config_opleiding: str) -> str | None:
-    """Welke 1CHO-opleiding hoort bij de opleiding uit de config?
+    """Welke 1CijferHO-opleiding hoort bij de opleiding uit de config?
 
-    Eén opleiding in 1CHO: die. Anders een hoofdletterongevoelige exacte
+    Eén opleiding in 1CijferHO: die. Anders een hoofdletterongevoelige exacte
     match, en daarna een eenduidige deelmatch ('Psychologie' in
     'B Psychologie'). Geen of meerdere kandidaten: None, dan moet de
     gebruiker kiezen."""
@@ -316,9 +316,9 @@ def selecteer_spells(
     jaar: int | None = None,
     studentnummers: set | None = None,
 ) -> tuple[pd.DataFrame, dict]:
-    """Houd per student één 1CHO-spell over die bij deze selectie hoort.
+    """Houd per student één 1CijferHO-spell over die bij deze selectie hoort.
 
-    Een instellingsbrede 1CHO-extractie bevat ook inschrijvingen bij andere
+    Een instellingsbrede 1CijferHO-extractie bevat ook inschrijvingen bij andere
     opleidingen en eerdere cohorten. Zonder filter telt een afgewezen
     kandidaat die elders instroomde als 'gestart', en komt een student met
     twee opleidingen dubbel in de analyse.
@@ -328,7 +328,7 @@ def selecteer_spells(
        eerdere poging hoort niet bij deze selectie). Zou dat alle koppelingen
        met `studentnummers` wegfilteren, dan slaan we deze stap over en
        melden dat; het jaar in de config sluit dan kennelijk niet aan op het
-       eerste studiejaar in 1CHO.
+       eerste studiejaar in 1CijferHO.
     3. Blijven er meerdere spells per student over: de spell die het dichtst
        bij het selectiejaar begon (bij gelijke stand de vroegste).
 
@@ -387,14 +387,14 @@ def bouw_ruwe_cho(
     geslacht: ArrayLike | None = None,
     vooropleiding_omschrijving: ArrayLike | None = None,
 ) -> pd.DataFrame:
-    """Bouw synthetische ruwe 1CHO-data in lang formaat.
+    """Bouw synthetische ruwe 1CijferHO-data in lang formaat.
 
     Elke ingeschreven student krijgt een eerstejaars-rij. Bij een meerjarige
     opleiding krijgen doorstromers (`doorstroomt=True`) daarnaast een rij voor
     jaar 2. Bij een eenjarige opleiding (master) zet je in plaats daarvan
     `diploma_behaald=True` voor wie het diploma haalde; dat wordt een kolom in
     de data. De uitkomstgroep zit dus NIET kant-en-klaar in de data maar wordt
-    afgeleid door `transformeer_cho()`, net als bij echte 1CHO-data.
+    afgeleid door `transformeer_cho()`, net als bij echte 1CijferHO-data.
 
     `studentnummers` en de meegegeven indicator- en demografie-arrays moeten
     allemaal dezelfde lengte hebben (een waarde per ingeschreven student).

@@ -881,7 +881,7 @@ def genereer_rapport(
         "achtergrond samenhangt in plaats van met geschiktheid."
     )
     pdf.body_text(
-        "De achtergrondgegevens komen uit 1CHO en zijn alleen bekend voor "
+        "De achtergrondgegevens komen uit 1CijferHO en zijn alleen bekend voor "
         "ingeschreven studenten. Deze analyse vergelijkt dus binnen de "
         "ingeschreven groep, niet onder alle sollicitanten. Per item toetsen we "
         "met een Kruskal-Wallis of de groepen anders scoren. De effectgrootte is "
@@ -962,7 +962,7 @@ def genereer_rapport(
 
     pdf.subsection_title("Scoreverschillen naar achtergrond (gestarte studenten)")
     pdf.body_text(
-        "  De achtergrond komt uit 1CHO en is alleen bekend voor gestarte "
+        "  De achtergrond komt uit 1CijferHO en is alleen bekend voor gestarte "
         "studenten. Of de selectie bepaalde groepen vaker afwijst, is met deze "
         "data niet te zien. Een verschil in gemiddelde score is op zichzelf geen "
         "bewijs van vertekening."

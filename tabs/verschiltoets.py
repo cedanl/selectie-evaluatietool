@@ -96,7 +96,7 @@ def _uitleg_verschil_demografisch(label):
         f"Een sterretje in de kolom '{P_GECORRIGEERD}' betekent een verschil dat "
         "waarschijnlijk niet op toeval berust, ook na correctie voor het aantal "
         "toetsen; dat kan wijzen op onbedoelde vertekening. Staat er 'vergelijkbaar', "
-        f"dan is er geen aangetoond verschil. De {laag} komt uit 1CHO en is alleen "
+        f"dan is er geen aangetoond verschil. De {laag} komt uit 1CijferHO en is alleen "
         "bekend voor ingeschreven studenten, dus we vergelijken binnen die groep.",
         "We toetsen het verschil met een verdelingsvrije toets (Kruskal-Wallis, "
         "werkt voor twee of meer groepen). De Effectgrootte is epsilon-kwadraat "

@@ -291,7 +291,7 @@ def registreer_callbacks(app):
             html.P(
                 "Hangen achtergrondkenmerken samen met de uitkomst, en scoren "
                 "gestarte studenten met een andere achtergrond verschillend op de "
-                "selectie-items? De achtergrond komt uit 1CHO en is alleen bekend "
+                "selectie-items? De achtergrond komt uit 1CijferHO en is alleen bekend "
                 "voor wie is gestart; of de selectie bepaalde groepen vaker afwijst, "
                 "is hier dus niet te zien.",
                 className="small text-muted",

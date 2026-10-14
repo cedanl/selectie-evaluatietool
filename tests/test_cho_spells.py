@@ -1,6 +1,6 @@
 """
-Tests voor het kiezen van de juiste 1CHO-spell per student (pitch #32): een
-instellingsbrede 1CHO-extractie bevat andere opleidingen en eerdere cohorten,
+Tests voor het kiezen van de juiste 1CijferHO-spell per student (pitch #32): een
+instellingsbrede 1CijferHO-extractie bevat andere opleidingen en eerdere cohorten,
 en mag kandidaten niet dubbel of met de verkeerde uitkomst laten meetellen.
 """
 

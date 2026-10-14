@@ -71,11 +71,11 @@ def koppel_data(cho_df: pd.DataFrame, scores_df: pd.DataFrame) -> pd.DataFrame:
         )
     dubbel = cho_df["studentnummer"].dropna().duplicated()
     if dubbel.any():
-        # Een student met meerdere 1CHO-spells zou dubbel in de analyse komen,
+        # Een student met meerdere 1CijferHO-spells zou dubbel in de analyse komen,
         # met mogelijk twee verschillende uitkomsten. Kies eerst één spell via
         # bereid_cho_voor() / selecteer_spells().
         raise ValueError(
-            f"1CHO bevat {int(dubbel.sum())} studentnummers met meerdere "
+            f"1CijferHO bevat {int(dubbel.sum())} studentnummers met meerdere "
             "inschrijvingen; kies eerst één inschrijving per student."
         )
     # Eén rij per kandidaat met de selectie-metadata. De scores zelf blijven in
@@ -186,7 +186,7 @@ def bereid_cho_voor(
     scores_df: pd.DataFrame,
     cho_opleiding: str | None = None,
 ) -> dict:
-    """Leid de 1CHO-uitkomst af en houd per student de spell over die bij deze
+    """Leid de 1CijferHO-uitkomst af en houd per student de spell over die bij deze
     selectie hoort (juiste opleiding en cohort).
 
     `cho_opleiding` is de keuze van de gebruiker in de upload-overlay; zonder
@@ -240,7 +240,7 @@ def bouw_data_stores(
     """Draai de pijplijn en geef de JSON voor data-store en scores-store terug.
 
     Eén plek voor de volgorde parse -> transformeer -> koppel, zodat de twee
-    laadpaden (upload en demo) niet uiteen kunnen lopen. De ruwe 1CHO komt al
+    laadpaden (upload en demo) niet uiteen kunnen lopen. De ruwe 1CijferHO komt al
     geparseerd binnen, omdat de paden hem verschillend inlezen (demo via
     read_csv, uploads via parse_csv_or_excel)."""
     scores_df = transformeer_naar_lang(parse_selectiedata(sel_contents, config), config)
@@ -322,7 +322,7 @@ def _groep_tabel_stijl(groepeer, kleur_map, volgorde) -> list:
 def _aantallen_per_groep(df, groepeer):
     """Aantal studenten per groep (n en %). Bij een binaire uitkomst telt de
     populatie die bij dat perspectief hoort; bij geslacht en vooropleiding
-    tellen alleen ingeschreven studenten (achtergrond komt uit 1CHO)."""
+    tellen alleen ingeschreven studenten (achtergrond komt uit 1CijferHO)."""
     if groepeer == "groep":
         telling = (
             df["groep"]

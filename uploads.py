@@ -81,7 +81,7 @@ def _upload_card(title, description, upload_id, status_id, accept):
                     ),
                     className="upload-zone",
                     accept=accept,
-                    # Geen limiet: een instellingsbrede 1CHO-extractie is al
+                    # Geen limiet: een instellingsbrede 1CijferHO-extractie is al
                     # snel >50 MB, en dcc.Upload negeert te grote bestanden
                     # zonder enige melding.
                     max_size=-1,
@@ -94,7 +94,7 @@ def _upload_card(title, description, upload_id, status_id, accept):
 
 
 def _grote_upload_card(title, description):
-    """Uploadkaart voor 1CHO. Geen dcc.Upload: die leest het bestand als
+    """Uploadkaart voor 1CijferHO. Geen dcc.Upload: die leest het bestand als
     base64-tekst in de browser in en faalt stil bij honderden MB's. Hier
     stuurt assets/grote_upload.js het bestand gestreamd naar
     /upload-bestand (bestandsopslag.py) en zet het token in 'cho-bestand'."""
@@ -184,20 +184,20 @@ _UPLOAD_KOLOM = dbc.Col(
             maak_wizard_layout(),
             html.Div(id="validatie-resultaat", className="mb-3"),
             _grote_upload_card(
-                "1CHO-data",
+                "1CijferHO-data",
                 "Inschrijvingsdata per kandidaat: het bestand uit de "
                 "1cijferho-tool dat eindigt op _enriched.csv (met het BSN al "
                 "gekoppeld aan het nummer uit de selectiedata). Niet het ruwe "
                 "DUO-bestand en niet het EV-bestand zonder toevoeging. Een "
                 "groot bestand van de hele instelling kan ook.",
             ),
-            # Verschijnt alleen als het 1CHO-bestand meerdere opleidingen bevat
+            # Verschijnt alleen als het 1CijferHO-bestand meerdere opleidingen bevat
             # (een instellingsbrede extractie): dan moet duidelijk zijn welke
             # inschrijvingen bij deze selectie horen.
             html.Div(
                 [
                     html.Label(
-                        "Welke opleiding in het 1CHO-bestand hoort bij deze selectie?",
+                        "Welke opleiding in het 1CijferHO-bestand hoort bij deze selectie?",
                         htmlFor="cho-opleiding-picker",
                         className="small fw-bold mb-1",
                     ),
@@ -480,10 +480,10 @@ def registreer_callbacks(app):
                     if missing:
                         cho_status = dbc.Alert(
                             [
-                                f"Ontbrekende kolommen in 1CHO: {', '.join(missing)}. ",
+                                f"Ontbrekende kolommen in 1CijferHO: {', '.join(missing)}. ",
                                 "Dit lijkt niet op de output van de "
                                 "1cijferho-pipeline; controleer of je het "
-                                "bewerkte 1CHO-bestand uploadt en niet het "
+                                "bewerkte 1CijferHO-bestand uploadt en niet het "
                                 "ruwe DUO-bestand.",
                             ],
                             color="danger",
@@ -494,7 +494,7 @@ def registreer_callbacks(app):
                     demo_missing = ontbrekende_demografie_kolommen(cho_ruw)
                     if demo_missing:
                         cho_status = dbc.Alert(
-                            "Ontbrekende achtergrondkolommen in 1CHO (nodig voor de "
+                            "Ontbrekende achtergrondkolommen in 1CijferHO (nodig voor de "
                             f"demografie- en eerlijkheidsanalyse): {', '.join(demo_missing)}. "
                             "Gebruik je de 1cijferho-tool, upload dan het bestand dat "
                             "eindigt op _enriched.csv of _decoded.csv; het gewone "
@@ -525,7 +525,7 @@ def registreer_callbacks(app):
 
                     if cho["keuze_nodig"]:
                         cho_status = dbc.Alert(
-                            f"Het 1CHO-bestand bevat {len(cho['opleidingen'])} "
+                            f"Het 1CijferHO-bestand bevat {len(cho['opleidingen'])} "
                             "opleidingen. Kies hieronder welke bij deze selectie "
                             "hoort; anders tellen inschrijvingen bij andere "
                             "opleidingen mee als 'gestart'.",
@@ -540,10 +540,10 @@ def registreer_callbacks(app):
                     if not matches:
                         cho_status = dbc.Alert(
                             f"Geen overlap tussen selectiedata ({len(sel_ids)} studenten) "
-                            f"en 1CHO-data ({cho['info']['n_studenten_totaal']} "
+                            f"en 1CijferHO-data ({cho['info']['n_studenten_totaal']} "
                             "studenten). "
                             "Controleer of beide bestanden hetzelfde studentnummer gebruiken. "
-                            "Komt het 1CHO-bestand uit de 1cijferho-tool, draai die dan "
+                            "Komt het 1CijferHO-bestand uit de 1cijferho-tool, draai die dan "
                             "met een koppelbestand (BSN naar studentnummer), zodat er een "
                             "kolom 'studentnummer' in staat.",
                             color="danger",
@@ -562,7 +562,7 @@ def registreer_callbacks(app):
                     if n_zonder_match > 0:
                         cho_alerts.append(
                             dbc.Alert(
-                                f"{n_zonder_match} kandidaten niet in 1CHO "
+                                f"{n_zonder_match} kandidaten niet in 1CijferHO "
                                 f"(worden 'Niet gestart').",
                                 color="info",
                                 className="small py-1 mb-1",
@@ -590,7 +590,9 @@ def registreer_callbacks(app):
                     if filter_regels:
                         cho_alerts.append(
                             dbc.Alert(
-                                "1CHO gefilterd: " + "; ".join(filter_regels) + ".",
+                                "1CijferHO gefilterd: "
+                                + "; ".join(filter_regels)
+                                + ".",
                                 color="info",
                                 className="small py-1 mb-1",
                             )
@@ -599,7 +601,7 @@ def registreer_callbacks(app):
                         cho_alerts.append(
                             dbc.Alert(
                                 "Het jaar in de config sluit niet aan op het eerste "
-                                "studiejaar in 1CHO; er is daarom niet op cohort "
+                                "studiejaar in 1CijferHO; er is daarom niet op cohort "
                                 "gefilterd. Controleer het jaar in de config.",
                                 color="warning",
                                 className="small py-1 mb-1",
@@ -649,7 +651,7 @@ def registreer_callbacks(app):
         no = dash.no_update
 
         if trigger == "btn-reset":
-            # Het 1CHO-bestand bevat persoonsgegevens: niet laten staan in de
+            # Het 1CijferHO-bestand bevat persoonsgegevens: niet laten staan in de
             # tijdelijke map als de gebruiker opnieuw begint.
             if cho_upload:
                 verwijder_upload(cho_upload.get("token"))
@@ -657,7 +659,7 @@ def registreer_callbacks(app):
 
         # Zonder deze afvanging gebeurt er bij een fout niets na de klik (de
         # callback faalt stil). De validatie draait dezelfde pijplijn, maar het
-        # tijdelijke 1CHO-bestand kan inmiddels zijn opgeruimd.
+        # tijdelijke 1CijferHO-bestand kan inmiddels zijn opgeruimd.
         try:
             if trigger == "btn-demodata":
                 return (*_laad_demodata(demo_dataset), no, no, no)

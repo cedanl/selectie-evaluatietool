@@ -91,16 +91,16 @@ def maak_upload_intro():
                         1,
                         "Data toevoegen",
                         "Je laadt de selectiescores, een korte configuratie en de "
-                        "studievoortgang (1CHO). De configuratie kun je ook in de tool "
+                        "studievoortgang (1CijferHO). De configuratie kun je ook in de tool "
                         "laten maken. Geen eigen data bij de hand? Kies onderaan een "
                         "voorbeeldset.",
                     ),
                     _stap(
                         2,
                         "Koppelen",
-                        "De tool koppelt elke kandidaat aan de 1CHO-gegevens. Alleen "
+                        "De tool koppelt elke kandidaat aan de 1CijferHO-gegevens. Alleen "
                         "kandidaten die zich daadwerkelijk bij de opleiding inschreven "
-                        "komen in 1CHO voor; daarvan bepaalt de tool of ze "
+                        "komen in 1CijferHO voor; daarvan bepaalt de tool of ze "
                         "doorstroomden of een diploma haalden.",
                     ),
                     _stap(
@@ -116,7 +116,7 @@ def maak_upload_intro():
             html.H6("De groepen"),
             html.P(
                 "Deze tool kijkt alleen naar studenten die zich daadwerkelijk bij de "
-                "instelling en opleiding inschreven en daardoor in het 1CHO-bestand "
+                "instelling en opleiding inschreven en daardoor in het 1CijferHO-bestand "
                 "terechtkomen. Binnen die groep vergelijkt de tool wie in jaar 2 nog "
                 "ingeschreven stond (of het diploma haalde) met wie niet:",
                 className="text-muted small",
@@ -130,7 +130,7 @@ def maak_upload_intro():
             ),
             html.P(
                 "Kandidaten die niet werden geselecteerd, of die wel een plek kregen "
-                "maar niet aan de opleiding begonnen, staan niet in 1CHO. Zij worden "
+                "maar niet aan de opleiding begonnen, staan niet in 1CijferHO. Zij worden "
                 "uit de analyse gehaald en niet met de ingeschreven studenten "
                 "vergeleken.",
                 className="text-muted small mb-2",

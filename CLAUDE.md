@@ -1,6 +1,6 @@
 # Evaluatietool Selectie
 
-Dashboard that evaluates whether selection procedures in Dutch higher education predict student success. Users upload selection scores, a config file, and 1CHO student data. The tool shows whether students who scored higher at selection also performed better (progressed to year 2).
+Dashboard that evaluates whether selection procedures in Dutch higher education predict student success. Users upload selection scores, a config file, and 1CijferHO student data. The tool shows whether students who scored higher at selection also performed better (progressed to year 2).
 
 ## Running
 
@@ -21,7 +21,7 @@ The code is split into modules per responsibility. Each tab module and uploads.p
 |---|---|
 | `app.py` | App init, layout composition, `registreer_callbacks` wiring, the embed-via-URL callback, server start. Entry point. |
 | `helpers.py` | Shared app-level helpers: `koppel_data`, `bouw_data_stores` (runs parse→transform→join, shared by the upload and demo load paths), `df_from_store`, `_laad_demodata`, `TABLE_STYLE`, `GROEPEER_OPTIES`, the groep-/kleur-helpers (`_scores_per_groep`, `_aantallen_per_groep`, `_groep_tabel_stijl`, `_meng_met_wit`), `DEMO_DATASETS` (`DEMO_DIR` is resolved relative to `helpers.py`, not the working directory). |
-| `bestandsopslag.py` | Server-side storage for large 1CHO uploads: a Flask route the browser streams the file to (`assets/grote_upload.js`), returning a token the callbacks use instead of a base64 string. |
+| `bestandsopslag.py` | Server-side storage for large 1CijferHO uploads: a Flask route the browser streams the file to (`assets/grote_upload.js`), returning a token the callbacks use instead of a base64 string. |
 | `uploads.py` | Upload overlay + sidebar layout and the upload/validation/demodata-load/cohort/download callbacks. |
 | `tabs/intro.py` | "Introductie"-tab: static, accessible welcome/context page. No callbacks (kept out of the `registreer_callbacks` loop). First tab, active by default. Group labels/colors come from `shared.GROEP_KLEUREN`. |
 | `tabs/bevindingen.py` | "Wat valt op"-tab: layout + `update_bevindingen`. |
@@ -33,7 +33,7 @@ The code is split into modules per responsibility. Each tab module and uploads.p
 | `rapport.py` | PDF report generation. Uses fpdf2 + kaleido. Called from uploads.py download button. |
 | `config_wizard.py` | Auto-detection of columns from uploaded Excel. Wired in app.py via `registreer_callbacks`. |
 | `transformatie.py` | File parsing, config reading, data validation, wide-to-long transformation. |
-| `cho_transform.py` | Raw 1CHO handling. `transformeer_cho()` derives the doorstroom group from long-format enrollment rows; `bouw_ruwe_cho()` builds synthetic raw 1CHO for the data scripts. |
+| `cho_transform.py` | Raw 1CijferHO handling. `transformeer_cho()` derives the doorstroom group from long-format enrollment rows; `bouw_ruwe_cho()` builds synthetic raw 1CijferHO for the data scripts. |
 | `shared.py` | Shared constants and analysis functions used by the tabs and rapport.py (perspectieven, effectgroottes, `vergelijk_succes_per_item`, `toets_verschil_per_item`, `bereken_univariaat`, `chi2_per_dimensie`, `genereer_bevindingen`, demografie-helpers). |
 
 ## Data flow
@@ -42,30 +42,30 @@ The code is split into modules per responsibility. Each tab module and uploads.p
 2. `transformatie.lees_config()` reads the config Excel (sheets: `instellingen`, `kolommen`)
 3. `transformatie.parse_selectiedata()` reads the selection Excel using config metadata (sheet name, header row)
 4. `transformatie.transformeer_naar_lang()` melts wide score columns into long format (`scores_df`)
-5. `cho_transform.transformeer_cho()` collapses the raw long-format 1CHO (one row per enrollment year) to one row per student and derives the doorstroom `groep`
-6. `helpers.koppel_data()` builds one row per candidate (plus selection metadata), merges the derived 1CHO onto it, and fills non-matches with "Niet gestart". The scores themselves stay in the long-format `scores_df`
+5. `cho_transform.transformeer_cho()` collapses the raw long-format 1CijferHO (one row per enrollment year) to one row per student and derives the doorstroom `groep`
+6. `helpers.koppel_data()` builds one row per candidate (plus selection metadata), merges the derived 1CijferHO onto it, and fills non-matches with "Niet gestart". The scores themselves stay in the long-format `scores_df`
 7. Both `df` (joined main data) and `scores_df` (long-format scores) are stored as JSON in `dcc.Store`
 8. Callbacks deserialize and filter per tab
 
 ## The four groups
 
-Raw 1CHO data has no ready-made group column. It is enrollment data in long format (one row per student per `inschrijvingsjaar`). `cho_transform.transformeer_cho()` derives the group, mirroring the no-fairness-without-awareness pipeline (`R/transform_ev_data.R`, the `any(inschrijvingsjaar == eerste_jaar_aan_deze_opleiding_instelling + 1)` retentie check). Group derivation is per spell (studentnummer + opleiding + eerste_jaar), so a student with two programmes gets a separate outcome per programme. Priority: year-2 enrollment > diploma in cohort year > dropout.
+Raw 1CijferHO data has no ready-made group column. It is enrollment data in long format (one row per student per `inschrijvingsjaar`). `cho_transform.transformeer_cho()` derives the group, mirroring the no-fairness-without-awareness pipeline (`R/transform_ev_data.R`, the `any(inschrijvingsjaar == eerste_jaar_aan_deze_opleiding_instelling + 1)` retentie check). Group derivation is per spell (studentnummer + opleiding + eerste_jaar), so a student with two programmes gets a separate outcome per programme. Priority: year-2 enrollment > diploma in cohort year > dropout.
 
-- **Niet gestart**: not in 1CHO at all. Either rejected or chose not to enroll. Assigned in `koppel_data()` as the fillna for non-matches, not in `transformeer_cho()`.
+- **Niet gestart**: not in 1CijferHO at all. Either rejected or chose not to enroll. Assigned in `koppel_data()` as the fillna for non-matches, not in `transformeer_cho()`.
 - **Gestart, niet naar jaar 2**: has a first-year row but no `eerste_jaar + 1` row and no diploma.
 - **Doorgestroomd naar jaar 2**: has an enrollment row in the year after the first year.
 - **Gestart, diploma gehaald**: no year-2 row, but `diploma_behaald` is true on the cohort-year row (`inschrijvingsjaar == eerste_jaar`; a diploma flagged on a later row does not count). For one-year programmes (masters) where success means a diploma, not progression to year 2.
 
 The group labels and the helper lists `GROEP_INGESCHREVEN` (all started) and `GROEP_SUCCES` (doorstroom or diploma) live in `shared.py`. Regression and VO analyses use `GROEP_INGESCHREVEN` (students who actually started) and treat `GROEP_SUCCES` as the positive outcome, so they work for both multi-year and one-year programmes.
 
-1CHO columns fall into three groups:
+1CijferHO columns fall into three groups:
 - **Structurally required** (`cho_transform.RUWE_CHO_KOLOMMEN`, needed to derive the group): `persoonsgebonden_nummer`, `inschrijvingsjaar`, `eerste_jaar_aan_deze_opleiding_instelling`. `transformeer_cho` raises if missing.
 - **Required for the analyses** (`cho_transform.VEREISTE_DEMO_KOLOMMEN`): `geslacht` and `hoogste_vooropleiding_omschrijving_vooropleiding` (shortened to VWO/HAVO/MBO/HO). The demografie- and eerlijkheidsanalyses need these, so the upload flow blocks opening the dashboard if they're missing (`ontbrekende_demografie_kolommen`, checked in `uploads.valideer_uploads`). They're enforced at the validation layer, not in `transformeer_cho`, so group-derivation still works without them (e.g. in the data scripts).
 - **Conditional / optional passthrough**: `diploma_behaald` is master-only (one-year programmes; bachelors have no diploma column and use year-2 doorstroom), so it is **not** universally required. `opleiding`, `instellingscode` pass through if present.
 
 **1cijferho output is read directly** (`cho_transform.normaliseer_1cijferho`, applied in `bestandsopslag.lees_cho_bestand`). The EV output of [1cijferho](https://github.com/cedanl/1cijferho) (preset "Evaluatietool Selectie", file `EV*_enriched.csv` or `_decoded.csv`) keeps DUO's number in `persoonsgebonden_nummer` and adds the institution's number as `studentnummer` when run with a BSN mapping file; the adapter makes `studentnummer` the join key. It also derives `diploma_behaald` for master-phase rows (`opleidingsfase_actueel`/`opleidingsfase` in M/master) as `inschrijvingsjaar - diplomajaar in {0, 1}`. Per the DUO file description, inschrijvingsjaar T runs Sep T to Aug T+1 but diplomajaar T runs Oct T to Sep T+1, so a diploma from September T has diplomajaar T-1. Combined with the cohort-row rule in `transformeer_cho` this means "diploma between September of the start year and September of the next year". Don't simplify to equality: that drops September diplomas. Bachelors get no diploma column. The plain `EV*.csv` lacks the decoded vooropleiding and programme name, so upload blocks on the missing demographic column and points to `_enriched.csv`. The README walks users through this end to end.
 
-Robustness: studentnummers are normalized on both sides (`transformatie.normaliseer_studentnummer`: int/float/text → trimmed string, `123.0` → `123`) so the selectiedata↔1CHO join and the upload overlap check don't fail on type/format mismatches. Year columns are coerced with `pd.to_numeric` and `transformeer_cho` raises if a year column has no valid values; `diploma_behaald` is parsed with `transformatie._parse_bool` (so a text `"False"`/`"Nee"` is not silently truthy).
+Robustness: studentnummers are normalized on both sides (`transformatie.normaliseer_studentnummer`: int/float/text → trimmed string, `123.0` → `123`) so the selectiedata↔1CijferHO join and the upload overlap check don't fail on type/format mismatches. Year columns are coerced with `pd.to_numeric` and `transformeer_cho` raises if a year column has no valid values; `diploma_behaald` is parsed with `transformatie._parse_bool` (so a text `"False"`/`"Nee"` is not silently truthy).
 
 The data scripts choose the outcome by `opleidingsfase`: masters (`"M"`, e.g. the Leiden/Farmacie demo) generate `diploma_behaald`; bachelors (`"B"`, e.g. the Radboud/Psychologie demo) generate year-2 doorstroom.
 
@@ -163,7 +163,7 @@ pdf = genereer_rapport(df, scores_df)
 
 ```
 scripts/
-  maak_data.py          # generates demo 1CHO data from source files (dev-only)
+  maak_data.py          # generates demo 1CijferHO data from source files (dev-only)
   maak_template.py      # generates docs/config_template.xlsx
   eenmalig/             # one-time scripts, not part of the running tool
     maak_presentatie.py  # generates the PowerPoint presentation
@@ -214,7 +214,7 @@ The per-item tests (verschiltoets per outcome, per demographic dimension, and th
 
 - **Outcome is called retentie**, not studiesucces, in all user-facing text (`shared.RETENTIE_UITLEG`, the perspectives' `kanttekening`/`uitkomst_naam`). Year-2 enrollment is retention: repeaters count as doorgestroomd, switchers as not. Group labels (`GROEP_*`) are unchanged.
 - **Null results are not evidence against the selection.** `beleidsvervolgstappen` never advises simplifying/cutting when nothing is significant. `genereer_bevindingen` returns `kanttekeningen`: the smallest detectable effect (`kleinste_aantoonbaar_effect`, 80% power, uncorrected, so a lower bound) and `BEREIKSBEPERKING_UITLEG` (range restriction: only admitted students have an outcome). Shown in Wat valt op, the Verschiltoets explanation and the report.
-- **Background analysis is named for what it is**: "Scoreverschillen naar achtergrond (gestarte studenten)", not "eerlijkheid". Background comes from 1CHO, so rejected candidates are invisible; the text says so.
+- **Background analysis is named for what it is**: "Scoreverschillen naar achtergrond (gestarte studenten)", not "eerlijkheid". Background comes from 1CijferHO, so rejected candidates are invisible; the text says so.
 - **Retentie per scoregroep** (`retentie_per_scoregroep`): quartiles of started students per item (or one band per value when an item has ≤4 distinct values), share with the positive outcome. Verschiltoets tab and report section 3.
 - **Small cells**: `MIN_CEL` (5). Use `cel_tekst` for counts and `afgeschermde_kruistabel` for crosstabs (suppresses the small cell, its row partner, and the Totaal row when exactly one row is suppressed). Suppressed groups are left out of charts and out of the demografie findings text.
 - **Report provenance**: "Over dit rapport" table in the Inleiding (tool version from pyproject, date, opleiding, instelling, jaar, counts, MIN_CEL).
@@ -256,7 +256,7 @@ The regression output is useful for spotting patterns but should not be overinte
 
 - **No .claudeignore**: the `data/` and `.venv/` directories are large. Don't glob or grep into them.
 - **The data stores hold JSON strings** in `dcc.Store` (data-store, scores-store). Tab callbacks deserialize with `helpers.df_from_store()` / `scores_df_from_store()`, which pin `studentnummer` to `str` (plain `read_json` turns `"00123"` into `123`). Don't call `pd.read_json` on a store directly.
-- **The 1CHO upload route** (`bestandsopslag.py`) rejects cross-origin POSTs (Origin check) and bodies over `MAX_UPLOAD_BYTES`. Uploads contain personal data: "Nieuw bestand laden" deletes the file (`verwijder_upload`) and clears the `cho-bestand` store, and files older than 24h are removed at startup.
+- **The 1CijferHO upload route** (`bestandsopslag.py`) rejects cross-origin POSTs (Origin check) and bodies over `MAX_UPLOAD_BYTES`. Uploads contain personal data: "Nieuw bestand laden" deletes the file (`verwijder_upload`) and clears the `cho-bestand` store, and files older than 24h are removed at startup.
 - **Table `filter_query` strings with data values** must go through `helpers.query_tekst()`, which escapes quotes and backslashes. Group labels come from the data (vooropleiding descriptions can contain quotes).
 - **The config wizard** (`config_wizard.py`) registers its own callbacks via `registreer_callbacks(app)`, wired in app.py. It shares the upload components with uploads.py.
 - **fpdf2 SVG support** is limited. The NKO logo uses a PNG version (`assets/nko-logo.png`) for PDF rendering; the SVG (`assets/nko-logo.svg`) is only for the web dashboard.

@@ -1,5 +1,5 @@
 /*
- * Upload van het (mogelijk zeer grote) 1CHO-bestand.
+ * Upload van het (mogelijk zeer grote) 1CijferHO-bestand.
  *
  * dcc.Upload leest een bestand in de browser in als één base64-tekst; boven
  * ~380 MB kan Chrome dat niet en gebeurt er niets. Dit script stuurt het

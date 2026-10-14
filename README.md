@@ -29,7 +29,7 @@ Deze tool zoekt dat voor je uit. Je geeft hem drie bestanden:
 1. de **selectiescores** van de opleiding (een Excel-bestand);
 2. een **config**: een klein Excel-bestand dat zegt welke kolommen scores zijn
    (de tool maakt het voor je);
-3. de **inschrijvingsgegevens van DUO** (1cijferho), zodat de tool ziet wie
+3. de **inschrijvingsgegevens van DUO** (1CijferHO), zodat de tool ziet wie
    na een jaar nog ingeschreven staat.
 
 Je krijgt een dashboard in je browser met grafieken en een samenvatting in
@@ -141,7 +141,7 @@ krijgt.
 
 Dit doe je **één keer voor de hele instelling**, niet per opleiding.
 
-De levering van DUO (1cijferho) is niet direct leesbaar: het zijn tekstbestanden
+De levering van DUO (1CijferHO) is niet direct leesbaar: het zijn tekstbestanden
 met codes in plaats van woorden, en studenten staan erin met hun BSN. De
 [1cijferho-tool](https://github.com/cedanl/1cijferho) van CEDA zet dat om naar
 een gewone CSV-tabel met leesbare kolommen. Deze tool leest die tabel.
@@ -263,7 +263,7 @@ maar een punt om zelf even naar te kijken.
 
 1. Zet de drie bestanden in de drie vakken: het selectiebestand bij
    **Selectiedata**, de config bij **Configuratiebestand** en het
-   `_enriched.csv`-bestand uit stap 2 bij **1CHO-data**.
+   `_enriched.csv`-bestand uit stap 2 bij **1CijferHO-data**.
 2. De tool controleert de bestanden. Groen is goed, geel is een waarschuwing,
    rood moet je eerst oplossen (zie [Iets werkt niet](#iets-werkt-niet)).
 3. Staan er meerdere opleidingen in het DUO-bestand, kies dan de goede.
@@ -347,9 +347,9 @@ Alle keuzes staan uitgebreid in [CLAUDE.md](CLAUDE.md).
 
 | Wat je ziet | Wat er aan de hand is | Wat je doet |
 |---|---|---|
-| **Geen overlap tussen selectiedata en 1CHO-data** | De nummers in de twee bestanden komen niet overeen | Kijk of het DUO-bestand een kolom `studentnummer` heeft. Zo niet, draai 1cijferho opnieuw met het koppelbestand. Zo wel, vergelijk een paar nummers uit beide bestanden: staat er een letter voor, of ontbreken nullen aan het begin? |
-| **Ontbrekende achtergrondkolommen in 1CHO** | Je gebruikte het DUO-bestand zonder `_enriched` | Gebruik het bestand dat eindigt op `_enriched.csv` |
-| **Ontbrekende kolommen in 1CHO** | Het bestand komt niet uit 1cijferho, of is in Excel bewerkt | Gebruik het `_enriched.csv` zoals 1cijferho het maakte |
+| **Geen overlap tussen selectiedata en 1CijferHO-data** | De nummers in de twee bestanden komen niet overeen | Kijk of het DUO-bestand een kolom `studentnummer` heeft. Zo niet, draai 1cijferho opnieuw met het koppelbestand. Zo wel, vergelijk een paar nummers uit beide bestanden: staat er een letter voor, of ontbreken nullen aan het begin? |
+| **Ontbrekende achtergrondkolommen in 1CijferHO** | Je gebruikte het DUO-bestand zonder `_enriched` | Gebruik het bestand dat eindigt op `_enriched.csv` |
+| **Ontbrekende kolommen in 1CijferHO** | Het bestand komt niet uit 1cijferho, of is in Excel bewerkt | Gebruik het `_enriched.csv` zoals 1cijferho het maakte |
 | **Blad / ID-kolom / kolom … niet gevonden** | De config past niet bij het selectiebestand | Laat de config opnieuw maken met **Config automatisch genereren** |
 | **… komen bij meer dan één kolom voor** | Twee aangevinkte kolommen hebben dezelfde naam | Geef elke kolom een eigen naam |
 | **… staan meerdere keren in de selectiedata** | Een kandidaat staat er twee keer in, met verschillende scores | Laat de opleiding uitzoeken welke rij klopt |

@@ -1,5 +1,5 @@
 """
-Tests voor de server-side upload van grote 1CHO-bestanden (bestandsopslag.py).
+Tests voor de server-side upload van grote 1CijferHO-bestanden (bestandsopslag.py).
 """
 
 import io
@@ -55,7 +55,7 @@ def test_upload_en_inlezen(client):
 def test_hoofdletterextensie_en_excel(client):
     buf = io.BytesIO()
     pd.read_csv(io.StringIO(CSV), sep=";").to_excel(buf, index=False)
-    antwoord = _upload(client, buf.getvalue(), "1CHO.XLSX")
+    antwoord = _upload(client, buf.getvalue(), "1CijferHO.XLSX")
     assert antwoord.status_code == 200
     df = bestandsopslag.lees_cho_upload(antwoord.get_json()["token"])
     assert len(df) == 2 and "overbodig_2" not in df.columns

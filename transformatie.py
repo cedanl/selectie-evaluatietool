@@ -138,7 +138,7 @@ def dubbele_itemnamen_melding(dubbel: dict[str, list[str]]) -> str:
 
 def normaliseer_studentnummer(serie: pd.Series) -> pd.Series:
     """Breng studentnummers naar een vergelijkbare vorm, zodat het koppelen van
-    selectiedata en 1CHO robuust is tegen verschillen in type en opmaak: tekst
+    selectiedata en 1CijferHO robuust is tegen verschillen in type en opmaak: tekst
     versus getal, spaties eromheen, en het '123.0'-artefact dat Excel en CSV van
     gehele getallen maken. Lege waarden worden <NA>."""
     s = serie.astype("string").str.strip().str.replace(r"\.0$", "", regex=True)

@@ -288,7 +288,7 @@ add_slide(
         "Beschrijft welke kolommen uit het selectiebestand worden meegenomen en hoe ze heten. "
         "Kan automatisch gegenereerd worden met de ingebouwde config wizard.",
         "",
-        "**3. 1CHO-data (studiesuccesdata)**",
+        "**3. 1CijferHO-data (studiesuccesdata)**",
         "De inschrijvingsdata zoals DUO die levert: een rij per student per inschrijvingsjaar. "
         "De tool leidt zelf af in welke uitkomstgroep een student valt (niet gestart, gestart maar "
         "niet doorgestroomd, doorgestroomd naar jaar 2, of diploma gehaald).",
@@ -331,15 +331,15 @@ add_slide(
 add_slide(
     "Wat doet de dataprofessional?",
     [
-        "De dataprofessional is verantwoordelijk voor de 1CHO-data (studiesucces).",
+        "De dataprofessional is verantwoordelijk voor de 1CijferHO-data (studiesucces).",
         "",
-        "**1CHO-data ophalen**",
+        "**1CijferHO-data ophalen**",
         "De dataprofessional haalt de studiesuccesgegevens op uit de 1 Cijfer HO bestanden van DUO. "
         "Hiervoor kan het 1cijferho-project van CEDA gebruikt worden (github.com/cedanl/1cijferho). "
         "Dat project heeft een preset voor de selectietool die precies de juiste kolommen selecteert.",
         "",
         "**Filteren op opleiding**",
-        "Filter de 1CHO-data op de opleiding die je analyseert. Het resultaat is inschrijvingsdata in "
+        "Filter de 1CijferHO-data op de opleiding die je analyseert. Het resultaat is inschrijvingsdata in "
         "lang formaat met per rij minstens persoonsgebonden_nummer, inschrijvingsjaar en het eerste "
         "studiejaar. De tool leidt de uitkomstgroep daar zelf uit af. Optioneel ook geslacht, herkomst, "
         "vooropleiding, VO-eindcijfer en diploma_behaald (voor eenjarige opleidingen).",
@@ -519,10 +519,10 @@ add_slide(
     "Uitkomstgroepen: de kern van de analyse",
     [
         "De tool vergelijkt selectiescores tussen uitkomstgroepen. De tool leidt die groepen zelf af "
-        "uit de 1CHO-inschrijvingsdata.",
+        "uit de 1CijferHO-inschrijvingsdata.",
         "",
         "**Niet gestart**",
-        "Kandidaten die niet in 1CHO staan. Niet toegelaten, of wel geselecteerd maar nooit gestart.",
+        "Kandidaten die niet in 1CijferHO staan. Niet toegelaten, of wel geselecteerd maar nooit gestart.",
         "",
         "**Gestart, niet naar jaar 2**",
         "Studenten die wel zijn gestart maar niet zijn doorgestroomd naar het tweede jaar en geen "
@@ -706,7 +706,7 @@ add_slide(
         "onderscheid?).",
         "",
         "**Belangrijke beperking**",
-        "De achtergrond komt uit 1CHO en bestaat alleen voor ingeschreven studenten. De demografische "
+        "De achtergrond komt uit 1CijferHO en bestaat alleen voor ingeschreven studenten. De demografische "
         "toets vergelijkt dus binnen de ingeschreven groep, niet onder alle sollicitanten.",
         "",
         "**Eén cohortjaar per keer**",
@@ -752,7 +752,7 @@ add_slide(
         "",
         "**Het idee**",
         "Het VO-eindcijfer is een onafhankelijke meting van cognitieve prestaties. Het is niet "
-        "onderdeel van de selectie, maar komt uit 1CHO.",
+        "onderdeel van de selectie, maar komt uit 1CijferHO.",
         "",
         "**Lage correlatie (r rond 0)**",
         "Het selectie-item meet iets anders dan schoolprestaties. Dat is vaak gewenst: de selectie "
@@ -922,14 +922,14 @@ add_table_slide(
             "Boxplots per item, uitkomstgroepen",
         ],
         [
-            "Koppeling met 1CHO-studiesuccesdata",
+            "Koppeling met 1CijferHO-studiesuccesdata",
             "Gedaan",
             "Via studentnummer, groep afgeleid uit inschrijvingen",
         ],
         [
             "Studieresultaten in de opleiding (LOCS/HOCS, per leerjaar)",
             "Anders ingevuld",
-            "Vervangen door doorstroom/diploma uit 1CHO als uitkomstmaat",
+            "Vervangen door doorstroom/diploma uit 1CijferHO als uitkomstmaat",
         ],
         [
             "Beschrijvende statistiek per item",
@@ -996,8 +996,8 @@ add_slide(
         "Een tool die nu waarde levert is meer waard dan maanden bouwen aan infrastructuur. "
         "De kernvraag (werkt de selectie?) kun je vandaag al beantwoorden.",
         "",
-        "**1CHO is beschikbaar en gestandaardiseerd**",
-        "Doorstroom en diploma uit 1CHO zijn voor elke opleiding op dezelfde manier af te leiden. "
+        "**1CijferHO is beschikbaar en gestandaardiseerd**",
+        "Doorstroom en diploma uit 1CijferHO zijn voor elke opleiding op dezelfde manier af te leiden. "
         "Studieresultaten binnen de opleiding (cijfers ingedeeld naar LOCS/HOCS, per leerjaar) vragen "
         "veel maatwerk per instelling en zijn lang niet altijd beschikbaar.",
         "",

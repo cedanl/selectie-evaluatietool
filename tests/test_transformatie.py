@@ -49,7 +49,7 @@ class TestNormaliseerStudentnummer:
         assert list(normaliseer_studentnummer(pd.Series([" 123 "]))) == ["123"]
 
     def test_int_en_string_bron_koppelen(self):
-        # selectiedata int 123 en 1CHO tekst "123" moeten matchen
+        # selectiedata int 123 en 1CijferHO tekst "123" moeten matchen
         sel = set(normaliseer_studentnummer(pd.Series([123, 124])).dropna())
         cho = set(normaliseer_studentnummer(pd.Series(["123", "124.0"])).dropna())
         assert sel & cho == {"123", "124"}

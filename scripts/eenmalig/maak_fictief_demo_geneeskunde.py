@@ -252,7 +252,7 @@ config_path.write_bytes(
     )
 )
 
-# -- 1CHO-data ----------------------------------------------------------------
+# -- 1CijferHO-data ----------------------------------------------------------------
 # Niet iedereen met een plaats schrijft zich in.
 ingeschreven = plaats & (RNG.random(N) < 0.92)
 ids = studentnummers[ingeschreven]

@@ -1,6 +1,6 @@
 # Privacy-handleiding
 
-Deze tool koppelt selectiegegevens aan inschrijvingsgegevens uit 1CHO. Dat
+Deze tool koppelt selectiegegevens aan inschrijvingsgegevens uit 1CijferHO. Dat
 zijn persoonsgegevens, en je gebruikt ze voor een ander doel dan waarvoor ze
 zijn verzameld: de selectiegegevens zijn verzameld om kandidaten toe te laten,
 niet om de selectie achteraf te evalueren. Deze handleiding helpt je het gesprek
@@ -18,12 +18,12 @@ te voeren met je privacy officer of functionaris gegevensbescherming (FG).
   andere partij. De tool haalt geen gegevens op en stuurt er geen weg.
 - **Selectiedata en config** worden in het geheugen van de app ingelezen en
   niet naar schijf geschreven.
-- **Het 1CHO-bestand** wordt, omdat het groot kan zijn, tijdelijk op schijf
+- **Het 1CijferHO-bestand** wordt, omdat het groot kan zijn, tijdelijk op schijf
   gezet in de tijdelijke map van het besturingssysteem
   (`selectie-evaluatietool-uploads`). Het wordt verwijderd zodra je op
   **Nieuw bestand laden** klikt. Sluit je de app zonder dat te doen, dan ruimt
   de tool bestanden ouder dan 24 uur op bij de volgende start.
-- **Alleen de benodigde kolommen.** Uit 1CHO leest de tool alleen de kolommen
+- **Alleen de benodigde kolommen.** Uit 1CijferHO leest de tool alleen de kolommen
   die hij gebruikt (studentnummer, inschrijvingsjaren, opleiding, geslacht,
   vooropleiding, diploma). Andere kolommen worden niet ingelezen.
 - **Uitkomsten zijn geaggregeerd.** Dashboard en PDF-rapport tonen groepen,
@@ -41,8 +41,8 @@ Lever niet meer aan dan nodig is (dataminimalisatie).
 |---|---|
 | Studentnummer (om te koppelen) | Naam, e-mailadres, adres, telefoonnummer |
 | Selectiescores per onderdeel | Geboortedatum, BSN |
-| Inschrijvingsjaren uit 1CHO | Vrije-tekstvelden en opmerkingen van beoordelaars |
-| Geslacht en vooropleiding (voor de achtergrondanalyse) | Andere 1CHO-kolommen |
+| Inschrijvingsjaren uit 1CijferHO | Vrije-tekstvelden en opmerkingen van beoordelaars |
+| Geslacht en vooropleiding (voor de achtergrondanalyse) | Andere 1CijferHO-kolommen |
 
 Staan er namen of e-mailadressen in je selectiebestand, verwijder die kolommen
 dan voor je het bestand in de tool laadt, of vink ze in de config niet aan. Een
@@ -67,7 +67,7 @@ Neem deze vragen door voordat je de tool met echte data gebruikt.
 4. **Informeren.** Staat in de privacyverklaring voor kandidaten dat
    selectiegegevens ook worden gebruikt om de procedure te evalueren? Zo niet:
    aanvullen voor volgende cohorten.
-5. **1CHO-voorwaarden.** Onder welke voorwaarden ontvangt je instelling 1CHO
+5. **1CijferHO-voorwaarden.** Onder welke voorwaarden ontvangt je instelling 1CijferHO
    van DUO, en valt dit gebruik daaronder?
 6. **DPIA.** Is een gegevensbeschermingseffectbeoordeling nodig (AVG art. 35)?
    Het koppelen van bronnen en het gebruik van gegevens over studievoortgang

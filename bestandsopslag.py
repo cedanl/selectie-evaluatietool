@@ -1,13 +1,13 @@
 """
-Server-side opslag voor grote uploads (het 1CHO-bestand).
+Server-side opslag voor grote uploads (het 1CijferHO-bestand).
 
 dcc.Upload leest een bestand in de browser in als één base64-tekst en stuurt
-die bij elke callback opnieuw mee. Bij een instellingsbreed 1CHO-bestand van
+die bij elke callback opnieuw mee. Bij een instellingsbreed 1CijferHO-bestand van
 honderden MB's gaat dat mis: Chrome kan zulke lange teksten niet aan (boven
 ~380 MB faalt de upload zonder melding) en elke validatie verstuurt het hele
 bestand opnieuw.
 
-Daarom gaat 1CHO via een eigen Flask-route: de browser streamt het bestand
+Daarom gaat 1CijferHO via een eigen Flask-route: de browser streamt het bestand
 één keer als multipart-upload (assets/grote_upload.js), de server schrijft
 het naar een tijdelijk bestand en geeft een token terug. De callbacks werken
 daarna alleen met dat token. Bij het inlezen nemen we alleen de kolommen die
@@ -36,13 +36,13 @@ UPLOAD_DIR = Path(tempfile.gettempdir()) / "selectie-evaluatietool-uploads"
 _TOEGESTANE_EXTENSIES = {".csv", ".txt", ".xlsx", ".xls"}
 _TOKEN = re.compile(r"^[0-9a-f]{32}$")
 
-# Ingelezen 1CHO-tabellen per token, zodat een wissel in het keuzemenu of
+# Ingelezen 1CijferHO-tabellen per token, zodat een wissel in het keuzemenu of
 # 'Open dashboard' het bestand niet opnieuw hoeft te parsen.
 _CACHE: OrderedDict[str, pd.DataFrame] = OrderedDict()
 _CACHE_GROOTTE = 2
 
 
-# Ruim bovengrens voor een instellingsbrede 1CHO-extractie. Controleren vóór
+# Ruim bovengrens voor een instellingsbrede 1CijferHO-extractie. Controleren vóór
 # Werkzeug het formulier leest, zodat een te groot bestand niet eerst op schijf
 # belandt.
 MAX_UPLOAD_BYTES = 4 * 1024**3
@@ -56,7 +56,7 @@ def _zelfde_herkomst() -> bool:
     """Komt het verzoek van de app zelf? Een browser stuurt bij een POST vanaf
     een andere site een Origin-header mee. Zonder deze controle kan elke
     website die de gebruiker bezoekt bestanden naar localhost:8050 posten en
-    zo, via de opruimregel, de echte 1CHO-upload uit de map duwen."""
+    zo, via de opruimregel, de echte 1CijferHO-upload uit de map duwen."""
     origin = request.headers.get("Origin")
     if not origin:
         return True  # geen browser-cross-origin-verzoek (bijv. tests, curl)
@@ -113,13 +113,13 @@ def pad_voor_token(token: str) -> Path:
     ]
     if not kandidaten:
         raise ValueError(
-            "Het geüploade 1CHO-bestand is niet meer beschikbaar. Upload het opnieuw."
+            "Het geüploade 1CijferHO-bestand is niet meer beschikbaar. Upload het opnieuw."
         )
     return kandidaten[0]
 
 
 def lees_cho_upload(token: str) -> pd.DataFrame:
-    """Lees het geüploade 1CHO-bestand (met cache per token)."""
+    """Lees het geüploade 1CijferHO-bestand (met cache per token)."""
     if token in _CACHE:
         _CACHE.move_to_end(token)
         return _CACHE[token]
@@ -135,7 +135,7 @@ def _benodigd(kolom) -> bool:
 
 
 def lees_cho_bestand(pad: Path) -> pd.DataFrame:
-    """Lees een (mogelijk heel groot) 1CHO-bestand van schijf.
+    """Lees een (mogelijk heel groot) 1CijferHO-bestand van schijf.
 
     Alleen de kolommen die de tool gebruikt worden ingelezen; een
     instellingsbreed bestand heeft er vaak tientallen. CSV-scheidingsteken en

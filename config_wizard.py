@@ -560,7 +560,7 @@ def bouw_config_dict(
 
 
 _INST_UITLEG = {
-    "koppel_id_kolom": "Naam van de kolom in je selectiebestand die het studentnummer bevat. Dit is de kolom die gebruikt wordt om selectiedata aan 1CHO-data te koppelen.",
+    "koppel_id_kolom": "Naam van de kolom in je selectiebestand die het studentnummer bevat. Dit is de kolom die gebruikt wordt om selectiedata aan 1CijferHO-data te koppelen.",
     "opleiding": "Naam of code van de opleiding, bijvoorbeeld 'Psychologie' of 'B PSY'.",
     "instellingscode": "BRIN-code van de instelling, bijvoorbeeld '21RI' voor Radboud.",
     "jaar": "Selectiejaar (het jaar waarin de selectie heeft plaatsgevonden), bijvoorbeeld '2026'.",
@@ -696,7 +696,7 @@ def maak_wizard_layout() -> html.Div:
                             "mogelijk automatisch in. Je controleert het in een paar "
                             "onderdelen: welk werkblad en welke kolomkoprij de tool moet "
                             "gebruiken, welke kolom de kandidaat herkent (om aan de "
-                            "1CHO-data te koppelen), en welke kolommen scores zijn. Per "
+                            "1CijferHO-data te koppelen), en welke kolommen scores zijn. Per "
                             "scorekolom geef je aan bij welk instrument hij hoort, wat "
                             "hij meet (het item), een eventueel criterium en op welke "
                             "schaal hij loopt.",
@@ -719,7 +719,7 @@ def maak_wizard_layout() -> html.Div:
                         ),
                         html.P(
                             "Loop de velden hieronder na, pas aan waar nodig en klik op "
-                            "'Bevestig config'. Daarna upload je de 1CHO-data om het "
+                            "'Bevestig config'. Daarna upload je de 1CijferHO-data om het "
                             "dashboard te openen.",
                             className="wiz-uitleg mb-3",
                         ),
@@ -806,7 +806,7 @@ def maak_wizard_layout() -> html.Div:
                                         dbc.FormText(
                                             "De kolom die een student herkent (bijv. "
                                             "studentnummer). Hiermee koppelen we de "
-                                            "scores aan de 1CHO-data."
+                                            "scores aan de 1CijferHO-data."
                                         ),
                                     ]
                                 ),
@@ -1188,7 +1188,7 @@ def registreer_callbacks(app: dash.Dash) -> None:
             json.dumps(config),
             dbc.Alert(
                 f"Config aangemaakt ({n_actief} van {n_totaal} kolommen). "
-                "Upload nu 1CHO-data om het dashboard te openen.",
+                "Upload nu 1CijferHO-data om het dashboard te openen.",
                 color="success",
                 className="small py-1",
             ),

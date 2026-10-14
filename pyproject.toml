@@ -1,7 +1,7 @@
 [project]
 name = "selectie-evaluatietool"
 version = "0.1.0"
-description = "Evaluatietool: selectiedata koppelen aan 1CHO voor studiesucces analyse"
+description = "Evaluatietool: selectiedata koppelen aan 1CijferHO voor studiesucces analyse"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"

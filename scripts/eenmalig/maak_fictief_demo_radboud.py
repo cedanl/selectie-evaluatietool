@@ -252,7 +252,7 @@ make_config(
     ],
 )
 
-# -- 1CHO-data ----------------------------------------------------------------
+# -- 1CijferHO-data ----------------------------------------------------------------
 rang = kolommen["Rangnummer"]
 ingeschreven_mask = rang <= 70
 ingeschreven_ids = studentnummers[ingeschreven_mask]
@@ -290,7 +290,7 @@ cho_df = bouw_ruwe_cho(
 cho_path = OUT_DIR / "1cho_data_demo_radboud_2026.csv"
 cho_df.to_csv(cho_path, index=False, sep=";")
 
-print(f"\n1CHO-data: {n_ingeschreven} ingeschreven van {N} kandidaten")
+print(f"\n1CijferHO-data: {n_ingeschreven} ingeschreven van {N} kandidaten")
 print(f"Doorgestroomd: {int(doorstroomt.sum())}, niet: {int((~doorstroomt).sum())}")
 
 # -- Kopieer naar demo --------------------------------------------------------

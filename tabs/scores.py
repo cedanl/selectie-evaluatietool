@@ -119,7 +119,7 @@ def maak_layout():
                     html.H6("Aantal studenten per groep"),
                     html.P(
                         "Alleen gestarte studenten tellen mee: de uitkomst en de "
-                        "achtergrond (geslacht, vooropleiding) komen uit 1CHO en zijn "
+                        "achtergrond (geslacht, vooropleiding) komen uit 1CijferHO en zijn "
                         "alleen bekend voor wie is ingeschreven. Groepen met minder "
                         f"dan {MIN_CEL} studenten tonen we als '{AFGESCHERMD}', zonder "
                         "percentage; de percentages gaan over de getoonde groepen.",

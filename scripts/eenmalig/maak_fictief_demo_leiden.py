@@ -11,7 +11,7 @@ tellen op tot subtotalen en een eindtotaal (C_Sc_Totaal).
 
 Omdat het een master is, is succes het halen van het diploma in het
 cohortjaar (geen doorstroom naar jaar 2). De uitkomstgroep zit niet als
-kolom in de data maar wordt door de tool afgeleid uit het 1CHO-bestand.
+kolom in de data maar wordt door de tool afgeleid uit het 1CijferHO-bestand.
 
 140 kandidaten, waarvan 60 ingeschreven. Niet herleidbaar naar echte data.
 
@@ -232,7 +232,7 @@ make_config(
     ],
 )
 
-# -- 1CHO-data ----------------------------------------------------------------
+# -- 1CijferHO-data ----------------------------------------------------------------
 # Master: succes is het diploma in het cohortjaar, niet doorstroom naar jaar 2.
 rang = kolommen["Rangnummer definitief"]
 ingeschreven_mask = rang <= N_INGESCHREVEN
@@ -271,7 +271,7 @@ cho_df = bouw_ruwe_cho(
 cho_path = OUT_DIR / "1cho_data_demo_leiden_2026.csv"
 cho_df.to_csv(cho_path, index=False, sep=";")
 
-print(f"\n1CHO-data: {n_ingeschreven} ingeschreven van {N} kandidaten")
+print(f"\n1CijferHO-data: {n_ingeschreven} ingeschreven van {N} kandidaten")
 print(
     f"Diploma gehaald: {int(diploma_behaald.sum())}, "
     f"niet: {int((~diploma_behaald).sum())}"
