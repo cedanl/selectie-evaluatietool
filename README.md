@@ -102,8 +102,10 @@ http://127.0.0.1:8050` ziet, open je <http://localhost:8050>. Stoppen doe je
 met Ctrl + C.
 
 **Eerst uitproberen.** Kies onderaan het uploadscherm bij **Nog geen eigen
-data?** een van de twee verzonnen voorbeelden:
+data?** een van de drie verzonnen voorbeelden:
 
+- **Demo Geneeskunde 2026**: bachelor Geneeskunde, 500 aanmelders, selectie
+  in twee rondes (toetsen, daarna MMI). Uitkomst: in jaar 2 nog ingeschreven.
 - **Demo Leiden 2026**: eenjarige master Farmacie, 140 kandidaten. Uitkomst:
   diploma gehaald.
 - **Demo Radboud 2026**: bachelor Psychologie, 200 kandidaten. Uitkomst: in
