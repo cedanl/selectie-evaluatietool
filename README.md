@@ -405,5 +405,5 @@ uv run ruff format . && uv run ruff check --fix .
 ---
 
 <div align="center">
-  <sub>Ontwikkeld door <a href="https://github.com/cedanl">CEDA NL</a> · MIT-licentie</sub>
+  <sub>Ontwikkeld door <a href="https://github.com/cedanl">CEDA NL</a> · EUPL-1.2-licentie</sub>
 </div>
